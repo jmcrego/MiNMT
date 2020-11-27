@@ -32,7 +32,7 @@ def numparameters(model):
 ##############################################################################################################
 class Model_encoder_decoder(torch.nn.Module):
   def __init__(self, n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, src_voc_size, tgt_voc_size, pad_idx, dropout): 
-    super(Model, self).__init__()
+    super(Model_encoder_decoder, self).__init__()
     self.src_emb = torch.nn.Embedding(src_voc_size, emb_dim, padding_idx=pad_idx)
     self.tgt_emb = torch.nn.Embedding(tgt_voc_size, emb_dim, padding_idx=pad_idx)
     self.pos_enc = PositionalEncoding(emb_dim, dropout, max_len=5000)
