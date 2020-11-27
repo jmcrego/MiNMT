@@ -28,9 +28,9 @@ def numparameters(model):
 
 
 ##############################################################################################################
-### Model ####################################################################################################
+### Model_endocder_decoder ###################################################################################
 ##############################################################################################################
-class Model(torch.nn.Module):
+class Model_encoder_decoder(torch.nn.Module):
   def __init__(self, n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, src_voc_size, tgt_voc_size, pad_idx, dropout): 
     super(Model, self).__init__()
     self.src_emb = torch.nn.Embedding(src_voc_size, emb_dim, padding_idx=pad_idx)
@@ -198,7 +198,7 @@ class Generator(torch.nn.Module):
 
 ##############################################################################################################
 def build_model(pars):
-  m = Model(pars.network.n_layers, pars.network.ff_dim, pars.network.n_heads, pars.network.emb_dim, pars.network.qk_dim, pars.network.v_dim, pars.data.src_voc_size, pars.data.tgt_voc_size, pars.data.pad_idx, pars.optim.dropout)
+  m = Model_encoder_decoder(pars.network.n_layers, pars.network.ff_dim, pars.network.n_heads, pars.network.emb_dim, pars.network.qk_dim, pars.network.v_dim, pars.data.src_voc_size, pars.data.tgt_voc_size, pars.data.pad_idx, pars.optim.dropout)
   npars, size = numparameters(m)
   logging.info('Built model #params = {} ({})'.format(npars,size))
 
