@@ -4,6 +4,7 @@ import sys
 import time
 import logging
 from Params import Params
+from Model import build_model
 
 ######################################################################
 ### MAIN #############################################################
@@ -13,6 +14,8 @@ if __name__ == '__main__':
 
     pars = Params(sys.argv)
     tic = time.time()
+
+    model = build_model(pars)
 
     if pars.run == 'learning':
       logging.info('Running: learning')

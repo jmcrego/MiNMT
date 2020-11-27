@@ -34,23 +34,22 @@ def read_file_param(file, pars):
 class network_params():
 
   def __init__(self):
-    self.emb_dim = 4
-    self.qk_dim = 2
-    self.v_dim = 2
-    self.ff_dim = 12
+    self.emb_dim = 512
+    self.qk_dim = 64
+    self.v_dim = 64
+    self.ff_dim = 1024
     self.n_heads = 8
     self.n_layers = 6
-    self.dropout = 0.1
 
   def usage(self):
     return '''
   Network params
-   -emb_dim INT : model embedding dimension (4)
-   -qk_dim INT : query/key dimension (2)
-   -v_dim INT : value dimension (2)
-   -ff_dim INT : feed-forward inner layer dimension (12)
-   -n_heads INT : number of attention heads (8)
-   -n_layers FLOAT : number of encoder layers (6)'''
+   -emb_dim    INT : model embedding dimension ({})
+   -qk_dim     INT : query/key dimension ({})
+   -v_dim      INT : value dimension ({})
+   -ff_dim     INT : feed-forward inner layer dimension ({})
+   -n_heads    INT : number of attention heads ({})
+   -n_layers FLOAT : number of encoder layers ({})'''.format(self.emb_dim, self.qk_dim, self.v_dim, self.ff_dim, self.n_heads, self.n_layers)
 
   def read_par(self, key, value):
       if key=='-network_params':
@@ -99,16 +98,16 @@ class optim_params():
   def usage(self):
     return '''
   Optim params
-   -optimizer STRING : optimization algorithm (adam)
-   -dropout FLOAT : dropout value (0.3)
-   -lr FLOAT : initial learning rate (2.0)
-   -min_lr FLOAT : minimum value for learning rate (0.0001)
-   -beta1 FLOAT : beta1 for adam optimizer (0.9)
-   -beta1 FLOAT : beta2 for adam optimizer (0.998)
-   -eps FLOAT : epsilon for adam optimizer (0.1e-9)
-   -noam_scale : scale of Noam decay for learning rate (2.0)
-   -noam_warmup : warmup steps of Noam decay for learning rate (4000)
-   -label_smoothing: smoothing probability for label smoothing (0.1)'''
+   -optimizer      STRING : optimization algorithm ({})
+   -dropout         FLOAT : dropout value ({})
+   -lr              FLOAT : initial learning rate ({})
+   -min_lr          FLOAT : minimum value for learning rate ({})
+   -beta1           FLOAT : beta1 for adam optimizer ({})
+   -beta2           FLOAT : beta2 for adam optimizer ({})
+   -eps             FLOAT : epsilon for adam optimizer ({})
+   -noam_scale      FLOAT : scale of Noam decay for learning rate ({})
+   -noam_warmup       INT : warmup steps of Noam decay for learning rate ({})
+   -label_smoothing FLOAT : smoothing probability for label smoothing ({})'''.format(self.optimizer, self.dropout, self.lr, self.min_lr, self.beta1, self.beta2, self.eps, self.noam_scale, self.noam_warmup, self.label_smoothing)
 
   def read_par(self, key, value):
       if key=='-optim_params':
@@ -154,11 +153,15 @@ class data_params():
 
   def __init__(self):
     self.tokenizer = 'space'
+    self.src_voc_size = 30000
+    self.tgt_voc_size = 30000
+    self.pad_idx = 0
+
 
   def usage(self):
     return '''
   Data params
-   -tokenizer STRING : tokenizer (space)'''
+   -tokenizer STRING : tokenizer (space)'''.format(self.tokenizer)
 
   def read_par(self, key, value):
       if key=='-data_params':
@@ -182,9 +185,9 @@ class learning_params():
   def usage(self):
     return '''
   Learning params
-   -max_updates INT : maximum number of training updates (5000000)
-   -batch_size INT : maximum batch size (32)
-   -batch_type STRING : sentences or tokens (sentences)'''
+   -max_updates   INT : maximum number of training updates ({})
+   -batch_size    INT : maximum batch size ({})
+   -batch_type STRING : sentences or tokens ({})'''.format(self.max_updates, self.batch_size, self.batch_type)
 
   def read_par(self, key, value):
       if key=='-learning_params':
@@ -213,7 +216,7 @@ class inference_params():
   def usage(self):
     return '''
   Inference params
-   -beam INT : size of beam (5)'''
+   -beam INT : size of beam ({})'''.format(self.beam)
 
   def read_par(self, key, value):
       if key=='-inference_params':
