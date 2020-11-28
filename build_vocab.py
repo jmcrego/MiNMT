@@ -26,6 +26,7 @@ if __name__ == '__main__':
     prog = sys.argv.pop(0)
     usage = '''usage: {} [-tokenizer_config FILE] < text > vocab
    -tokenizer_config FILE : tokenizer config file (if not used mode=space)
+for further details visit: https://github.com/OpenNMT/Tokenizer/tree/master/bindings/python
 '''.format(prog)
 
     ftokconf = None
