@@ -73,16 +73,17 @@ class Vocab():
   def __getitem__(self, s): ### implementation of the method used when invoking : vocab[entry]
     if type(s) == int: ### input is an index, i want the string
       if s not in self:
-        logging.error("key \'{}\' not found in vocab".format(s))
+        logging.error("Key \'{}\' not found in vocab".format(s))
         sys.exit()
       return self.idx_to_tok[s] ### s exists in self.idx_to_tok
     if s not in self: ### input is a string, i want the index
       return self.idx_unk
     return self.tok_to_idx[s]
 
+
   def read(self, file):
     if not os.path.exists(file):
-      logging.error('missing {} vocab file'.format(file))
+      logging.error('Missing {} vocab file'.format(file))
       sys.exit()
 
     with open(file,'r') as f: 
@@ -98,30 +99,33 @@ class Vocab():
         self.tok_to_idx[tok] = len(self.tok_to_idx)
 
     if self.idx_to_tok[self.idx_pad] != self.str_pad:
-      logging.error('vocabulary idx={} reserved for {}'.format(self.idx_pad,self.str_pad))
+      logging.error('Vocabulary idx={} reserved for {}'.format(self.idx_pad,self.str_pad))
       sys.exit()
     if self.idx_to_tok[self.idx_unk] != self.str_unk:
-      logging.error('vocabulary idx={} reserved for {}'.format(self.idx_unk,self.str_unk))
+      logging.error('Vocabulary idx={} reserved for {}'.format(self.idx_unk,self.str_unk))
       sys.exit()
     if self.idx_to_tok[self.idx_bos] != self.str_bos:
-      logging.error('vocabulary idx={} reserved for {}'.format(self.idx_bos,self.str_bos))
+      logging.error('Vocabulary idx={} reserved for {}'.format(self.idx_bos,self.str_bos))
       sys.exit()
     if self.idx_to_tok[self.idx_eos] != self.str_eos:
-      logging.error('vocabulary idx={} reserved for {}'.format(self.idx_eos,self.str_eos))
+      logging.error('Vocabulary idx={} reserved for {}'.format(self.idx_eos,self.str_eos))
       sys.exit()
     if self.idx_to_tok[self.idx_sep] != self.str_sep:
-      logging.error('vocabulary idx={} reserved for {}'.format(self.idx_sep,self.str_sep))
+      logging.error('Vocabulary idx={} reserved for {}'.format(self.idx_sep,self.str_sep))
       sys.exit()
-
     logging.info('Read Vocab ({} entries) from {}'.format(len(self.idx_to_tok), file))
+
 
   def build(self, ftokconf, min_freq=1, max_size=0):
     token = OpenNMTTokenizer(ftokconf)
     ### read tokens frequency
-    self.tok_to_frq = defaultdict(int)
+    tok_to_frq = defaultdict(int)
+    nlines = 0
     for l in sys.stdin:
+      nlines += 1
       for tok in token.tokenize(l.strip(' \n')):
-        self.tok_to_frq[tok] += 1
+        tok_to_frq[tok] += 1
+    logging.info('Read {} stdin lines with {} distinct tokens'.format(nlines,len(tok_to_frq)))
     ### dump vocab from tok_to_frq
     print(self.str_pad)
     print(self.str_unk)
@@ -129,10 +133,14 @@ class Vocab():
     print(self.str_eos)
     print(self.str_sep)
     n = 5
-    for tok, frq in sorted(self.tok_to_frq.items(), key=lambda item: item[1], reverse=True):
+    for tok, frq in sorted(tok_to_frq.items(), key=lambda item: item[1], reverse=True):
       if n == max_size or frq < min_freq:
         break
       print(tok)
       n += 1
-    logging.info('built vocab ({} entries)'.format(n))
+    logging.info('Built vocab ({} entries)'.format(n))
+
+
+
+
 
