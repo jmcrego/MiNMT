@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import sys
+import random
 import logging
 
 def create_logger(logfile, loglevel):
@@ -152,7 +153,8 @@ class optim_options():
 class data_options():
 
   def __init__(self):
-    self.tokenizer = None
+    self.src_token = None
+    self.tgt_token = None
     self.src_vocab = None 
     self.tgt_vocab = None 
 
@@ -160,16 +162,20 @@ class data_options():
   def usage(self):
     return '''
   Data options
-   -tokenizer FILE : onmt tokenizer config file (if not given use 'space' mode)
+   -src_token FILE : source-side onmt tokenizer config file (if not given use 'space' mode)
+   -tgt_token FILE : target-side onmt tokenizer config file (if not given use 'space' mode)
    -src_vocab FILE : source-side vocabulary file
-   -tgt_vocab FILE : target-side vocabulary file'''.format(self.tokenizer)
+   -tgt_vocab FILE : target-side vocabulary file'''
 
   def read_opt(self, key, value):
       if key=='-data_options':
         self.read_file_options(value, self)
         return True
-      elif key=='-tokenizer':
-        self.tokenizer = value
+      elif key=='-src_token':
+        self.src_token = value
+        return True
+      elif key=='-tgt_token':
+        self.tgt_token = value
         return True
       elif key=='-src_vocab':
         self.src_vocab = value
@@ -251,7 +257,8 @@ class Options():
 
     log_file = None
     log_level = 'info'
-    
+    seed = 12345
+
     while len(sys.argv):
       tok = sys.argv.pop(0)
       if tok=="-h":
@@ -262,6 +269,8 @@ class Options():
         log_file = sys.argv.pop(0)
       elif tok=="-log_level" and len(sys.argv):
         log_level = sys.argv.pop(0)
+      elif tok=="-seed" and len(sys.argv):
+        seed = int(sys.argv.pop(0))
 
       else:
         if len(sys.argv):
@@ -286,12 +295,14 @@ class Options():
     logging.info("Data options = {}".format(self.data.__dict__))
     logging.info("Learning options = {}".format(self.learning.__dict__))
     logging.info("Inference options = {}".format(self.inference.__dict__))
+    random.seed(seed)
 
   def usage(self):
     sys.stderr.write('''usage: {} -run COMMAND [net_options] [opt_options] [data_options] [learning_options] [inference_options] [-h] [-log_level LEVL] [-log_file FILE]
-   -run COMMAND : learn or inference
-   -log_file FILE : log file  (stderr)
+   -run      COMMAND : learn or inference
+   -log_file    FILE : log file  (stderr)
    -log_level STRING : log level [debug, info, warning, critical, error] (info)
+   -seeed        INT : seed for randomness (12345)
    -h                : this help
 {}
 {}

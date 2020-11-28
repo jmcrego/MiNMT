@@ -5,6 +5,7 @@ import os
 import yaml
 import pyonmttok
 import logging
+import random
 from collections import defaultdict
 #import numpy as np
 
@@ -38,7 +39,7 @@ class OpenNMTTokenizer():
 ### Vocab ####################################################################################################
 ##############################################################################################################
 class Vocab():
-  def __init__(self, file=None): #n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, src_voc_size, tgt_voc_size, pad_idx, dropout): 
+  def __init__(self, file=None): 
     super(Vocab, self).__init__()
     self.idx_pad = 0 
     self.str_pad = '<pad>'
@@ -139,6 +140,62 @@ class Vocab():
       print(tok)
       n += 1
     logging.info('Built vocab ({} entries)'.format(n))
+
+
+
+##############################################################################################################
+### Dataset ##################################################################################################
+##############################################################################################################
+class Dataset():
+  def __init__(self, ftok_src, ftok_tgt, vocab_src, vocab_tgt, ftxt_src, ftxt_tgt):
+    super(Dataset, self).__init__()
+
+    vdata = [] ### contains [pos, ltokens_src, ltokens_tgt]
+
+    token = OpenNMTTokenizer(ftok_src)
+    ntokens = 0
+    nunks = 0
+    with open(ftxt_src,'r') as f: 
+      for i,l in enumerate(f):
+        toks_idx = []
+        for w in token.tokenize(l):
+          toks_idx.append(vocab_src[w])
+          ntokens += 1
+          if toks_idx[-1] == vocab_src.idx_unk:
+            nunks += 1
+        vdata.append([i,toks_idx])
+      logging.info('Read {} lines with {} tokens ({} <unk>) from {}'.format(i,ftxt_src, ntokens, nunks))
+
+    token = OpenNMTTokenizer(ftok_tgt)
+    ntokens = 0
+    nunks = 0
+    with open(ftxt_tgt,'r') as f: 
+      for i,l in enumerate(f):
+        toks_idx = []
+        for w in token.tokenize(l):
+          toks_idx.append(vocab_tgt[w])
+          ntokens += 1
+          if toks_idx[-1] == vocab_tgt.idx_unk:
+            nunks += 1
+        vdata[i].append(toks_idx)
+      logging.info('Read {} lines with {} tokens ({} <unk>) from {}'.format(i,ftxt_tgt, ntokens, nunks))
+
+    ### shuffle vdata
+    random.shuffle(vdata)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
