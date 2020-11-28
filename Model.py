@@ -26,15 +26,26 @@ def numparameters(model):
 
   return npars, size
 
+def build_model(o,src_vocab,tgt_vocab):
+  m = Model_encoder_decoder(o.network.n_layers, o.network.ff_dim, o.network.n_heads, o.network.emb_dim, o.network.qk_dim, o.network.v_dim, len(src_vocab), len(tgt_vocab), src_vocab.idx_pad, o.optim.dropout)
+  npars, size = numparameters(m)
+  logging.info('Built model #params = {} ({})'.format(npars,size))
+
+  for p in m.parameters():
+    if p.dim() > 1:
+      torch.nn.init.xavier_uniform_(p)
+  logging.info('Model initialised (Xavier uniform)')
+
+  return m
 
 ##############################################################################################################
 ### Model_endocder_decoder ###################################################################################
 ##############################################################################################################
 class Model_encoder_decoder(torch.nn.Module):
-  def __init__(self, n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, src_voc_size, tgt_voc_size, pad_idx, dropout): 
+  def __init__(self, n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, src_voc_size, tgt_voc_size, idx_pad, dropout): 
     super(Model_encoder_decoder, self).__init__()
-    self.src_emb = torch.nn.Embedding(src_voc_size, emb_dim, padding_idx=pad_idx)
-    self.tgt_emb = torch.nn.Embedding(tgt_voc_size, emb_dim, padding_idx=pad_idx)
+    self.src_emb = torch.nn.Embedding(src_voc_size, emb_dim, padding_idx=idx_pad)
+    self.tgt_emb = torch.nn.Embedding(tgt_voc_size, emb_dim, padding_idx=idx_pad)
     self.pos_enc = PositionalEncoding(emb_dim, dropout, max_len=5000)
     self.stacked_encoder = Stacked_Encoder(n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout)
     self.stacked_decoder = Stacked_Decoder(n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout)
@@ -45,8 +56,8 @@ class Model_encoder_decoder(torch.nn.Module):
     ref = self.pos_enc(self.tgt_emb(ref))
     z_src = self.stacked_encoder(src)
     z_ref = self.stacked_decoder(z_src, ref, mask)
-    pred = self.generator(z_ref)
-    return pred
+    y = self.generator(z_ref)
+    return y
 
 ##############################################################################################################
 ### Stacked_Encoder ##########################################################################################
@@ -196,17 +207,5 @@ class Generator(torch.nn.Module):
   def forward(self, x):
     return torch.nn.functional.log_softmax(self.proj(x), dim=-1)
 
-##############################################################################################################
-def build_model(pars):
-  m = Model_encoder_decoder(pars.network.n_layers, pars.network.ff_dim, pars.network.n_heads, pars.network.emb_dim, pars.network.qk_dim, pars.network.v_dim, pars.data.src_voc_size, pars.data.tgt_voc_size, pars.data.pad_idx, pars.optim.dropout)
-  npars, size = numparameters(m)
-  logging.info('Built model #params = {} ({})'.format(npars,size))
-
-  for p in m.parameters():
-    if p.dim() > 1:
-      torch.nn.init.xavier_uniform_(p)
-  logging.info('Model initialised (Xavier uniform)')
-
-  return m
 
 

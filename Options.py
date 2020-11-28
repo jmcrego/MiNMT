@@ -152,16 +152,17 @@ class optim_options():
 class data_options():
 
   def __init__(self):
-    self.tokenizer = 'space'
-    self.src_voc_size = 30000
-    self.tgt_voc_size = 30000
-    self.pad_idx = 0
+    self.tokenizer = None
+    self.src_vocab = None 
+    self.tgt_vocab = None 
 
 
   def usage(self):
     return '''
   Data options
-   -tokenizer STRING : tokenizer (space)'''.format(self.tokenizer)
+   -tokenizer FILE : onmt tokenizer config file (if not given use 'space' mode)
+   -src_vocab FILE : source-side vocabulary file
+   -tgt_vocab FILE : target-side vocabulary file'''.format(self.tokenizer)
 
   def read_opt(self, key, value):
       if key=='-data_options':
@@ -169,6 +170,12 @@ class data_options():
         return True
       elif key=='-tokenizer':
         self.tokenizer = value
+        return True
+      elif key=='-src_vocab':
+        self.src_vocab = value
+        return True
+      elif key=='-tgt_vocab':
+        self.tgt_vocab = value
         return True
       return False
 

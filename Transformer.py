@@ -3,7 +3,8 @@
 import sys
 import time
 import logging
-from Params import Params
+from Options import Options
+from Data import Vocab
 from Model import build_model
 
 ######################################################################
@@ -12,22 +13,24 @@ from Model import build_model
             
 if __name__ == '__main__':
 
-    pars = Params(sys.argv)
-    tic = time.time()
+  opts = Options(sys.argv)
+  tic = time.time()
 
-    model = build_model(pars)
+  src_vocab = Vocab(opts.data.src_vocab)
+  tgt_vocab = Vocab(opts.data.tgt_vocab)
+  model = build_model(opts,src_vocab,tgt_vocab)
 
-    if pars.run == 'learning':
-      logging.info('Running: learning')
+  if opts.run == 'learning':
+    logging.info('Running: learning')
 
-    elif pars.run == 'inference':
-      logging.info('Running: inference')
+  elif opts.run == 'inference':
+    logging.info('Running: inference')
 
-    else:
-      logging.warning('Nothing to run')
+  else:
+    logging.warning('Nothing to run')
 
-    toc = time.time()
-    logging.info('Done ({:.3f} seconds)'.format(toc-tic))
+  toc = time.time()
+  logging.info('Done ({:.3f} seconds)'.format(toc-tic))
 
 
 
