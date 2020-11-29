@@ -216,11 +216,6 @@ class Dataset():
       shards.append(np.asarray(shard))
       logging.info('Sorted shard #{} with {} examples'.format(len(shards),len(shard)))
 
-    #for s in range(len(shards)):
-    #  for i in range(len(shards[s])):
-    #    pos, lsrc, ltgt = shards[s][i]
-    #    print("shard={} i={} pos={} lsrc={} ltgt={} {}".format(s,i,pos,lsrc,ltgt,ldata[pos]))
-
     ### build batches
     self.batches = []
     for shard in shards:
