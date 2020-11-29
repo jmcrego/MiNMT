@@ -159,8 +159,11 @@ class data_options():
     self.tgt_vocab = None 
     self.src_train = None 
     self.tgt_train = None 
+    self.src_valid = None 
+    self.tgt_valid = None 
     self.train_set = None
-    self.shard_size = 0
+    self.valid_set = None
+    self.shard_size = 10000
     self.batch_size = 32
     self.batch_type = 'sentences'    
 
@@ -173,7 +176,10 @@ class data_options():
    -tgt_vocab    FILE : target-side vocabulary file
    -src_train    FILE : source-side training file
    -tgt_train    FILE : target-side training file
-   -train_set    FILE : train dataset is read/written in this file
+   -src_valid    FILE : source-side validation file
+   -tgt_valid    FILE : target-side validation file
+   -train_set    FILE : training dataset is read/written from/into this file
+   -valid_set    FILE : validation dataset is read/written from/into this file
    -shard_size    INT : maximum shard size ({}) use 0 to consider all data in a single shard
    -batch_size    INT : maximum batch size ({})
    -batch_type STRING : sentences or tokens ({})'''.format(self.shard_size, self.batch_size, self.batch_type)
@@ -200,8 +206,17 @@ class data_options():
       elif key=='-tgt_train':
         self.tgt_train = value
         return True
+      elif key=='-src_valid':
+        self.src_valid = value
+        return True
+      elif key=='-tgt_valid':
+        self.tgt_valid = value
+        return True
       elif key=='-train_set':
         self.train_set = value
+        return True
+      elif key=='-valid_set':
+        self.valid_set = value
         return True
       elif key=='-shard_size':
         self.shard_size = int(value)
@@ -319,7 +334,7 @@ class Options():
 
   def usage(self):
     sys.stderr.write('''usage: {} -run COMMAND [net_options] [opt_options] [data_options] [learning_options] [inference_options] [-h] [-log_level LEVL] [-log_file FILE]
-   -run      COMMAND : learn or inference
+   -run        STEPS : step to run: learn or inference
    -log_file    FILE : log file  (stderr)
    -log_level STRING : log level [debug, info, warning, critical, error] (info)
    -seeed        INT : seed for randomness (12345)

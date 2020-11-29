@@ -5,6 +5,7 @@ import logging
 import torch
 import math
 #import numpy as np
+from Data import Vocab
 
 def numparameters(model):
   npars = 0 #pars
@@ -26,9 +27,9 @@ def numparameters(model):
 
   return npars, size
 
-def build_model(o,fvocab_src,fvocab_tgt):
-  src_vocab = Vocab(fvocab_src)
-  tgt_vocab = Vocab(fvocab_tgt)
+def build_model(o):
+  src_vocab = Vocab(o.data.src_vocab)
+  tgt_vocab = Vocab(o.data.tgt_vocab)
   m = Model_encoder_decoder(o.network.n_layers, o.network.ff_dim, o.network.n_heads, o.network.emb_dim, o.network.qk_dim, o.network.v_dim, len(src_vocab), len(tgt_vocab), src_vocab.idx_pad, o.optim.dropout)
   npars, size = numparameters(m)
   logging.info('Built model #params = {} ({})'.format(npars,size))
