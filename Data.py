@@ -5,9 +5,10 @@ import os
 import yaml
 import pyonmttok
 import logging
-import random
+#import random
+import operator
 from collections import defaultdict
-#import numpy as np
+import numpy as np
 
 ####################################################################
 ### OpenNMTTokenizer ###############################################
@@ -21,13 +22,13 @@ class OpenNMTTokenizer():
       with open(fyaml) as yamlfile: 
         opts = yaml.load(yamlfile, Loader=yaml.FullLoader)
         if 'mode' not in opts:
-          logging.error('error: missing mode in tokenizer')
+          logging.error('Missing mode in tokenizer')
           sys.exit()
 
     mode = opts["mode"]
     del opts["mode"]
     self.tokenizer = pyonmttok.Tokenizer(mode, **opts)
-    logging.info('built tokenizer mode={} {}'.format(mode,opts))
+    logging.info('Built tokenizer mode={} {}'.format(mode,opts))
 
   def tokenize(self, text):
     return self.tokenizer.tokenize(text)[0]
@@ -147,47 +148,108 @@ class Vocab():
 ### Dataset ##################################################################################################
 ##############################################################################################################
 class Dataset():
-  def __init__(self, ftok_src, ftok_tgt, vocab_src, vocab_tgt, ftxt_src, ftxt_tgt):
+  def __init__(self, fvocab_src, fvocab_tgt, ftoken_src, ftoken_tgt, ftxt_src, ftxt_tgt, shard_size, batch_size):
     super(Dataset, self).__init__()
 
-    vdata = [] ### contains [pos, ltokens_src, ltokens_tgt]
+    logging.info('Building dataset')
+    self.ldata = [] ### contains [ltokens_src, ltokens_tgt]
+    idata = [] ### contains [pos, len_src, len_tgt]
 
-    token = OpenNMTTokenizer(ftok_src)
+    ### read into vdata ###
+    vocab = Vocab(fvocab_src)
+    self.src_idx_pad = vocab.idx_pad
+    token = OpenNMTTokenizer(ftoken_src)
     ntokens = 0
     nunks = 0
     with open(ftxt_src,'r') as f: 
       for i,l in enumerate(f):
         toks_idx = []
         for w in token.tokenize(l):
-          toks_idx.append(vocab_src[w])
+          toks_idx.append(vocab[w])
           ntokens += 1
-          if toks_idx[-1] == vocab_src.idx_unk:
+          if toks_idx[-1] == vocab.idx_unk:
             nunks += 1
-        vdata.append([i,toks_idx])
-      logging.info('Read {} lines with {} tokens ({} <unk>) from {}'.format(i,ftxt_src, ntokens, nunks))
+        toks_idx.insert(0,vocab.idx_bos)
+        toks_idx.append(vocab.idx_eos)
+        self.ldata.append([toks_idx])
+        idata.append([i,len(toks_idx)])
+      logging.info('Read {} lines with {} tokens ({} <unk> [{:.1f}%]) from {}'.format(i, ntokens, nunks, 100.0*nunks/ntokens, ftxt_src))
 
-    token = OpenNMTTokenizer(ftok_tgt)
+    vocab = Vocab(fvocab_tgt)
+    self.tgt_idx_pad = vocab.idx_pad
+    token = OpenNMTTokenizer(ftoken_tgt)
     ntokens = 0
     nunks = 0
     with open(ftxt_tgt,'r') as f: 
       for i,l in enumerate(f):
         toks_idx = []
         for w in token.tokenize(l):
-          toks_idx.append(vocab_tgt[w])
+          toks_idx.append(vocab[w])
           ntokens += 1
-          if toks_idx[-1] == vocab_tgt.idx_unk:
+          if toks_idx[-1] == vocab.idx_unk:
             nunks += 1
-        vdata[i].append(toks_idx)
-      logging.info('Read {} lines with {} tokens ({} <unk>) from {}'.format(i,ftxt_tgt, ntokens, nunks))
+        if i>=len(idata):
+          logging.error('Different number of lines in parallel data set {}-{}'.format(i,len(idata)))
+          sys.exit()
+        toks_idx.insert(0,vocab.idx_bos)
+        toks_idx.append(vocab.idx_eos)
+        self.ldata[i].extend([toks_idx])
+        idata[i].extend([len(toks_idx)])
+      if i!=len(idata)-1:
+        logging.error('Different number of lines in parallel data set {}-{}'.format(i,len(idata)))
+        sys.exit()
+      logging.info('Read {} lines with {} tokens ({} <unk> [{:.1f}%]) from {}'.format(i, ntokens, nunks, 100.0*nunks/ntokens, ftxt_tgt))
 
-    ### shuffle vdata
-    random.shuffle(vdata)
+    ### shuffle idata
+    idata = np.asarray(idata) ### transform ldata from list to np.array (not copy)
+    np.random.shuffle(idata)
+    logging.info('Shuffled dataset {}'.format(idata.shape))
+
+    ### split in shards and sort each shard to minimize padding when building batches
+    if shard_size == 0:
+      shard_size = len(idata)
+
+    shards = []
+    for i in range(0,len(idata),shard_size):
+      shard = idata[i:min(len(idata),i+shard_size)]
+      shard = sorted(shard, key = operator.itemgetter(1, 2))
+      shards.append(np.asarray(shard))
+      logging.info('Sorted shard #{} with {} examples'.format(len(shards),len(shard)))
+
+    #for s in range(len(shards)):
+    #  for i in range(len(shards[s])):
+    #    pos, lsrc, ltgt = shards[s][i]
+    #    print("shard={} i={} pos={} lsrc={} ltgt={} {}".format(s,i,pos,lsrc,ltgt,ldata[pos]))
+
+    ### build batches
+    self.batches = []
+    for shard in shards:
+      for i in range(0,len(shard),batch_size):
+        self.batches.append(self.build_batch(shard[i: min(len(shard),i+batch_size)]))
+    self.batches = np.asarray(self.batches)
+    logging.info('Built {} batches'.format(len(self.batches)))
+    ### shuffle batches
+    np.random.shuffle(self.batches)
+    logging.info('Shuffled {} batches'.format(len(self.batches)))
+
+  def build_batch(self, shard_batch):
+    max_src_len = max(shard_batch[:,1])
+    max_tgt_len = max(shard_batch[:,2])
+    batch = []
+    for example in shard_batch:
+      pos, src_len, tgt_len = example
+      src = list(self.ldata[pos][0]) + [self.src_idx_pad] * (max_src_len-src_len)
+      tgt = list(self.ldata[pos][1]) + [self.tgt_idx_pad] * (max_tgt_len-tgt_len)
+      batch.append([src,tgt])
+    return batch
 
 
+  def __len__(self):
+    return len(self.batches)
 
-
-
-
+  def __iter__(self):
+    for batch in self.batches:
+      yield batch
 
 
 

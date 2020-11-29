@@ -157,15 +157,24 @@ class data_options():
     self.tgt_token = None
     self.src_vocab = None 
     self.tgt_vocab = None 
-
+    self.src_train = None 
+    self.tgt_train = None 
+    self.shard_size = 0
+    self.batch_size = 32
+    self.batch_type = 'sentences'    
 
   def usage(self):
     return '''
   Data options
-   -src_token FILE : source-side onmt tokenizer config file (if not given use 'space' mode)
-   -tgt_token FILE : target-side onmt tokenizer config file (if not given use 'space' mode)
-   -src_vocab FILE : source-side vocabulary file
-   -tgt_vocab FILE : target-side vocabulary file'''
+   -src_token    FILE : source-side onmt tokenizer config file ('space' mode)
+   -tgt_token    FILE : target-side onmt tokenizer config file ('space' mode)
+   -src_vocab    FILE : source-side vocabulary file
+   -tgt_vocab    FILE : target-side vocabulary file
+   -src_train    FILE : source-side training file
+   -tgt_train    FILE : target-side training file
+   -shard_size    INT : maximum shard size ({}) use 0 to consider all data in a single shard
+   -batch_size    INT : maximum batch size ({})
+   -batch_type STRING : sentences or tokens ({})'''.format(self.shard_size, self.batch_size, self.batch_type)
 
   def read_opt(self, key, value):
       if key=='-data_options':
@@ -183,6 +192,22 @@ class data_options():
       elif key=='-tgt_vocab':
         self.tgt_vocab = value
         return True
+      elif key=='-src_train':
+        self.src_train = value
+        return True
+      elif key=='-tgt_train':
+        self.tgt_train = value
+        return True
+      elif key=='-shard_size':
+        self.shard_size = int(value)
+        return True
+      elif key=='-batch_size':
+        self.batch_size = int(value)
+        return True
+      elif key=='-batch_type':
+        self.batch_type = value
+        return True
+
       return False
 
 ##############################################################################################################
@@ -192,15 +217,11 @@ class learning_options():
 
   def __init__(self):
     self.max_updates = 5000000
-    self.batch_size = 32
-    self.batch_type = 'sentences'    
 
   def usage(self):
     return '''
   Learning options
-   -max_updates   INT : maximum number of training updates ({})
-   -batch_size    INT : maximum batch size ({})
-   -batch_type STRING : sentences or tokens ({})'''.format(self.max_updates, self.batch_size, self.batch_type)
+   -max_updates   INT : maximum number of training updates ({})'''.format(self.max_updates)
 
   def read_opt(self, key, value):
       if key=='-learning_options':
@@ -208,12 +229,6 @@ class learning_options():
         return True
       elif key=='-max_updates':
         self.max_updates = int(value)
-        return True
-      elif key=='-batch_size':
-        self.batch_size = int(value)
-        return True
-      elif key=='-batch_type':
-        self.batch_type = value
         return True
 
       return False
