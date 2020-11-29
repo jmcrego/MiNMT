@@ -9,6 +9,7 @@ import logging
 import operator
 from collections import defaultdict
 import numpy as np
+import pickle
 
 ####################################################################
 ### OpenNMTTokenizer ###############################################
@@ -148,16 +149,21 @@ class Vocab():
 ### Dataset ##################################################################################################
 ##############################################################################################################
 class Dataset():
-  def __init__(self, fvocab_src, fvocab_tgt, ftoken_src, ftoken_tgt, ftxt_src, ftxt_tgt, shard_size, batch_size):
+  def __init__(self, fvocab_src, fvocab_tgt, ftoken_src, ftoken_tgt, ftxt_src, ftxt_tgt, shard_size, batch_size, ofile):
     super(Dataset, self).__init__()
 
+    if ofile is not None and os.path.exists(ofile):
+      self.batches = pickle.load(open(ofile, 'rb'))
+      logging.info('Read train dataset from file {}'.format(ofile))
+      return
+
     logging.info('Building dataset')
-    self.ldata = [] ### contains [ltokens_src, ltokens_tgt]
+    ldata = [] ### contains [ltokens_src, ltokens_tgt]
     idata = [] ### contains [pos, len_src, len_tgt]
 
     ### read into vdata ###
     vocab = Vocab(fvocab_src)
-    self.src_idx_pad = vocab.idx_pad
+    src_idx_pad = vocab.idx_pad
     token = OpenNMTTokenizer(ftoken_src)
     ntokens = 0
     nunks = 0
@@ -171,12 +177,12 @@ class Dataset():
             nunks += 1
         toks_idx.insert(0,vocab.idx_bos)
         toks_idx.append(vocab.idx_eos)
-        self.ldata.append([toks_idx])
+        ldata.append([toks_idx])
         idata.append([i,len(toks_idx)])
       logging.info('Read {} lines with {} tokens ({} <unk> [{:.1f}%]) from {}'.format(i, ntokens, nunks, 100.0*nunks/ntokens, ftxt_src))
 
     vocab = Vocab(fvocab_tgt)
-    self.tgt_idx_pad = vocab.idx_pad
+    tgt_idx_pad = vocab.idx_pad
     token = OpenNMTTokenizer(ftoken_tgt)
     ntokens = 0
     nunks = 0
@@ -193,7 +199,7 @@ class Dataset():
           sys.exit()
         toks_idx.insert(0,vocab.idx_bos)
         toks_idx.append(vocab.idx_eos)
-        self.ldata[i].extend([toks_idx])
+        ldata[i].extend([toks_idx])
         idata[i].extend([len(toks_idx)])
       if i!=len(idata)-1:
         logging.error('Different number of lines in parallel data set {}-{}'.format(i,len(idata)))
@@ -220,22 +226,25 @@ class Dataset():
     self.batches = []
     for shard in shards:
       for i in range(0,len(shard),batch_size):
-        self.batches.append(self.build_batch(shard[i: min(len(shard),i+batch_size)]))
+        self.batches.append(self.build_batch(shard[i: min(len(shard),i+batch_size)], ldata, src_idx_pad, tgt_idx_pad))
     self.batches = np.asarray(self.batches)
     logging.info('Built {} batches'.format(len(self.batches)))
     ### shuffle batches
     np.random.shuffle(self.batches)
     logging.info('Shuffled {} batches'.format(len(self.batches)))
+    ### save binary file
+    if ofile is not None:
+      pickle.dump(self.batches, open(ofile, 'wb'), pickle.HIGHEST_PROTOCOL)
 
-  def build_batch(self, shard_batch):
+  def build_batch(self, shard_batch, ldata, src_idx_pad, tgt_idx_pad):
     max_src_len = max(shard_batch[:,1])
     max_tgt_len = max(shard_batch[:,2])
     batch = []
     for example in shard_batch:
       pos, src_len, tgt_len = example
-      src = list(self.ldata[pos][0]) + [self.src_idx_pad] * (max_src_len-src_len)
-      tgt = list(self.ldata[pos][1]) + [self.tgt_idx_pad] * (max_tgt_len-tgt_len)
-      batch.append([src,tgt])
+      src = list(ldata[pos][0]) + [src_idx_pad] * (max_src_len-src_len)
+      tgt = list(ldata[pos][1]) + [tgt_idx_pad] * (max_tgt_len-tgt_len)
+      batch.append([pos, src, tgt])
     return batch
 
 

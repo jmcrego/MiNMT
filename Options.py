@@ -159,6 +159,7 @@ class data_options():
     self.tgt_vocab = None 
     self.src_train = None 
     self.tgt_train = None 
+    self.train_set = None
     self.shard_size = 0
     self.batch_size = 32
     self.batch_type = 'sentences'    
@@ -172,6 +173,7 @@ class data_options():
    -tgt_vocab    FILE : target-side vocabulary file
    -src_train    FILE : source-side training file
    -tgt_train    FILE : target-side training file
+   -train_set    FILE : train dataset is read/written in this file
    -shard_size    INT : maximum shard size ({}) use 0 to consider all data in a single shard
    -batch_size    INT : maximum batch size ({})
    -batch_type STRING : sentences or tokens ({})'''.format(self.shard_size, self.batch_size, self.batch_type)
@@ -197,6 +199,9 @@ class data_options():
         return True
       elif key=='-tgt_train':
         self.tgt_train = value
+        return True
+      elif key=='-train_set':
+        self.train_set = value
         return True
       elif key=='-shard_size':
         self.shard_size = int(value)

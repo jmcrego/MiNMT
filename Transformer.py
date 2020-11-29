@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import sys
+import os
 import time
+import pickle
 import logging
 from Options import Options
 from Data import Vocab, Dataset
@@ -16,7 +18,7 @@ if __name__ == '__main__':
   opts = Options(sys.argv)
   tic = time.time()
 
-  train = Dataset(opts.data.src_vocab, opts.data.tgt_vocab, opts.data.src_token, opts.data.tgt_token, opts.data.src_train, opts.data.tgt_train, opts.data.shard_size, opts.data.batch_size)
+  train = Dataset(opts.data.src_vocab, opts.data.tgt_vocab, opts.data.src_token, opts.data.tgt_token, opts.data.src_train, opts.data.tgt_train, opts.data.shard_size, opts.data.batch_size, opts.data.train_set)
   sys.exit()
 
   model = build_model(opts, opts.data.src_vocab, opts.data.src_vocab)
