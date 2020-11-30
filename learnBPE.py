@@ -5,7 +5,7 @@ import sys
 prog = sys.argv.pop(0)
 if len(sys.argv) == 0:
     sys.stderr.write('usage: {} bpe_model < raw\n'.format(prog))
-    sys.stderr.write('builds bpe_model using raw text\n'.format(prog))
+    sys.stderr.write('Creates bpe_model using raw text\n'.format(prog))
     sys.exit()
 
 bpe_model = sys.argv.pop()
