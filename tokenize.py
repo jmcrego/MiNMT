@@ -14,3 +14,4 @@ tokenizer = pyonmttok.Tokenizer("aggressive", joiner_annotate=True, segment_numb
 for l in sys.stdin:
     tokens, _ = tokenizer.tokenize(l)
     print(' '.join(tokens))
+sys.stderr.write('Done\n')

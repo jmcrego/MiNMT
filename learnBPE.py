@@ -18,3 +18,4 @@ for l in sys.stdin:
 
 sys.stderr.write('learning bpe model: {}\n'.format(bpe_model))
 tokenizer = learner.learn(bpe_model)
+sys.stderr.write('Done\n')
