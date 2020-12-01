@@ -206,7 +206,7 @@ class Dataset():
       if len(self.batches) == 0:
         logging.error('No batches found in Dataset {}'.format(ofile+'.bin'))
         sys.exit()
-      logging.info('Read batches [{},{}] Dataset from file {}'.format(len(self.batches),len(self.batches[0][0]),ofile+'.bin'))
+      logging.info('Read {} batches from Dataset file {}'.format(len(self.batches), ofile+'.bin'))
       return
 
     logging.info('Building Datasets from files {} {}'.format(ftxt_src, ftxt_tgt))
