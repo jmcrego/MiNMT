@@ -38,42 +38,7 @@ def file2idx(ftxt, fvocab, ftoken):
   logging.info('Found {} <unk> in {} tokens [{:.1f}%]'.format(nunks, ntokens, 100.0*nunks/ntokens))
   return ldata, idata, vocab.idx_pad
 
-def file2str(ftxt, fvocab, ftoken):
-  ldata = []
-  idata = []
-  vocab = Vocab(fvocab)
-  str_pad = vocab.str_pad
-  token = OpenNMTTokenizer(ftoken)
-  ntokens = 0
-  nunks = 0
-  with open(ftxt,'r') as f: 
-    for i,l in enumerate(f):
-      toks_str = []
-      for w in token.tokenize(l):
-        toks_str.append(w)
-        ntokens += 1
-        if toks_str[-1] not in vocab:
-          nunks += 1
-      toks_str.insert(0,vocab.str_bos)
-      toks_str.append(vocab.str_eos)
-      ldata.append(toks_str)
-      idata.append(len(toks_str))
-    logging.info('Read {} lines with {} tokens ({} <unk> [{:.1f}%]) from {}'.format(i, ntokens, nunks, 100.0*nunks/ntokens, ftxt))
-  return ldata, idata, vocab.str_pad
-
 def build_batch_idx(shard_batch, ldata_src, ldata_tgt, src_idx_pad, tgt_idx_pad):
-  batch_src, batch_tgt, batch_lsrc, batch_ltgt = [], [], [], []
-  max_lsrc = shard_batch[:,1].max()
-  max_ltgt = shard_batch[:,2].max() 
-  for example in shard_batch:
-    pos, lsrc, ltgt = example
-    batch_src.append(ldata_src[pos] + [src_idx_pad]*(max_lsrc-lsrc))
-    batch_tgt.append(ldata_tgt[pos] + [tgt_idx_pad]*(max_ltgt-ltgt))
-    batch_lsrc.append(lsrc)
-    batch_ltgt.append(ltgt)
-  return [batch_src, batch_tgt, batch_lsrc, batch_ltgt]
-
-def build_batch_str(shard_batch, ldata_src, ldata_tgt, src_idx_pad, tgt_idx_pad):
   batch_src, batch_tgt, batch_lsrc, batch_ltgt = [], [], [], []
   max_lsrc = shard_batch[:,1].max()
   max_ltgt = shard_batch[:,2].max() 
@@ -243,8 +208,6 @@ class Dataset():
     ### read ldata ###
     ldata_src, len_src, src_pad = file2idx(ftxt_src, fvocab_src, ftoken_src)
     ldata_tgt, len_tgt, tgt_pad = file2idx(ftxt_tgt, fvocab_tgt, ftoken_tgt)
-    #ldata_src, len_src, src_pad = file2str(ftxt_src, fvocab_src, ftoken_src)
-    #ldata_tgt, len_tgt, tgt_pad = file2str(ftxt_tgt, fvocab_tgt, ftoken_tgt)
     if len(ldata_src) != len(ldata_tgt):
       logging.error('Different number of lines in parallel data set {}-{}'.format(len(ldata_src),len(ldata_tgt)))
       sys.exit()
