@@ -19,19 +19,23 @@ def file2idx(ftxt, fvocab, ftoken):
   token = OpenNMTTokenizer(ftoken)
   ntokens = 0
   nunks = 0
-  with open(ftxt,'r') as f: 
-    for i,l in enumerate(f):
-      toks_idx = []
-      for w in token.tokenize(l):
-        toks_idx.append(vocab[w])
-        ntokens += 1
-        if toks_idx[-1] == vocab.idx_unk:
-          nunks += 1
-      toks_idx.insert(0,vocab.idx_bos)
-      toks_idx.append(vocab.idx_eos)
-      ldata.append(toks_idx)
-      idata.append(len(toks_idx))
-    logging.info('Read {} lines with {} tokens ({} <unk> [{:.1f}%]) from {}'.format(i, ntokens, nunks, 100.0*nunks/ntokens, ftxt))
+
+  with open(ftxt) as f:
+    lines=f.read().splitlines()
+    logging.info('Read {} lines from {}'.format(len(lines), ftxt))
+
+  for l in lines:
+    toks_idx = []
+    for w in token.tokenize(l):
+      toks_idx.append(vocab[w])
+      ntokens += 1
+      if toks_idx[-1] == vocab.idx_unk:
+        nunks += 1
+    toks_idx.insert(0,vocab.idx_bos)
+    toks_idx.append(vocab.idx_eos)
+    ldata.append(toks_idx)
+    idata.append(len(toks_idx))
+  logging.info('Found {} <unk> in {} tokens [{:.1f}%]'.format(nunks, ntokens, 100.0*nunks/ntokens))
   return ldata, idata, vocab.idx_pad
 
 def file2str(ftxt, fvocab, ftoken):
