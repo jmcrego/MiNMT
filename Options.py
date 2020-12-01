@@ -178,8 +178,8 @@ class data_options():
    -tgt_train    FILE : target-side training file
    -src_valid    FILE : source-side validation file
    -tgt_valid    FILE : target-side validation file
-   -train_set    FILE : training dataset is read/written from/into this file
-   -valid_set    FILE : validation dataset is read/written from/into this file
+   -train_set    FILE : training dataset is read/written from/into FILE.bin
+   -valid_set    FILE : validation dataset is read/written from/into FILE.bin
    -shard_size    INT : maximum shard size ({}) use 0 to consider all data in a single shard
    -batch_size    INT : maximum batch size ({})
    -batch_type STRING : sentences or tokens ({})'''.format(self.shard_size, self.batch_size, self.batch_type)

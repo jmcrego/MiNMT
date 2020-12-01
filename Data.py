@@ -5,11 +5,137 @@ import os
 import yaml
 import pyonmttok
 import logging
-#import random
 import operator
-from collections import defaultdict
-import numpy as np
 import pickle
+import numpy as np
+import concurrent.futures
+from collections import defaultdict
+
+def file2idx(ftxt, fvocab, ftoken):
+  ldata = []
+  idata = []
+  vocab = Vocab(fvocab)
+  idx_pad = vocab.idx_pad
+  token = OpenNMTTokenizer(ftoken)
+  ntokens = 0
+  nunks = 0
+  with open(ftxt,'r') as f: 
+    for i,l in enumerate(f):
+      toks_idx = []
+      for w in token.tokenize(l):
+        toks_idx.append(vocab[w])
+        ntokens += 1
+        if toks_idx[-1] == vocab.idx_unk:
+          nunks += 1
+      toks_idx.insert(0,vocab.idx_bos)
+      toks_idx.append(vocab.idx_eos)
+      ldata.append(toks_idx)
+      idata.append(len(toks_idx))
+    logging.info('Read {} lines with {} tokens ({} <unk> [{:.1f}%]) from {}'.format(i, ntokens, nunks, 100.0*nunks/ntokens, ftxt))
+  return ldata, idata, vocab.idx_pad
+
+def tokenize_idx_batch(token, vocab, block):
+  ldata = []
+  idata = []
+  ntokens = 0
+  nunks = 0
+  for line in block:
+    toks = token.tokenize(line)
+    #toks to idxs
+    idxs = []
+    for w in toks:
+      idxs.append(vocab[w])
+      ntokens += 1
+      if idxs[-1] == vocab.idx_unk:
+        nunks += 1
+    #additional <bos> <eos>
+    toks.insert(0,vocab.idx_bos)
+    toks.append(vocab.idx_eos)
+    ldata.append(toks)
+    idata.append(len(toks))
+  return [ldata, idata, ntokens, nunks]
+
+def file2idx_batch(ftxt, fvocab, ftoken):
+  ldata = []
+  idata = []
+  vocab = Vocab(fvocab)
+  idx_pad = vocab.idx_pad
+  token = OpenNMTTokenizer(ftoken)
+  ntokens = 0
+  nunks = 0
+
+  with open(ftxt,'r') as f:
+    lines = f.read().splitlines()
+  logging.info('Read file {} with {} lines'.format(ftxt, len(lines)))
+
+  block_size = 1024
+  with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
+    for i in range(0,len(lines),block_size):
+      future_to_tokenize = [executor.submit(tokenize_idx_batch, token, vocab, lines[i:min(len(lines),i+block_size)]) for i in range(0, len(lines), block_size)]
+      for future in future_to_tokenize:
+        tokenize_result = future.result()
+        ntokens += tokenize_result[2]
+        nunks += tokenize_result[3]
+        if len(ldata) == 0:
+          ldata = tokenize_result[0]
+          idata = tokenize_result[1]
+        else:
+          ldata.extend(tokenize_result[0])
+          idata.extend(tokenize_result[1])
+    logging.info('Read {} lines with {} tokens ({} <unk> [{:.1f}%]) from {}'.format(i, ntokens, nunks, 100.0*nunks/ntokens, ftxt))
+  return ldata, idata, vocab.idx_pad
+
+def file2str(ftxt, fvocab, ftoken):
+  ldata = []
+  idata = []
+  vocab = Vocab(fvocab)
+  str_pad = vocab.str_pad
+  token = OpenNMTTokenizer(ftoken)
+  ntokens = 0
+  nunks = 0
+  with open(ftxt,'r') as f: 
+    for i,l in enumerate(f):
+      toks_str = []
+      for w in token.tokenize(l):
+        toks_str.append(w)
+        ntokens += 1
+        if toks_str[-1] not in vocab:
+          nunks += 1
+      toks_str.insert(0,vocab.str_bos)
+      toks_str.append(vocab.str_eos)
+      ldata.append(toks_str)
+      idata.append(len(toks_str))
+    logging.info('Read {} lines with {} tokens ({} <unk> [{:.1f}%]) from {}'.format(i, ntokens, nunks, 100.0*nunks/ntokens, ftxt))
+  return ldata, idata, vocab.str_pad
+
+def build_batch_idx(shard_batch, ldata_src, ldata_tgt, src_idx_pad, tgt_idx_pad):
+  batch_src, batch_tgt, batch_lsrc, batch_ltgt = [], [], [], []
+  max_lsrc = shard_batch[:,1].max()
+  max_ltgt = shard_batch[:,2].max() 
+  for example in shard_batch:
+    pos, lsrc, ltgt = example
+    batch_src.append(ldata_src[pos] + [src_idx_pad]*(max_lsrc-lsrc))
+    batch_tgt.append(ldata_tgt[pos] + [tgt_idx_pad]*(max_ltgt-ltgt))
+    batch_lsrc.append(lsrc)
+    batch_ltgt.append(ltgt)
+  return [batch_src, batch_tgt, batch_lsrc, batch_ltgt]
+
+def build_batch_str(shard_batch, ldata_src, ldata_tgt, src_idx_pad, tgt_idx_pad):
+  batch_src, batch_tgt, batch_lsrc, batch_ltgt = [], [], [], []
+  max_lsrc = shard_batch[:,1].max()
+  max_ltgt = shard_batch[:,2].max() 
+  for example in shard_batch:
+    pos, lsrc, ltgt = example
+    batch_src.append(ldata_src[pos] + [src_idx_pad]*(max_lsrc-lsrc))
+    batch_tgt.append(ldata_tgt[pos] + [tgt_idx_pad]*(max_ltgt-ltgt))
+    batch_lsrc.append(lsrc)
+    batch_ltgt.append(ltgt)
+  return [batch_src, batch_tgt, batch_lsrc, batch_ltgt]
+
+  def len2msk(l,maxl): 
+    msk = torch.arange(maxl)[None, :] < l[:, None]
+    return msk
+
 
 ####################################################################
 ### OpenNMTTokenizer ###############################################
@@ -153,27 +279,31 @@ class Dataset():
     super(Dataset, self).__init__()
 
     if ofile is not None and os.path.exists(ofile):
-      self.batches = pickle.load(open(ofile, 'rb'))
-      logging.info('Read dataset from file {}'.format(ofile))
+      self.batches = pickle.load(open(ofile+'.bin', 'rb'))
+      if len(self.batches) == 0:
+        logging.error('No batches found in dataset {}'.format(ofile))
+        sys.exit()
+      logging.info('Read batches [{},{}] dataset from file {}'.format(len(self.batches),len(self.batches[0][0]),ofile))
       return
 
     logging.info('Building dataset')
-    ldata = [] ### contains [ltokens_src, ltokens_tgt]
-    idata = [] ### contains [pos, len_src, len_tgt]
-
-    ### read into vdata ###
-    ldata_src, len_src, src_idx_pad = self.read_file(ftxt_src, fvocab_src, ftoken_src)
-    ldata_tgt, len_tgt, tgt_idx_pad = self.read_file(ftxt_tgt, fvocab_tgt, ftoken_tgt)
+    ### read ldata ###
+    ldata_src, len_src, src_pad = file2idx_batch(ftxt_src, fvocab_src, ftoken_src)
+    logging.info('Done')
+    sys.exit()
+    ldata_tgt, len_tgt, tgt_pad = file2idx(ftxt_tgt, fvocab_tgt, ftoken_tgt)
+    #ldata_src, len_src, src_pad = file2str(ftxt_src, fvocab_src, ftoken_src)
+    #ldata_tgt, len_tgt, tgt_pad = file2str(ftxt_tgt, fvocab_tgt, ftoken_tgt)
     if len(ldata_src) != len(ldata_tgt):
       logging.error('Different number of lines in parallel data set {}-{}'.format(len(ldata_src),len(ldata_tgt)))
       sys.exit()
+
     pos = [i for i in range(len(ldata_src))]
-    idata = np.column_stack((np.asarray(pos),len_src))
+    idata = np.column_stack((pos,len_src))
     idata = np.column_stack((idata,len_tgt))
 
     ### shuffle idata
-    idata = np.asarray(idata) ### transform ldata from list to np.array (not copy)
-    np.random.shuffle(idata)
+    np.random.shuffle(idata) #idata is np.ndarray
     logging.info('Shuffled dataset {}'.format(idata.shape))
 
     ### split in shards and sort each shard to minimize padding when building batches
@@ -183,15 +313,17 @@ class Dataset():
     shards = []
     for i in range(0,len(idata),shard_size):
       shard = idata[i:min(len(idata),i+shard_size)]
-      shard = sorted(shard, key = operator.itemgetter(1, 2))
-      shards.append(np.asarray(shard))
+      shard_inds_sorted = np.lexsort((shard[:,2], shard[:,1])) # sort by lsrc then ltgt 
+      shards.append(shard[shard_inds_sorted]) #shard is ndarray
       logging.info('Sorted shard #{} with {} examples'.format(len(shards),len(shard)))
 
     ### build batches
     self.batches = []
     for shard in shards:
       for i in range(0,len(shard),batch_size):
-        self.batches.append(self.build_batch(shard[i: min(len(shard),i+batch_size)], ldata_src, ldata_tgt, src_idx_pad, tgt_idx_pad))
+        batch = shard[i: min(len(shard),i+batch_size)]
+        self.batches.append(build_batch_idx(batch, ldata_src, ldata_tgt, src_pad, tgt_pad)) 
+        #self.batches.append(build_batch_str(batch, ldata_src, ldata_tgt, src_pad, tgt_pad)) 
     self.batches = np.asarray(self.batches)
     logging.info('Built {} batches'.format(len(self.batches)))
 
@@ -199,43 +331,19 @@ class Dataset():
     np.random.shuffle(self.batches)
     logging.info('Shuffled {} batches'.format(len(self.batches)))
 
-    ### save binary file
+    ### batches = list of batch
+    ### batch = [batch_src, batch_tgt, batch_lsrc, batch_ltgt]
+    ### batch_src  = [src_1,  src_2,  ... src_N] 
+    ### batch_tgt  = [tgt_1,  tgt_2,  ... tgt_N] 
+    ### batch_lsrc = [lsrc_1, lsrc_2, ... lsrc_N] 
+    ### batch_ltgt = [ltgt_1, ltgt_2, ... ltgt_N] 
+    ### src_n = [ idx_1, idx_2, ..., idx_I] (already padded)
+    ### tgt_n = [ idx_1, idx_2, ..., idx_J] (already padded)
+    ### N is the batch size, I and J are source/target sentence lengths
+    ### save batches into binary file
     if ofile is not None:
-      pickle.dump(self.batches, open(ofile, 'wb'), pickle.HIGHEST_PROTOCOL)
-
-  def read_file(self, ftxt, fvocab, ftoken):
-    ldata = []
-    idata = []
-    vocab = Vocab(fvocab)
-    idx_pad = vocab.idx_pad
-    token = OpenNMTTokenizer(ftoken)
-    ntokens = 0
-    nunks = 0
-    with open(ftxt,'r') as f: 
-      for i,l in enumerate(f):
-        toks_idx = []
-        for w in token.tokenize(l):
-          toks_idx.append(vocab[w])
-          ntokens += 1
-          if toks_idx[-1] == vocab.idx_unk:
-            nunks += 1
-        toks_idx.insert(0,vocab.idx_bos)
-        toks_idx.append(vocab.idx_eos)
-        ldata.append([toks_idx])
-        idata.append(len(toks_idx))
-      logging.info('Read {} lines with {} tokens ({} <unk> [{:.1f}%]) from {}'.format(i, ntokens, nunks, 100.0*nunks/ntokens, ftxt))
-    return ldata, np.asarray(idata), vocab.idx_pad
-
-  def build_batch(self, shard_batch, ldata_src, ldata_tgt, src_idx_pad, tgt_idx_pad):
-    max_src_len = max(shard_batch[:,1])
-    max_tgt_len = max(shard_batch[:,2])
-    batch = []
-    for example in shard_batch:
-      pos, src_len, tgt_len = example
-      src = list(ldata_src[pos]) + [src_idx_pad] * (max_src_len-src_len)
-      tgt = list(ldata_tgt[pos]) + [tgt_idx_pad] * (max_tgt_len-tgt_len)
-      batch.append([pos, src, tgt])
-    return batch
+      logging.info('Saving {}'.format(ofile+'.bin'))
+      pickle.dump(self.batches, open(ofile+'.bin', 'wb'), pickle.HIGHEST_PROTOCOL)
 
 
   def __len__(self):
