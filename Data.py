@@ -259,8 +259,8 @@ class Dataset():
     logging.info('Built {} batches'.format(len(self.batches)))
 
     ### shuffle batches
-    np.random.shuffle(self.batches)
-    logging.debug('Shuffled {} batches'.format(len(self.batches)))
+    #np.random.shuffle(self.batches)
+    #logging.debug('Shuffled {} batches'.format(len(self.batches)))
 
     ### batches = list of batch
     ### batch = [batch_src, batch_tgt, batch_lsrc, batch_ltgt] or [batch_src, batch_lsrc]
@@ -276,6 +276,10 @@ class Dataset():
       logging.info('Saving {}'.format(ofile+'.bin'))
       pickle.dump(self.batches, open(ofile+'.bin', 'wb'), pickle.HIGHEST_PROTOCOL)
 
+
+  def shuffle(self):
+    np.random.shuffle(self.batches)
+    logging.debug('Shuffled {} batches'.format(len(self.batches)))
 
   def __len__(self):
     return len(self.batches)

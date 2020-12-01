@@ -30,7 +30,7 @@ def numparameters(model):
 def build_model(o):
   src_vocab = Vocab(o.data.src_vocab)
   tgt_vocab = Vocab(o.data.tgt_vocab)
-  m = Model_encoder_decoder(o.network.n_layers, o.network.ff_dim, o.network.n_heads, o.network.emb_dim, o.network.qk_dim, o.network.v_dim, len(src_vocab), len(tgt_vocab), src_vocab.idx_pad, o.optim.dropout)
+  m = Encoder_Decoder(o.network.n_layers, o.network.ff_dim, o.network.n_heads, o.network.emb_dim, o.network.qk_dim, o.network.v_dim, len(src_vocab), len(tgt_vocab), src_vocab.idx_pad, o.optim.dropout)
   npars, size = numparameters(m)
   logging.info('Built model #params = {} ({})'.format(npars,size))
 
@@ -42,11 +42,11 @@ def build_model(o):
   return m
 
 ##############################################################################################################
-### Model_endocder_decoder ###################################################################################
+### Endcoder_Decoder #########################################################################################
 ##############################################################################################################
-class Model_encoder_decoder(torch.nn.Module):
+class Encoder_Decoder(torch.nn.Module):
   def __init__(self, n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, src_voc_size, tgt_voc_size, idx_pad, dropout): 
-    super(Model_encoder_decoder, self).__init__()
+    super(Encoder_Decoder, self).__init__()
     self.src_emb = torch.nn.Embedding(src_voc_size, emb_dim, padding_idx=idx_pad)
     self.tgt_emb = torch.nn.Embedding(tgt_voc_size, emb_dim, padding_idx=idx_pad)
     self.pos_enc = PositionalEncoding(emb_dim, dropout, max_len=5000)
@@ -54,7 +54,10 @@ class Model_encoder_decoder(torch.nn.Module):
     self.stacked_decoder = Stacked_Decoder(n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout)
     self.generator = Generator(emb_dim, tgt_voc_size)
 
-  def forward(self, src, ref, mask):
+  def forward(self, src, ref, lref):
+    maxl = len(lref[0])
+    msk = torch.arange(maxl)[None, :] < lref[:, None]
+
     src = self.pos_enc(self.src_emb(src))
     ref = self.pos_enc(self.tgt_emb(ref))
     z_src = self.stacked_encoder(src)

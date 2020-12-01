@@ -249,19 +249,44 @@ class data_options():
 class learning_options():
 
   def __init__(self):
-    self.max_updates = 5000000
+    self.max_steps = 5000000
+    self.max_epochs = 0
+    self.validate_every = 0
+    self.save_every = 0
+    self.report_every = 10000
+    self.keep_last_n = 10
 
   def usage(self):
     return '''
   Learning options
-   -max_updates   INT : maximum number of training updates ({})'''.format(self.max_updates)
+   -max_steps      INT : maximum number of training updates ({})
+   -max_epochs     INT : maximum number of training epochs ({})
+   -validate_every INT : validation every INT model updates ({})
+   -save_every     INT : save model every INT model updates ({})
+   -report_every   INT : report every INT model updates ({})
+   -keep_last_n    INT : save last INT checkpoints ({})'''.format(self.max_updates, self.validate_every, self.report_every, self.keep_last_n)
 
   def read_opt(self, key, value):
       if key=='-learning_options':
         self.read_file_options(value, self)
         return True
-      elif key=='-max_updates':
-        self.max_updates = int(value)
+      elif key=='-max_steps':
+        self.max_steps = int(value)
+        return True
+      elif key=='-max_epochs':
+        self.max_epochs = int(value)
+        return True
+      elif key=='-validate_every':
+        self.validate_every = int(value)
+        return True
+      elif key=='-save_every':
+        self.save_every = int(value)
+        return True
+      elif key=='-report_every':
+        self.report_every = int(value)
+        return True
+      elif key=='-keep_last_n':
+        self.keep_last_n = int(value)
         return True
 
       return False
@@ -347,7 +372,7 @@ class Options():
 
   def usage(self):
     sys.stderr.write('''usage: {} -run COMMAND [net_options] [opt_options] [data_options] [learning_options] [inference_options] [-h] [-log_level LEVL] [-log_file FILE]
-   -run        STEPS : step to run: learn or inference
+   -run       STRING : learn or inference
    -log_file    FILE : log file  (stderr)
    -log_level STRING : log level [debug, info, warning, critical, error] (info)
    -seeed        INT : seed for randomness (12345)

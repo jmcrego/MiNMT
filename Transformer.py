@@ -8,6 +8,7 @@ import logging
 from Options import Options
 from Data import Vocab, Dataset
 from Model import build_model
+from Learning import Learning
 
 ######################################################################
 ### MAIN #############################################################
@@ -29,6 +30,8 @@ if __name__ == '__main__':
 
   if opts.run == 'learning':
     logging.info('Running: learning')
+    learning = Learning(opts.learning, model, 'optim')
+    learning.learn(train,valid)
 
   elif opts.run == 'inference':
     logging.info('Running: inference')
