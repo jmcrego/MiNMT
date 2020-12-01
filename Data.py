@@ -41,13 +41,18 @@ def file2idx(ftxt, fvocab, ftoken):
 def build_batch_idx(shard_batch, ldata_src, ldata_tgt, src_idx_pad, tgt_idx_pad):
   batch_src, batch_tgt, batch_lsrc, batch_ltgt = [], [], [], []
   max_lsrc = shard_batch[:,1].max()
-  max_ltgt = shard_batch[:,2].max() 
+  if ldata_tgt is not None:
+    max_ltgt = shard_batch[:,2].max()
   for example in shard_batch:
-    pos, lsrc, ltgt = example
+    if ldata_tgt is not None:
+      pos, lsrc, ltgt = example
+    else:
+      pos, lsrc = example
     batch_src.append(ldata_src[pos] + [src_idx_pad]*(max_lsrc-lsrc))
-    batch_tgt.append(ldata_tgt[pos] + [tgt_idx_pad]*(max_ltgt-ltgt))
     batch_lsrc.append(lsrc)
-    batch_ltgt.append(ltgt)
+    if ldata_tgt is not None:
+      batch_tgt.append(ldata_tgt[pos] + [tgt_idx_pad]*(max_ltgt-ltgt))
+      batch_ltgt.append(ltgt)
   return [batch_src, batch_tgt, batch_lsrc, batch_ltgt]
 
   def len2msk(l,maxl): 
@@ -73,7 +78,7 @@ class OpenNMTTokenizer():
     mode = opts["mode"]
     del opts["mode"]
     self.tokenizer = pyonmttok.Tokenizer(mode, **opts)
-    logging.info('Built tokenizer mode={} {}'.format(mode,opts))
+    logging.debug('Built tokenizer mode={} {}'.format(mode,opts))
 
   def tokenize(self, text):
     return self.tokenizer.tokenize(text)[0]
@@ -160,7 +165,7 @@ class Vocab():
     if self.idx_to_tok[self.idx_sep] != self.str_sep:
       logging.error('Vocabulary idx={} reserved for {}'.format(self.idx_sep,self.str_sep))
       sys.exit()
-    logging.info('Read Vocab ({} entries) from file {}'.format(len(self.idx_to_tok), file))
+    logging.debug('Read Vocab ({} entries) from file {}'.format(len(self.idx_to_tok), file))
 
 
   def build(self, ftokconf, min_freq=1, max_size=0):
@@ -172,7 +177,7 @@ class Vocab():
       nlines += 1
       for tok in token.tokenize(l.strip(' \n')):
         tok_to_frq[tok] += 1
-    logging.info('Read {} stdin lines with {} distinct tokens'.format(nlines,len(tok_to_frq)))
+    logging.debug('Read {} stdin lines with {} distinct tokens'.format(nlines,len(tok_to_frq)))
     ### dump vocab from tok_to_frq
     print(self.str_pad)
     print(self.str_unk)
@@ -199,26 +204,28 @@ class Dataset():
     if ofile is not None and os.path.exists(ofile):
       self.batches = pickle.load(open(ofile+'.bin', 'rb'))
       if len(self.batches) == 0:
-        logging.error('No batches found in dataset {}'.format(ofile))
+        logging.error('No batches found in Dataset {}'.format(ofile))
         sys.exit()
-      logging.info('Read batches [{},{}] dataset from file {}'.format(len(self.batches),len(self.batches[0][0]),ofile))
+      logging.info('Read batches [{},{}] Dataset from file {}'.format(len(self.batches),len(self.batches[0][0]),ofile))
       return
 
-    logging.info('Building dataset')
+    logging.info('Building Datasets from files {} {}'.format(ftxt_src, ftxt_tgt))
     ### read ldata ###
     ldata_src, len_src, src_pad = file2idx(ftxt_src, fvocab_src, ftoken_src)
-    ldata_tgt, len_tgt, tgt_pad = file2idx(ftxt_tgt, fvocab_tgt, ftoken_tgt)
-    if len(ldata_src) != len(ldata_tgt):
-      logging.error('Different number of lines in parallel data set {}-{}'.format(len(ldata_src),len(ldata_tgt)))
-      sys.exit()
+    if ftxt_tgt is not None:
+      ldata_tgt, len_tgt, tgt_pad = file2idx(ftxt_tgt, fvocab_tgt, ftoken_tgt)
+      if len(ldata_src) != len(ldata_tgt):
+        logging.error('Different number of lines in parallel data set {}-{}'.format(len(ldata_src),len(ldata_tgt)))
+        sys.exit()
 
     pos = [i for i in range(len(ldata_src))]
     idata = np.column_stack((pos,len_src))
-    idata = np.column_stack((idata,len_tgt))
+    if ftxt_tgt is not None:
+      idata = np.column_stack((idata,len_tgt))
 
     ### shuffle idata
     np.random.shuffle(idata) #idata is np.ndarray
-    logging.info('Shuffled dataset {}'.format(idata.shape))
+    logging.debug('Shuffled Dataset {}'.format(idata.shape))
 
     ### split in shards and sort each shard to minimize padding when building batches
     if shard_size == 0:
@@ -227,26 +234,36 @@ class Dataset():
     shards = []
     for i in range(0,len(idata),shard_size):
       shard = idata[i:min(len(idata),i+shard_size)]
-      shard_inds_sorted = np.lexsort((shard[:,2], shard[:,1])) # sort by lsrc then ltgt 
-      shards.append(shard[shard_inds_sorted]) #shard is ndarray
-      logging.info('Sorted shard #{} with {} examples'.format(len(shards),len(shard)))
+      pos = shard[:,0]
+      lsrc = shard[:,1]
+      if ftxt_tgt is not None:
+        ltgt = shard[:,2]
+        shard_inds_sorted = np.lexsort((lsrc, ltgt)) # sort by lsrc then ltgt 
+      else:
+        shard_inds_sorted = np.argsort(lsrc) # sort by lsrc
+
+      shard = shard[shard_inds_sorted]
+      shards.append(shard) #shard is ndarray
+      logging.debug('Sorted shard #{} with {} examples'.format(len(shards),len(shard)))
 
     ### build batches
     self.batches = []
     for shard in shards:
       for i in range(0,len(shard),batch_size):
         batch = shard[i: min(len(shard),i+batch_size)]
-        self.batches.append(build_batch_idx(batch, ldata_src, ldata_tgt, src_pad, tgt_pad)) 
-        #self.batches.append(build_batch_str(batch, ldata_src, ldata_tgt, src_pad, tgt_pad)) 
+        if ftxt_tgt is not None:
+          self.batches.append(build_batch_idx(batch, ldata_src, ldata_tgt, src_pad, tgt_pad)) 
+        else:
+          self.batches.append(build_batch_idx(batch, ldata_src, None, src_pad, None)) 
     self.batches = np.asarray(self.batches)
     logging.info('Built {} batches'.format(len(self.batches)))
 
     ### shuffle batches
     np.random.shuffle(self.batches)
-    logging.info('Shuffled {} batches'.format(len(self.batches)))
+    logging.debug('Shuffled {} batches'.format(len(self.batches)))
 
     ### batches = list of batch
-    ### batch = [batch_src, batch_tgt, batch_lsrc, batch_ltgt]
+    ### batch = [batch_src, batch_tgt, batch_lsrc, batch_ltgt] or [batch_src, batch_lsrc]
     ### batch_src  = [src_1,  src_2,  ... src_N] 
     ### batch_tgt  = [tgt_1,  tgt_2,  ... tgt_N] 
     ### batch_lsrc = [lsrc_1, lsrc_2, ... lsrc_N] 
@@ -266,8 +283,6 @@ class Dataset():
   def __iter__(self):
     for batch in self.batches:
       yield batch
-
-
 
 
 

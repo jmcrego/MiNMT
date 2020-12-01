@@ -22,10 +22,8 @@ if __name__ == '__main__':
     train = Dataset(opts.data.src_vocab, opts.data.tgt_vocab, opts.data.src_token, opts.data.tgt_token, opts.data.src_train, opts.data.tgt_train, opts.data.shard_size, opts.data.batch_size, opts.data.train_set)
   if opts.data.valid_set or (opts.data.src_valid and opts.data.tgt_valid):
     valid = Dataset(opts.data.src_vocab, opts.data.tgt_vocab, opts.data.src_token, opts.data.tgt_token, opts.data.src_valid, opts.data.tgt_valid, 0, opts.data.batch_size, opts.data.valid_set)
-
-  toc = time.time()
-  logging.info('Done ({:.3f} seconds)'.format(toc-tic))
-  sys.exit()
+  if opts.data.test_set or opts.data.src_test:
+    test = Dataset(opts.data.src_vocab, None, opts.data.src_token, None, opts.data.src_test, None, 0, opts.data.batch_size, opts.data.test_set)
 
   model = build_model(opts)
 

@@ -163,6 +163,7 @@ class data_options():
     self.tgt_valid = None 
     self.train_set = None
     self.valid_set = None
+    self.test_set = None
     self.shard_size = 10000
     self.batch_size = 32
     self.batch_type = 'sentences'    
@@ -178,8 +179,11 @@ class data_options():
    -tgt_train    FILE : target-side training file
    -src_valid    FILE : source-side validation file
    -tgt_valid    FILE : target-side validation file
+   -src_test     FILE : source-side test file
+   -tgt_test     FILE : target-side test file
    -train_set    FILE : training dataset is read/written from/into FILE.bin
    -valid_set    FILE : validation dataset is read/written from/into FILE.bin
+   -test_set     FILE : test dataset is read/written from/into FILE.bin
    -shard_size    INT : maximum shard size ({}) use 0 to consider all data in a single shard
    -batch_size    INT : maximum batch size ({})
    -batch_type STRING : sentences or tokens ({})'''.format(self.shard_size, self.batch_size, self.batch_type)
@@ -212,11 +216,20 @@ class data_options():
       elif key=='-tgt_valid':
         self.tgt_valid = value
         return True
+      elif key=='-src_test':
+        self.src_test = value
+        return True
+      elif key=='-tgt_test':
+        self.tgt_test = value
+        return True
       elif key=='-train_set':
         self.train_set = value
         return True
       elif key=='-valid_set':
         self.valid_set = value
+        return True
+      elif key=='-test_set':
+        self.test_set = value
         return True
       elif key=='-shard_size':
         self.shard_size = int(value)
