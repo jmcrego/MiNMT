@@ -34,57 +34,6 @@ def file2idx(ftxt, fvocab, ftoken):
     logging.info('Read {} lines with {} tokens ({} <unk> [{:.1f}%]) from {}'.format(i, ntokens, nunks, 100.0*nunks/ntokens, ftxt))
   return ldata, idata, vocab.idx_pad
 
-def tokenize_idx_batch(token, vocab, block):
-  ldata = []
-  idata = []
-  ntokens = 0
-  nunks = 0
-  for line in block:
-    toks = token.tokenize(line)
-    #toks to idxs
-    idxs = []
-    for w in toks:
-      idxs.append(vocab[w])
-      ntokens += 1
-      if idxs[-1] == vocab.idx_unk:
-        nunks += 1
-    #additional <bos> <eos>
-    toks.insert(0,vocab.idx_bos)
-    toks.append(vocab.idx_eos)
-    ldata.append(toks)
-    idata.append(len(toks))
-  return [ldata, idata, ntokens, nunks]
-
-def file2idx_batch(ftxt, fvocab, ftoken):
-  ldata = []
-  idata = []
-  vocab = Vocab(fvocab)
-  idx_pad = vocab.idx_pad
-  token = OpenNMTTokenizer(ftoken)
-  ntokens = 0
-  nunks = 0
-
-  with open(ftxt,'r') as f:
-    lines = f.read().splitlines()
-  logging.info('Read file {} with {} lines'.format(ftxt, len(lines)))
-
-  block_size = 1024
-  with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
-    for i in range(0,len(lines),block_size):
-      future_to_tokenize = [executor.submit(tokenize_idx_batch, token, vocab, lines[i:min(len(lines),i+block_size)]) for i in range(0, len(lines), block_size)]
-      for future in future_to_tokenize:
-        tokenize_result = future.result()
-        ntokens += tokenize_result[2]
-        nunks += tokenize_result[3]
-        if len(ldata) == 0:
-          ldata = tokenize_result[0]
-          idata = tokenize_result[1]
-        else:
-          ldata.extend(tokenize_result[0])
-          idata.extend(tokenize_result[1])
-    logging.info('Read {} lines with {} tokens ({} <unk> [{:.1f}%]) from {}'.format(i, ntokens, nunks, 100.0*nunks/ntokens, ftxt))
-  return ldata, idata, vocab.idx_pad
-
 def file2str(ftxt, fvocab, ftoken):
   ldata = []
   idata = []
@@ -288,9 +237,7 @@ class Dataset():
 
     logging.info('Building dataset')
     ### read ldata ###
-    ldata_src, len_src, src_pad = file2idx_batch(ftxt_src, fvocab_src, ftoken_src)
-    logging.info('Done')
-    sys.exit()
+    ldata_src, len_src, src_pad = file2idx(ftxt_src, fvocab_src, ftoken_src)
     ldata_tgt, len_tgt, tgt_pad = file2idx(ftxt_tgt, fvocab_tgt, ftoken_tgt)
     #ldata_src, len_src, src_pad = file2str(ftxt_src, fvocab_src, ftoken_src)
     #ldata_tgt, len_tgt, tgt_pad = file2str(ftxt_tgt, fvocab_tgt, ftoken_tgt)
