@@ -201,12 +201,12 @@ class Dataset():
   def __init__(self, fvocab_src, fvocab_tgt, ftoken_src, ftoken_tgt, ftxt_src, ftxt_tgt, shard_size, batch_size, ofile):
     super(Dataset, self).__init__()
 
-    if ofile is not None and os.path.exists(ofile):
+    if ofile is not None and os.path.exists(ofile+'.bin'):
       self.batches = pickle.load(open(ofile+'.bin', 'rb'))
       if len(self.batches) == 0:
-        logging.error('No batches found in Dataset {}'.format(ofile))
+        logging.error('No batches found in Dataset {}'.format(ofile+'.bin'))
         sys.exit()
-      logging.info('Read batches [{},{}] Dataset from file {}'.format(len(self.batches),len(self.batches[0][0]),ofile))
+      logging.info('Read batches [{},{}] Dataset from file {}'.format(len(self.batches),len(self.batches[0][0]),ofile+'.bin'))
       return
 
     logging.info('Building Datasets from files {} {}'.format(ftxt_src, ftxt_tgt))
