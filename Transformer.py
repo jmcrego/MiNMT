@@ -5,9 +5,11 @@ import os
 import time
 import pickle
 import logging
+import torch
 from Options import Options
-from Data import Vocab, Dataset
-from Model import build_model
+from Data import Vocab, Dataset, OpenNMTTokenizer
+from Model import build_model, save_checkpoint, load_checkpoint_or_initialise
+from Optimizer import OptScheduler, build_AdamOptimizer, LabelSmoothing
 from Learning import Learning
 
 ######################################################################
@@ -16,32 +18,49 @@ from Learning import Learning
             
 if __name__ == '__main__':
 
-  opts = Options(sys.argv)
   tic = time.time()
+  opts = Options(sys.argv)
+  ol = opts.learning
+  on = opts.network
+  oo = opts.optim
+  od = opts.data
+  oi = opts.inference
 
-  if opts.data.train_set or (opts.data.src_train and opts.data.tgt_train):
-    train = Dataset(opts.data.src_vocab, opts.data.tgt_vocab, opts.data.src_token, opts.data.tgt_token, opts.data.src_train, opts.data.tgt_train, opts.data.shard_size, opts.data.batch_size, opts.data.train_set)
-  if opts.data.valid_set or (opts.data.src_valid and opts.data.tgt_valid):
-    valid = Dataset(opts.data.src_vocab, opts.data.tgt_vocab, opts.data.src_token, opts.data.tgt_token, opts.data.src_valid, opts.data.tgt_valid, 0, opts.data.batch_size, opts.data.valid_set)
-  if opts.data.test_set or opts.data.src_test:
-    test = Dataset(opts.data.src_vocab, None, opts.data.src_token, None, opts.data.src_test, None, 0, opts.data.batch_size, opts.data.test_set)
+  src_token = OpenNMTTokenizer(od.src_token)
+  tgt_token = OpenNMTTokenizer(od.tgt_token)
+  src_vocab = Vocab(od.src_vocab)
+  tgt_vocab = Vocab(od.tgt_vocab)
+  assert src_vocab.idx_pad == tgt_vocab.idx_pad
 
-  model = build_model(opts)
+  ################
+  ### learning ###
+  ################
+  if od.train_set or (od.src_train and od.tgt_train):
+    train = Dataset(src_vocab, tgt_vocab, src_token, tgt_token, od.src_train, od.tgt_train, od.shard_size, od.batch_size, od.train_set)
+    if od.valid_set or (od.src_valid and od.tgt_valid):
+      valid = Dataset(src_vocab, tgt_vocab, src_token, tgt_token, od.src_valid, od.tgt_valid, od.shard_size, od.batch_size, od.valid_set)
+    else:
+      valid = None
+    model = build_model(on, len(src_vocab), len(tgt_vocab), src_vocab.idx_pad)
+    optim = build_AdamOptimizer(model, oo)
+    last_step, model, optim = load_checkpoint_or_initialise(model, optim, opts.suffix)
+    optScheduler = OptScheduler(optim, on.emb_dim, oo.noam_scale, oo.noam_warmup, last_step)
+    criter = LabelSmoothing(on.emb_dim, src_vocab.idx_pad, oo.label_smoothing)
+    learning = Learning(model, optim, optScheduler, criter, opts.suffix, ol)
+    learning.learn(train, valid)
 
-  if opts.run == 'learning':
-    logging.info('Running: learning')
-    learning = Learning(opts.learning, model, 'optim')
-    learning.learn(train,valid)
-
-  elif opts.run == 'inference':
-    logging.info('Running: inference')
-
-  else:
-    logging.warning('Nothing to run')
+  #################
+  ### inference ###
+  #################
+  if od.test_set or od.src_test:
+    test = Dataset(src_vocab, None, src_token, None, od.src_test, None, od.shard_size, od.batch_size, od.test_set)
+    model = build_model(on, len(src_vocab), len(tgt_vocab), src_vocab.idx_pad)
+    _, model, _ = load_checkpoint(model, None, opts.suffix)
+    inference = Inference(model, oi)
+    inference.translate(test)
 
   toc = time.time()
-  logging.info('Done ({:.3f} seconds)'.format(toc-tic))
-
+  logging.info('Done ({:.2f} seconds)'.format(toc-tic))
 
 
 

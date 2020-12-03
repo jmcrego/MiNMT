@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import sys
+import os
+import yaml
 import random
 import logging
 
@@ -17,6 +19,15 @@ def create_logger(logfile, loglevel):
         logging.debug('Created Logger level={} file={}'.format(loglevel, logfile))
 
 def read_file_options(file, opts):
+  with open(file, 'r') as fyaml:      
+    dopts = yaml.load(fyaml, Loader=yaml.SafeLoader) #Loader=yaml.FullLoader)
+
+  for key, value in dopts.iteritems():
+    if not opts.read_opt('-'+key, value):
+      logging.error('option {} does not allowed in {}'.format(key, opts.__class__.__name__))
+      sys.exit()
+
+def read_file_options2(file, opts):
   with open(file) as f: 
     for l in f:
       toks = l.rstrip().split(' ')
@@ -41,16 +52,19 @@ class network_options():
     self.ff_dim = 1024
     self.n_heads = 8
     self.n_layers = 6
+    self.dropout = 0.3
 
   def usage(self):
     return '''
   Network options
-   -emb_dim    INT : model embedding dimension ({})
-   -qk_dim     INT : query/key dimension ({})
-   -v_dim      INT : value dimension ({})
-   -ff_dim     INT : feed-forward inner layer dimension ({})
-   -n_heads    INT : number of attention heads ({})
-   -n_layers FLOAT : number of encoder layers ({})'''.format(self.emb_dim, self.qk_dim, self.v_dim, self.ff_dim, self.n_heads, self.n_layers)
+   -network_options YAML : yaml file with network options
+   -emb_dim          INT : model embedding dimension ({})
+   -qk_dim           INT : query/key dimension ({})
+   -v_dim            INT : value dimension ({})
+   -ff_dim           INT : feed-forward inner layer dimension ({})
+   -n_heads          INT : number of attention heads ({})
+   -n_layers       FLOAT : number of encoder layers ({})
+   -dropout        FLOAT : dropout value ({})'''.format(self.emb_dim, self.qk_dim, self.v_dim, self.ff_dim, self.n_heads, self.n_layers, self.dropout)
 
   def read_opt(self, key, value):
       if key=='-network_options':
@@ -75,7 +89,7 @@ class network_options():
         self.n_layers = int(value)
         return True
       elif key=='-dropout':
-        self.n_layers = float(value)
+        self.dropout = float(value)
         return True
       return False
 
@@ -85,22 +99,20 @@ class network_options():
 class optim_options():
 
   def __init__(self):
-    self.optimizer = 'adam'
-    self.dropout = 0.3
     self.lr = 2.0
     self.min_lr = 0.0001
     self.beta1 = 0.9
     self.beta2 = 0.998
     self.eps = 1e-9
-    self.noam_scale = 2.0
+    self.noam_scale = 1.0
     self.noam_warmup = 4000
     self.label_smoothing = 0.1
+    self.clip_grad_norm = 0.5
 
   def usage(self):
     return '''
   Optim options
-   -optimizer      STRING : optimization algorithm ({})
-   -dropout         FLOAT : dropout value ({})
+   -optim_options    YAML : yaml file with optim options
    -lr              FLOAT : initial learning rate ({})
    -min_lr          FLOAT : minimum value for learning rate ({})
    -beta1           FLOAT : beta1 for adam optimizer ({})
@@ -108,17 +120,12 @@ class optim_options():
    -eps             FLOAT : epsilon for adam optimizer ({})
    -noam_scale      FLOAT : scale of Noam decay for learning rate ({})
    -noam_warmup       INT : warmup steps of Noam decay for learning rate ({})
-   -label_smoothing FLOAT : smoothing probability for label smoothing ({})'''.format(self.optimizer, self.dropout, self.lr, self.min_lr, self.beta1, self.beta2, self.eps, self.noam_scale, self.noam_warmup, self.label_smoothing)
+   -label_smoothing FLOAT : smoothing probability for label smoothing ({})
+   -clip_grad_norm  FLOAT : clip gradients ({})'''.format(self.lr, self.min_lr, self.beta1, self.beta2, self.eps, self.noam_scale, self.noam_warmup, self.label_smoothing, self.clip_grad_norm)
 
   def read_opt(self, key, value):
       if key=='-optim_options':
         read_file_options(value, self)
-        return True
-      elif key=='-optimizer':
-        self.optimizer = int(value)
-        return True
-      elif key=='-dropout':
-        self.dropout = float(value)
         return True
       elif key=='-lr':
         self.lr = float(value)
@@ -143,6 +150,9 @@ class optim_options():
         return True
       elif key=='-label_smoothing':
         self.label_smoothing = float(value)
+        return True
+      elif key=='-clip_grad_norm':
+        self.clip_grad_norm = float(value)
         return True
 
       return False
@@ -171,6 +181,7 @@ class data_options():
   def usage(self):
     return '''
   Data options
+   -data_options YAML : yaml file with data options
    -src_token    FILE : source-side onmt tokenizer config file ('space' mode)
    -tgt_token    FILE : target-side onmt tokenizer config file ('space' mode)
    -src_vocab    FILE : source-side vocabulary file
@@ -259,12 +270,13 @@ class learning_options():
   def usage(self):
     return '''
   Learning options
-   -max_steps      INT : maximum number of training updates ({})
-   -max_epochs     INT : maximum number of training epochs ({})
-   -validate_every INT : validation every INT model updates ({})
-   -save_every     INT : save model every INT model updates ({})
-   -report_every   INT : report every INT model updates ({})
-   -keep_last_n    INT : save last INT checkpoints ({})'''.format(self.max_updates, self.validate_every, self.report_every, self.keep_last_n)
+   -learning_options YAML : yaml file with learning options
+   -max_steps         INT : maximum number of training updates ({})
+   -max_epochs        INT : maximum number of training epochs ({})
+   -validate_every    INT : validation every INT model updates ({})
+   -save_every        INT : save model every INT model updates ({})
+   -report_every      INT : report every INT model updates ({})
+   -keep_last_n       INT : save last INT checkpoints ({})'''.format(self.max_steps, self.max_epochs, self.validate_every, self.save_every, self.report_every, self.keep_last_n)
 
   def read_opt(self, key, value):
       if key=='-learning_options':
@@ -302,7 +314,8 @@ class inference_options():
   def usage(self):
     return '''
   Inference options
-   -beam INT : size of beam ({})'''.format(self.beam)
+   -inference_options YAML : yaml file with inference options
+   -beam               INT : size of beam ({})'''.format(self.beam)
 
   def read_opt(self, key, value):
       if key=='-inference_options':
@@ -326,8 +339,8 @@ class Options():
     self.learning = learning_options()
     self.inference = inference_options()
     self.prog = argv.pop(0)
-    self.run = None
 
+    self.suffix = None
     log_file = None
     log_level = 'info'
     seed = 12345
@@ -336,8 +349,8 @@ class Options():
       tok = sys.argv.pop(0)
       if tok=="-h":
         self.usage()
-      elif tok=="-run" and len(sys.argv):
-        self.run = sys.argv.pop(0).lower()
+      elif tok=="-suffix" and len(sys.argv):
+        self.suffix = sys.argv.pop(0)
       elif tok=="-log_file" and len(sys.argv):
         log_file = sys.argv.pop(0)
       elif tok=="-log_level" and len(sys.argv):
@@ -363,16 +376,30 @@ class Options():
         self.usage()
 
     create_logger(log_file,log_level)
+
+    if self.suffix is None:
+      logging.error("Missing -suffix option")
+      self.usage()
+
+    if os.path.exists(self.suffix+'.network'):
+      logging.info('Replacing network options found in {}.network'.format(self.suffix))
+      with open("{}.network".format(self.suffix), 'r') as fyaml:      
+        self.network.__dict__ = yaml.load(fyaml, Loader=yaml.SafeLoader) #Loader=yaml.FullLoader)
+    else:
+      with open("{}.network".format(self.suffix), 'w') as fyaml:      
+        yaml.dump(self.network.__dict__, fyaml) #, sort_keys=False) #default_flow_style=False)
+
     logging.info("Network options = {}".format(self.network.__dict__))
     logging.info("Optim options = {}".format(self.optim.__dict__))
     logging.info("Data options = {}".format(self.data.__dict__))
     logging.info("Learning options = {}".format(self.learning.__dict__))
     logging.info("Inference options = {}".format(self.inference.__dict__))
+    logging.info("Suffix = {}".format(self.suffix))
     random.seed(seed)
 
   def usage(self):
-    sys.stderr.write('''usage: {} -run COMMAND [net_options] [opt_options] [data_options] [learning_options] [inference_options] [-h] [-log_level LEVL] [-log_file FILE]
-   -run       STRING : learn or inference
+    sys.stderr.write('''usage: {} -suffix FILE [net_options] [opt_options] [data_options] [learning_options] [inference_options] [-h] [-log_level LEVL] [-log_file FILE]
+   -suffix    STRING : suffix for model/optim files
    -log_file    FILE : log file  (stderr)
    -log_level STRING : log level [debug, info, warning, critical, error] (info)
    -seeed        INT : seed for randomness (12345)

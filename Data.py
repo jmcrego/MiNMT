@@ -11,12 +11,9 @@ import numpy as np
 import concurrent.futures
 from collections import defaultdict
 
-def file2idx(ftxt, fvocab, ftoken):
+def file2idx(ftxt, vocab, token):
   ldata = []
   idata = []
-  vocab = Vocab(fvocab)
-  idx_pad = vocab.idx_pad
-  token = OpenNMTTokenizer(ftoken)
   ntokens = 0
   nunks = 0
 
@@ -36,7 +33,7 @@ def file2idx(ftxt, fvocab, ftoken):
     ldata.append(toks_idx)
     idata.append(len(toks_idx))
   logging.info('Found {} <unk> in {} tokens [{:.1f}%]'.format(nunks, ntokens, 100.0*nunks/ntokens))
-  return ldata, idata, vocab.idx_pad
+  return ldata, idata
 
 def build_batch_idx(shard_batch, ldata_src, ldata_tgt, src_idx_pad, tgt_idx_pad):
   batch_src, batch_tgt, batch_lsrc, batch_ltgt = [], [], [], []
@@ -54,11 +51,6 @@ def build_batch_idx(shard_batch, ldata_src, ldata_tgt, src_idx_pad, tgt_idx_pad)
       batch_tgt.append(ldata_tgt[pos] + [tgt_idx_pad]*(max_ltgt-ltgt))
       batch_ltgt.append(ltgt)
   return [batch_src, batch_tgt, batch_lsrc, batch_ltgt]
-
-  def len2msk(l,maxl): 
-    msk = torch.arange(maxl)[None, :] < l[:, None]
-    return msk
-
 
 ####################################################################
 ### OpenNMTTokenizer ###############################################
@@ -198,7 +190,7 @@ class Vocab():
 ### Dataset ##################################################################################################
 ##############################################################################################################
 class Dataset():
-  def __init__(self, fvocab_src, fvocab_tgt, ftoken_src, ftoken_tgt, ftxt_src, ftxt_tgt, shard_size, batch_size, ofile):
+  def __init__(self, vocab_src, vocab_tgt, token_src, token_tgt, ftxt_src, ftxt_tgt, shard_size, batch_size, ofile):
     super(Dataset, self).__init__()
 
     if ofile is not None and os.path.exists(ofile+'.bin'):
@@ -211,9 +203,9 @@ class Dataset():
 
     logging.info('Building Datasets from files {} {}'.format(ftxt_src, ftxt_tgt))
     ### read ldata ###
-    ldata_src, len_src, src_pad = file2idx(ftxt_src, fvocab_src, ftoken_src)
+    ldata_src, len_src = file2idx(ftxt_src, vocab_src, token_src)
     if ftxt_tgt is not None:
-      ldata_tgt, len_tgt, tgt_pad = file2idx(ftxt_tgt, fvocab_tgt, ftoken_tgt)
+      ldata_tgt, len_tgt = file2idx(ftxt_tgt, vocab_tgt, token_tgt)
       if len(ldata_src) != len(ldata_tgt):
         logging.error('Different number of lines in parallel data set {}-{}'.format(len(ldata_src),len(ldata_tgt)))
         sys.exit()
@@ -252,9 +244,9 @@ class Dataset():
       for i in range(0,len(shard),batch_size):
         batch = shard[i: min(len(shard),i+batch_size)]
         if ftxt_tgt is not None:
-          self.batches.append(build_batch_idx(batch, ldata_src, ldata_tgt, src_pad, tgt_pad)) 
+          self.batches.append(build_batch_idx(batch, ldata_src, ldata_tgt, vocab_src.idx_pad, vocab_tgt.idx_pad)) 
         else:
-          self.batches.append(build_batch_idx(batch, ldata_src, None, src_pad, None)) 
+          self.batches.append(build_batch_idx(batch, ldata_src, None, vocab_src.idx_pad, None)) 
     self.batches = np.asarray(self.batches)
     logging.info('Built {} batches'.format(len(self.batches)))
 

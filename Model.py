@@ -5,6 +5,7 @@ import logging
 import torch
 import math
 #import numpy as np
+import glob
 from Data import Vocab
 
 def numparameters(model):
@@ -27,25 +28,55 @@ def numparameters(model):
 
   return npars, size
 
-def build_model(o):
-  src_vocab = Vocab(o.data.src_vocab)
-  tgt_vocab = Vocab(o.data.tgt_vocab)
-  m = Encoder_Decoder(o.network.n_layers, o.network.ff_dim, o.network.n_heads, o.network.emb_dim, o.network.qk_dim, o.network.v_dim, len(src_vocab), len(tgt_vocab), src_vocab.idx_pad, o.optim.dropout)
+def lens2msk(l): 
+  maxl = l.size(1)
+  msk = torch.arange(maxl)[None, :] < l[:, None]
+  return msk
+
+def build_model(on, Vs, Vt, idx_pad):
+  m = Encoder_Decoder(on.n_layers, on.ff_dim, on.n_heads, on.emb_dim, on.qk_dim, on.v_dim, on.dropout, Vs, Vt, idx_pad)
   npars, size = numparameters(m)
   logging.info('Built model #params = {} ({})'.format(npars,size))
-
-  for p in m.parameters():
-    if p.dim() > 1:
-      torch.nn.init.xavier_uniform_(p)
-  logging.info('Model initialised (Xavier uniform)')
-
   return m
+
+def save_checkpoint(model, optimizer, suffix, step, keep_last_n):
+  checkpoint = { 'step': step, 'model': model.state_dict(), 'optimizer': optimizer.state_dict() }
+  torch.save(checkpoint, "{}.checkpoint_{:08d}.pt".format(suffix,step))
+  logging.info('Saved {}.checkpoint_{:08d}.pt'.format(suffix,step))
+  files = sorted(glob.glob(suffix + '.checkpoint_????????.pt')) 
+  while keep_last_n > 0 and len(files) > keep_last_n:
+    f = files.pop(0)
+    os.remove(f) ### first is the oldest
+    logging.debug('Removed checkpoint {}'.format(f))
+
+def load_checkpoint_or_initialise(model, optimizer, suffix):
+  step = 0
+  files = sorted(glob.glob("{}.checkpoint_????????.pt".format(suffix))) ### I check if there is one model
+  if len(files) == 0:
+    for p in model.parameters():
+      if p.dim() > 1:
+        torch.nn.init.xavier_uniform_(p)
+    logging.info('No model found [network initialised]')
+    return step, model, optimizer
+
+  file = files[-1] ### last is the newest
+  checkpoint = torch.load(file)
+  step = checkpoint['step']
+  ### assert checkpoint['model'] has same options than model
+  model.load_state_dict(checkpoint['model'])
+  if optimizer is None:
+    logging.info('Loaded model step={} from {}'.format(step,file))
+    return step, model, optimizer ### this is for inference
+
+  optimizer.load_state_dict(checkpoint['optimizer'])
+  logging.info('Loaded model/optimizer step={} from {}'.format(step,file))
+  return step, model, optimizer ### this is for learning
 
 ##############################################################################################################
 ### Endcoder_Decoder #########################################################################################
 ##############################################################################################################
 class Encoder_Decoder(torch.nn.Module):
-  def __init__(self, n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, src_voc_size, tgt_voc_size, idx_pad, dropout): 
+  def __init__(self, n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout, src_voc_size, tgt_voc_size, idx_pad): 
     super(Encoder_Decoder, self).__init__()
     self.src_emb = torch.nn.Embedding(src_voc_size, emb_dim, padding_idx=idx_pad)
     self.tgt_emb = torch.nn.Embedding(tgt_voc_size, emb_dim, padding_idx=idx_pad)
@@ -55,9 +86,7 @@ class Encoder_Decoder(torch.nn.Module):
     self.generator = Generator(emb_dim, tgt_voc_size)
 
   def forward(self, src, ref, lref):
-    maxl = len(lref[0])
-    msk = torch.arange(maxl)[None, :] < lref[:, None]
-
+    msk = lens2msk(lref)
     src = self.pos_enc(self.src_emb(src))
     ref = self.pos_enc(self.tgt_emb(ref))
     z_src = self.stacked_encoder(src)
