@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import torch
+import torch.nn.functional as F
+from torch.autograd import Variable
 import logging
 
 def build_AdamOptimizer(model, lr, beta1, beta2, eps): 
@@ -25,44 +27,30 @@ class OptScheduler(): ### Adam optimizer with scheduler
 
 
 class LabelSmoothing(torch.nn.Module):
-  def __init__(self, size, padding_idx, smoothing=0.0):
+  def __init__(self, nclasses, padding_idx, smoothing=0.0):
     super(LabelSmoothing, self).__init__()
     self.criterion = torch.nn.KLDivLoss(reduction='sum')
     self.padding_idx = padding_idx
     self.confidence = 1.0 - smoothing
     self.smoothing = smoothing
-    self.size = size #size of tgt vocab
-    self.true_dist = None
+    self.nclasses = nclasses #size of tgt vocab
 
   def forward(self, pred, gold):
     #pred is [bs, lt, Vt]
     #gold is [bs, lt]
     assert pred.size(0) == gold.size(0)
     assert pred.size(1) == gold.size(1)
-    assert pred.size(2) == self.size
+    assert pred.size(2) == self.nclasses
     pred = pred.contiguous().view(-1, pred.size(-1)) #[bs*lt, Vt]
-    gold = gold.contiguous().view(-1) #gold is [bs*lt]
+    gold = gold.contiguous().view(-1).long() #gold is [bs*lt]
+    #return F.cross_entropy(input=pred, target=gold, ignore_index=self.padding_idx, reduction='sum')
 
-    #pred is [bs*lt, Vt]
-    #gold is [bs*lt]
-    #eps = 0.1
-    #n_class = pred.size(1)
-    #one_hot = torch.zeros_like(pred).scatter(1, gold.view(-1, 1), 1)
-
-    #one_hot = one_hot * (1 - eps) + (1 - one_hot) * eps / (n_class - 1)
-    #log_prb = F.log_softmax(pred, dim=1)
-    #non_pad_mask = gold.ne(trg_pad_idx)
-    #loss = -(one_hot * log_prb).sum(dim=1)
-    #loss = loss.masked_select(non_pad_mask).sum()  # average later
-
-    true_dist = pred.data.clone()
-    true_dist.fill_(self.smoothing / (self.size - 2))
+    true_dist = pred.data.clone() #[bs*lt, Vt]
+    true_dist.fill_(self.smoothing / (self.nclasses - 2))
     true_dist.scatter_(1, gold.data.unsqueeze(1), self.confidence)
     true_dist[:, self.padding_idx] = 0
     mask = torch.nonzero(gold.data == self.padding_idx)
-    if mask.dim() > 0:
-      true_dist.index_fill_(0, mask.squeeze(), 0.0)
-    self.true_dist = true_dist
-    return self.criterion(pred, Variable(true_dist, requires_grad=False))
+    true_dist.index_fill_(0, mask.squeeze(), 0.0)
+    return self.criterion(pred, Variable(true_dist, requires_grad=False)) ### sum of loss of all words (other than <pad> in reference)
 
 

@@ -107,7 +107,6 @@ class optim_options():
     self.noam_scale = 1.0
     self.noam_warmup = 4000
     self.label_smoothing = 0.1
-    self.clip_grad_norm = 0.5
 
   def usage(self):
     return '''
@@ -120,8 +119,7 @@ class optim_options():
    -eps             FLOAT : epsilon for adam optimizer ({})
    -noam_scale      FLOAT : scale of Noam decay for learning rate ({})
    -noam_warmup       INT : warmup steps of Noam decay for learning rate ({})
-   -label_smoothing FLOAT : smoothing probability for label smoothing ({})
-   -clip_grad_norm  FLOAT : clip gradients ({})'''.format(self.lr, self.min_lr, self.beta1, self.beta2, self.eps, self.noam_scale, self.noam_warmup, self.label_smoothing, self.clip_grad_norm)
+   -label_smoothing FLOAT : smoothing probability for label smoothing ({})'''.format(self.lr, self.min_lr, self.beta1, self.beta2, self.eps, self.noam_scale, self.noam_warmup, self.label_smoothing)
 
   def read_opt(self, key, value):
       if key=='-optim_options':
@@ -150,9 +148,6 @@ class optim_options():
         return True
       elif key=='-label_smoothing':
         self.label_smoothing = float(value)
-        return True
-      elif key=='-clip_grad_norm':
-        self.clip_grad_norm = float(value)
         return True
 
       return False
@@ -268,6 +263,7 @@ class learning_options():
     self.save_every = 0
     self.report_every = 10000
     self.keep_last_n = 10
+    self.clip_grad_norm = 0.5
 
   def usage(self):
     return '''
@@ -278,7 +274,8 @@ class learning_options():
    -validate_every    INT : validation every INT model updates ({})
    -save_every        INT : save model every INT model updates ({})
    -report_every      INT : report every INT model updates ({})
-   -keep_last_n       INT : save last INT checkpoints ({})'''.format(self.max_steps, self.max_epochs, self.validate_every, self.save_every, self.report_every, self.keep_last_n)
+   -keep_last_n       INT : save last INT checkpoints ({})
+   -clip_grad_norm  FLOAT : clip gradients ({})'''.format(self.max_steps, self.max_epochs, self.validate_every, self.save_every, self.report_every, self.keep_last_n, self.clip_grad_norm)
 
   def read_opt(self, key, value):
       if key=='-learning_options':
@@ -301,6 +298,9 @@ class learning_options():
         return True
       elif key=='-keep_last_n':
         self.keep_last_n = int(value)
+        return True
+      elif key=='-clip_grad_norm':
+        self.clip_grad_norm = float(value)
         return True
 
       return False

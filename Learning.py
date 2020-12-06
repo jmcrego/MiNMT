@@ -35,6 +35,7 @@ class Learning():
     self.save_every = ol.save_every
     self.report_every = ol.report_every
     self.keep_last_n = ol.keep_last_n
+    self.clip_grad_norm = ol.clip_grad_norm
 
   def learn(self, trainset, validset):
     logging.info('Running: learning')
@@ -56,11 +57,8 @@ class Learning():
         logging.info('y_pred = {}'.format(y_pred.shape))
         logging.info('batch_ref = {}'.format(torch.IntTensor(batch_ref).shape))
         loss = self.criter(y_pred, torch.IntTensor(batch_ref)) / sum(batch_ltgt) #or torch.sum(batch_ltgt)
-        print(loss)
-        sys.exit()
         learning_total_loss += loss.item()
-        loss_report += loss.item()
-        self.optScheduler.optim.zero_grad()
+        self.optScheduler.optimizer.zero_grad()
         loss.backward()
         torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.clip_grad_norm)
         self.optScheduler.step() #increments step, computes lr, updates model parameters
@@ -81,18 +79,18 @@ class Learning():
             vloss = self.validate(validset)
 
         if self.save_every and self.optScheduler._step % self.save_every == 0: ### save
-          save_checkpoint(self.suffix, self.model, self.optScheduler.optim, self.optScheduler._step, self.keep_last_n)
+          save_checkpoint(self.suffix, self.model, self.optScheduler.optimizer, self.optScheduler._step, self.keep_last_n)
 
         if self.max_steps and self.optScheduler._step >= self.max_steps: ### stop by max_steps
           if validset is not None:
             vloss = self.validate(validset)
-          save_checkpoint(self.suffix, self.model, self.OptScheduler.optim, self.optScheduler._step, self.keep_last_n)
+          save_checkpoint(self.suffix, self.model, self.OptScheduler.optimizer, self.optScheduler._step, self.keep_last_n)
           return
 
       if self.max_epochs and epoch >= self.max_epochs: ### stop by max_epochs
         if validset is not None:
           vloss = self.validate(validset)
-        save_checkpoint(self.suffix, self.model, self.optScheduler.optim, self.optScheduler._step, self.keep_last_n)
+        save_checkpoint(self.suffix, self.model, self.optScheduler.optimizer, self.optScheduler._step, self.keep_last_n)
         return
     return
 
