@@ -34,18 +34,32 @@ class LabelSmoothing(torch.nn.Module):
     self.size = size #size of tgt vocab
     self.true_dist = None
 
-  def forward(self, pred, ref):
+  def forward(self, pred, gold):
+    #pred is [bs, lt, Vt]
+    #gold is [bs, lt]
+    assert pred.size(0) == gold.size(0)
+    assert pred.size(1) == gold.size(1)
+    assert pred.size(2) == self.size
+    pred = pred.contiguous().view(-1, pred.size(-1)) #[bs*lt, Vt]
+    gold = gold.contiguous().view(-1) #gold is [bs*lt]
+
     #pred is [bs*lt, Vt]
-    #ref is [bs*lt]
-    assert pred.size(0) == ref.size(0)
-    assert pred.size(1) == self.size
-    #logging.info('pred = {}'.format(pred.shape))
-    #logging.info('ref = {}'.format(ref.shape))
+    #gold is [bs*lt]
+    #eps = 0.1
+    #n_class = pred.size(1)
+    #one_hot = torch.zeros_like(pred).scatter(1, gold.view(-1, 1), 1)
+
+    #one_hot = one_hot * (1 - eps) + (1 - one_hot) * eps / (n_class - 1)
+    #log_prb = F.log_softmax(pred, dim=1)
+    #non_pad_mask = gold.ne(trg_pad_idx)
+    #loss = -(one_hot * log_prb).sum(dim=1)
+    #loss = loss.masked_select(non_pad_mask).sum()  # average later
+
     true_dist = pred.data.clone()
     true_dist.fill_(self.smoothing / (self.size - 2))
-    true_dist.scatter_(1, ref.data.unsqueeze(1), self.confidence)
+    true_dist.scatter_(1, gold.data.unsqueeze(1), self.confidence)
     true_dist[:, self.padding_idx] = 0
-    mask = torch.nonzero(ref.data == self.padding_idx)
+    mask = torch.nonzero(gold.data == self.padding_idx)
     if mask.dim() > 0:
       true_dist.index_fill_(0, mask.squeeze(), 0.0)
     self.true_dist = true_dist

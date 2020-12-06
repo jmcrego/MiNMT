@@ -55,7 +55,7 @@ class Learning():
         y_pred = self.model.forward(batch_src,batch_tgt,batch_ref,batch_lsrc,batch_ltgt) #src, tgt, ref, lsrc, ltgt
         logging.info('y_pred = {}'.format(y_pred.shape))
         logging.info('batch_ref = {}'.format(torch.IntTensor(batch_ref).shape))
-        loss = self.criter(y_pred.contiguous().view(-1, y_pred.size(-1)), torch.IntTensor(batch_ref).contiguous().view(-1)) / sum(batch_ltgt) #or torch.sum(batch_ltgt)
+        loss = self.criter(y_pred, torch.IntTensor(batch_ref)) / sum(batch_ltgt) #or torch.sum(batch_ltgt)
         print(loss)
         sys.exit()
         learning_total_loss += loss.item()
