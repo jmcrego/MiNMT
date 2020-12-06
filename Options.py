@@ -171,6 +171,8 @@ class data_options():
     self.tgt_train = None 
     self.src_valid = None 
     self.tgt_valid = None 
+    self.src_test = None 
+    self.tgt_test = None 
     self.train_set = None
     self.valid_set = None
     self.test_set = None

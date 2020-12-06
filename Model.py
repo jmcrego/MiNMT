@@ -4,7 +4,7 @@ import sys
 import logging
 import torch
 import math
-#import numpy as np
+import numpy as np
 import glob
 from Data import Vocab
 
@@ -28,9 +28,10 @@ def numparameters(model):
 
   return npars, size
 
-def lens2msk(l): 
-  maxl = l.size(1)
-  msk = torch.arange(maxl)[None, :] < l[:, None]
+def lens2msk(lens): 
+  #lens is [bs]
+  maxl = torch.max(lens)
+  msk = torch.arange(maxl)[None, :] < lens[:, None]
   return msk
 
 def build_model(on, Vs, Vt, idx_pad):
@@ -39,7 +40,7 @@ def build_model(on, Vs, Vt, idx_pad):
   logging.info('Built model #params = {} ({})'.format(npars,size))
   return m
 
-def save_checkpoint(model, optimizer, suffix, step, keep_last_n):
+def save_checkpoint(suffixmodel, optimizer, step, keep_last_n):
   checkpoint = { 'step': step, 'model': model.state_dict(), 'optimizer': optimizer.state_dict() }
   torch.save(checkpoint, "{}.checkpoint_{:08d}.pt".format(suffix,step))
   logging.info('Saved {}.checkpoint_{:08d}.pt'.format(suffix,step))
@@ -49,7 +50,7 @@ def save_checkpoint(model, optimizer, suffix, step, keep_last_n):
     os.remove(f) ### first is the oldest
     logging.debug('Removed checkpoint {}'.format(f))
 
-def load_checkpoint_or_initialise(model, optimizer, suffix):
+def load_checkpoint_or_initialise(suffix, model, optimizer):
   step = 0
   files = sorted(glob.glob("{}.checkpoint_????????.pt".format(suffix))) ### I check if there is one model
   if len(files) == 0:
@@ -84,14 +85,28 @@ class Encoder_Decoder(torch.nn.Module):
     self.stacked_encoder = Stacked_Encoder(n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout)
     self.stacked_decoder = Stacked_Decoder(n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout)
     self.generator = Generator(emb_dim, tgt_voc_size)
+    logging.debug('n_layers={}'.format(n_layers))
+    logging.debug('ff_dim={}'.format(ff_dim))
+    logging.debug('n_heads={}'.format(n_heads))
+    logging.debug('emb_dim={}'.format(emb_dim))
+    logging.debug('qk_dim={}'.format(qk_dim))
+    logging.debug('v_dim={}'.format(v_dim))
+    logging.debug('Vs={}'.format(src_voc_size))
+    logging.debug('Vt={}'.format(tgt_voc_size))
 
-  def forward(self, src, ref, lref):
-    msk = lens2msk(lref)
-    src = self.pos_enc(self.src_emb(src))
-    ref = self.pos_enc(self.tgt_emb(ref))
-    z_src = self.stacked_encoder(src)
-    z_ref = self.stacked_decoder(z_src, ref, mask)
-    y = self.generator(z_ref)
+  def forward(self, src, tgt, ref, lsrc, ltgt):
+    src = torch.LongTensor(src) #[bs,ls]
+    tgt = torch.LongTensor(tgt) #[bs,lt]
+    ref = torch.LongTensor(ref) #[bs,lt]
+    lsrc = torch.LongTensor(lsrc) #[bs]
+    ltgt = torch.LongTensor(ltgt) #[bs]
+    msk_src = lens2msk(torch.LongTensor(lsrc)) #[bs,ls]
+    msk_tgt = lens2msk(torch.LongTensor(ltgt)) #[bs,lt]
+    src = self.pos_enc(self.src_emb(src)) #[bs,ls,ed]
+    tgt = self.pos_enc(self.tgt_emb(tgt)) #[bs,lt,ed]
+    z_src = self.stacked_encoder(src, msk_src) #[bs,ls,ed]
+    z_tgt = self.stacked_decoder(z_src, tgt, msk_src, msk_tgt) #[bs,lt,ed]
+    y = self.generator(z_tgt) #[bs, lt, Vt]
     return y
 
 ##############################################################################################################
@@ -102,26 +117,10 @@ class Stacked_Encoder(torch.nn.Module):
     super(Stacked_Encoder, self).__init__()
     self.encoderlayers = torch.nn.ModuleList([Encoder(ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout) for _ in range(n_layers)])
 
-  def forward(self, x):
-    for encoderlayer in self.encoderlayers:
-      x = encoderlayer(x)
-    return x
-
-##############################################################################################################
-### Encoder ##################################################################################################
-##############################################################################################################
-class Encoder(torch.nn.Module):
-  def __init__(self, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout):
-    super(Encoder, self).__init__()
-    self.feedforward = FeedForward(emb_dim, ff_dim, dropout)
-    self.multiheaded_selfattn = MultiHeaded_SelfAttn(n_heads, emb_dim, qk_dim, v_dim, dropout)
-    self.addnorm = AddNorm(emb_dim) 
-    self.dropout = torch.nn.Dropout(dropout)
-
-  def forward(self, src):
-    tmp = self.dropout(self.addnorm(self.multiheaded_selfattn(q=src, k_and_v=src), src))
-    z = self.dropout(self.addnorm(self.feedforward(tmp, mask), tmp))
-    return z
+  def forward(self, src, msk):
+    for i,encoderlayer in enumerate(self.encoderlayers):
+      src = encoderlayer(src, msk) #[bs, ls, ed]
+    return src 
 
 ##############################################################################################################
 ### Stacked_Decoder ##########################################################################################
@@ -131,10 +130,27 @@ class Stacked_Decoder(torch.nn.Module):
     super(Stacked_Decoder, self).__init__()
     self.decoderlayers = torch.nn.ModuleList([Decoder(ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout) for _ in range(n_layers)])
 
-  def forward(self, z_src, x, mask):
-    for decoderlayer in self.decoderlayers:
-      x = decoderlayer(z_src, x, mask)
-    return x
+  def forward(self, z_src, tgt, msk_src, msk_tgt):
+    for i,decoderlayer in enumerate(self.decoderlayers):
+      tgt = decoderlayer(z_src, tgt, msk_src, msk_tgt)
+    return tgt 
+
+##############################################################################################################
+### Encoder ##################################################################################################
+##############################################################################################################
+class Encoder(torch.nn.Module):
+  def __init__(self, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout):
+    super(Encoder, self).__init__()
+    self.feedforward = FeedForward(emb_dim, ff_dim, dropout)
+    self.multihead_attn = MultiHead_Attn(n_heads, emb_dim, qk_dim, v_dim, dropout)
+    self.norm = LayerNorm(emb_dim)
+
+  def forward(self, src, msk):
+    #logging.info('begin Encoder fwd')
+    tmp = self.norm(self.multihead_attn(q=src, k=src, v=src, msk=msk) + src) #[bs, ls, ed] # self-attention to src embeddings
+    z = self.norm(self.feedforward(tmp) + tmp) #[bs, ls, ed]  
+    #logging.info('end Encoder fwd')
+    return z
 
 ##############################################################################################################
 ### Decoder ##################################################################################################
@@ -143,48 +159,68 @@ class Decoder(torch.nn.Module):
   def __init__(self, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout):
     super(Decoder, self).__init__()
     self.feedforward = FeedForward(emb_dim, ff_dim, dropout)
-    self.multiheaded_selfattn = MultiHeaded_SelfAttn(n_heads, emb_dim, qk_dim, v_dim, dropout)
-    self.addnorm = AddNorm(emb_dim) 
-    self.dropout = torch.nn.Dropout(dropout)
+    self.multihead_attn = MultiHead_Attn(n_heads, emb_dim, qk_dim, v_dim, dropout)
+    self.norm = LayerNorm(emb_dim)
 
-  def forward(self, z_src, ref, mask):
-    tmp = self.dropout(self.addnorm(self.multiheaded_selfattn(q=ref, k_and_v=ref, mask=mask), ref)) 
-    tmp = self.dropout(self.addnorm(self.multiheaded_selfattn(q=tmp, k_and_v=z_src), tmp))
-    z = self.dropout(self.addnorm(self.feedforward(tmp, mask), tmp))
+  def forward(self, z_src, tgt, msk_src, msk_tgt):
+    #add causal mask to msk_tgt
+    tmp = self.norm(self.multihead_attn(q=tgt, k=tgt, v=tgt, msk=msk_tgt) + tgt) #[bs, lt, ed] causal attention to previous tgt words (decoder attention)
+    tmp = self.norm(self.multihead_attn(q=tmp, k=z_src, v=z_src, msk=msk_src) + tmp) #[bs, ls, ed] self-attention to src embeddings (encoder attention)
+    z = self.norm(self.feedforward(tmp) + tmp)
     return z
 
 ##############################################################################################################
-### MultiHeaded_SelfAttn #####################################################################################
+### MultiHead_Attn ###########################################################################################
 ##############################################################################################################
-class MultiHeaded_SelfAttn(torch.nn.Module):
+class MultiHead_Attn(torch.nn.Module):
   def __init__(self, n_heads, emb_dim, qk_dim, v_dim, dropout):
-    super(MultiHeaded_SelfAttn, self).__init__()
-    self.WO = torch.nn.Linear(n_heads*v_dim, emb_dim)
-    self.attnheads = torch.nn.ModuleList([SelfAttn(emb_dim, qk_dim, v_dim, dropout) for _ in range(n_heads)])
+    super(MultiHead_Attn, self).__init__()
+    self.nh = n_heads
+    self.ed = emb_dim
+    self.qd = qk_dim
+    self.kd = qk_dim
+    self.vd = v_dim
+    self.WQ = torch.nn.Linear(emb_dim, qk_dim*n_heads)
+    self.WK = torch.nn.Linear(emb_dim, qk_dim*n_heads)
+    self.WV = torch.nn.Linear(emb_dim,  v_dim*n_heads)
+    self.WO = torch.nn.Linear(v_dim*n_heads, emb_dim)
     self.dropout = torch.nn.Dropout(dropout)
 
-  def forward(q, k_and_v, mask=None):
-    z = torch.cat([attnhead(q, k_and_v, mask) for attnhead in self.attnheads], dim=2) 
-    return self.dropout(self.WO(z))
+  def forward(self, q, k, v, msk):
+    #q is [bs, slq, ed]
+    #k is [bs, slk, ed]
+    #v is [bs, slv, ed]
+    bs = q.shape[0]
+    slq = q.shape[1] 
+    slk = k.shape[1]
+    slv = v.shape[1]
+    ed = q.shape[2]
+    assert self.ed == q.shape[2] == k.shape[2] == v.shape[2]
+    assert slk == slv #when applied in decoder both may be be referred to the seq-length of the source-side while slq is referred to the target-side
 
-##############################################################################################################
-### SelfAttn #################################################################################################
-##############################################################################################################
-class SelfAttn(torch.nn.Module):
-  def __init__(self, emb_dim, qk_dim, v_dim, dropout):
-    super(SelfAttn, self).__init__()
-    self.WQ = torch.nn.Linear(emb_dim, qk_dim)
-    self.WK = torch.nn.Linear(emb_dim, qk_dim)
-    self.WV = torch.nn.Linear(emb_dim, v_dim)
+    Q = self.WQ(q.contiguous().view([bs*slq,self.ed])) #[bs*slq,qd*nh]
+    K = self.WK(k.contiguous().view([bs*slk,self.ed])) #[bs*slk,kd*nh]
+    V = self.WV(v.contiguous().view([bs*slv,self.ed])) #[bs*slv,vd*nh]
 
-  def forward(q, k_and_v, mask=None):  ### implement future masking if mask is not None
-    q = self.WQ(q)
-    k = self.WK(k_and_v)
-    v = self.WV(k_and_v)
+    Q = Q.contiguous().view([bs,slq,self.qd,self.nh]).permute(3,0,1,2) #=> [bs,slq,qd,nh] => [nh,bs,slq,qd]
+    K = K.contiguous().view([bs,slk,self.kd,self.nh]).permute(3,0,1,2) #=> [bs,slk,kd,nh] => [nh,bs,slk,kd]
+    V = V.contiguous().view([bs,slv,self.vd,self.nh]).permute(3,0,1,2) #=> [bs,slv,vd,nh] => [nh,bs,slv,vd]
+
+    z = torch.cat([self.Attn(Q[n], K[n], V[n], msk) for n in range(self.nh)], dim=2) #cancats the nh 3d-matrices in the last (d=2) dimension [bs, slk, vd*nh]
+    z = self.WO(z) #[bs, slk, ed]
+    return self.dropout(z)
+
+  def Attn(self, Q, K, V, msk): 
+    #Q is [bs, slq, qd]
+    #K is [bs, slk, kd]
+    #V is [bs, slv, vd]
     ### implements scaled dot-product attention for q, k, v
-    s = q.bmm(k.transpose(1, 2))
-    w = torch.nn.functional.softmax(s / qk_dim**0.5, dim=-1)
-    z = w.bmm(v)
+    s = Q.bmm(K.transpose(1, 2)) #[bs, slq, qd] x [bs, kd, slk] = [bs, slq, lsk] (qd must be equal to kd)
+    if msk is not None:
+      msk = torch.unsqueeze(msk,-2) #[bs,1,ls]
+      s = s.masked_fill(msk == 0, -1e9) #[bs, slq, slk] (very low score for <pad> words)
+    w = torch.nn.functional.softmax(s / Q.shape[2]**0.5, dim=2) #[bs, slq, slk]
+    z = w.bmm(V) #[bs, slq, slk] X [bs, slv, vd] = [bs, slq, vd]
     return z
 
 ##############################################################################################################
@@ -195,22 +231,25 @@ class FeedForward(torch.nn.Module):
     super(FeedForward, self).__init__()
     self.FF_in = torch.nn.Linear(emb_dim, ff_dim)
     self.FF_out = torch.nn.Linear(ff_dim, emb_dim)
-    self.dropout = torch.nn.Dropout(dropout)
+    self.dropout = torch.nn.Dropout(dropout) #this regularization is not used in the original model
 
   def forward(self, x):
     return self.FF_out(self.dropout(torch.nn.functional.relu(self.FF_in(x))))
 
 ##############################################################################################################
-### AddNorm ##################################################################################################
+### LayerNorm ################################################################################################
 ##############################################################################################################
-class AddNorm(torch.nn.Module):
-  #implements adding residual connections & normalization
-  def __init__(self, emb_dim):
-    super(AddNorm, self).__init__()
-    self.norm = torch.nn.LayerNorm(emb_dim, eps=1e-6)
+class LayerNorm(torch.nn.Module):
+  def __init__(self, features, eps=1e-6):
+    super(LayerNorm, self).__init__()
+    self.a_2 = torch.nn.Parameter(torch.ones(features))
+    self.b_2 = torch.nn.Parameter(torch.zeros(features))
+    self.eps = eps
 
-  def forward(a, b, mask):
-    return self.norm(a + b) ### b is the residual
+  def forward(self, x):
+    mean = x.mean(-1, keepdim=True)
+    std = x.std(-1, keepdim=True)
+    return self.a_2 * (x - mean) / (std + self.eps) + self.b_2
 
 ##############################################################################################################
 ### PositionalEncoding #######################################################################################

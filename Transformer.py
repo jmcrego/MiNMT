@@ -18,6 +18,12 @@ from Learning import Learning
             
 if __name__ == '__main__':
 
+  #a = torch.IntTensor([[[1,2,3],[4,5,6],[7,8,9]],[[10,11,12],[13,14,15],[16,17,18]],[[19,20,21],[22,23,24],[25,26,27]]])
+  #print("a = {}\n{}".format(a.shape,a))
+  #a = torch.index_select(a,dim=0,index=torch.tensor([1],dtype=torch.long)).squeeze()
+  #print("a = {}\n{}".format(a.shape,a))
+  #sys.exit()
+
   tic = time.time()
   opts = Options(sys.argv)
   ol = opts.learning
@@ -42,11 +48,11 @@ if __name__ == '__main__':
     else:
       valid = None
     model = build_model(on, len(src_vocab), len(tgt_vocab), src_vocab.idx_pad)
-    optim = build_AdamOptimizer(model, oo)
-    last_step, model, optim = load_checkpoint_or_initialise(model, optim, opts.suffix)
+    optim = build_AdamOptimizer(model, oo.lr, oo.beta1, oo.beta2, oo.eps)
+    last_step, model, optim = load_checkpoint_or_initialise(opts.suffix, model, optim)
     optScheduler = OptScheduler(optim, on.emb_dim, oo.noam_scale, oo.noam_warmup, last_step)
-    criter = LabelSmoothing(on.emb_dim, src_vocab.idx_pad, oo.label_smoothing)
-    learning = Learning(model, optim, optScheduler, criter, opts.suffix, ol)
+    criter = LabelSmoothing(len(tgt_vocab), src_vocab.idx_pad, oo.label_smoothing)
+    learning = Learning(model, optScheduler, criter, opts.suffix, ol)
     learning.learn(train, valid)
 
   #################
@@ -55,7 +61,7 @@ if __name__ == '__main__':
   if od.test_set or od.src_test:
     test = Dataset(src_vocab, None, src_token, None, od.src_test, None, od.shard_size, od.batch_size, od.test_set)
     model = build_model(on, len(src_vocab), len(tgt_vocab), src_vocab.idx_pad)
-    _, model, _ = load_checkpoint(model, None, opts.suffix)
+    _, model, _ = load_checkpoint(opts.suffix, model, None)
     inference = Inference(model, oi)
     inference.translate(test)
 

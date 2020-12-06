@@ -37,20 +37,41 @@ def file2idx(ftxt, vocab, token):
 
 def build_batch_idx(shard_batch, ldata_src, ldata_tgt, src_idx_pad, tgt_idx_pad):
   batch_src, batch_tgt, batch_lsrc, batch_ltgt = [], [], [], []
-  max_lsrc = shard_batch[:,1].max()
-  if ldata_tgt is not None:
-    max_ltgt = shard_batch[:,2].max()
-  for example in shard_batch:
-    if ldata_tgt is not None:
-      pos, lsrc, ltgt = example
-    else:
+
+  if ldata_tgt is None: ### inference (only src side)
+    #shard_batch contains [pos, lsrc]
+    max_lsrc = shard_batch[:,1].max()
+    for example in shard_batch:
       pos, lsrc = example
-    batch_src.append(ldata_src[pos] + [src_idx_pad]*(max_lsrc-lsrc))
-    batch_lsrc.append(lsrc)
-    if ldata_tgt is not None:
-      batch_tgt.append(ldata_tgt[pos] + [tgt_idx_pad]*(max_ltgt-ltgt))
+      batch_src.append(ldata_src[pos] + [src_idx_pad]*(max_lsrc-lsrc))
+      batch_lsrc.append(lsrc) 
+
+  else: ### training (both src/tgt)  
+    #shard_batch contains [pos, lsrc, ltgt]
+    max_lsrc = shard_batch[:,1].max()
+    max_ltgt = shard_batch[:,2].max()
+    for example in shard_batch:
+      pos, lsrc, ltgt = example
+      batch_lsrc.append(lsrc)
       batch_ltgt.append(ltgt)
+      batch_src.append(ldata_src[pos] + [src_idx_pad]*(max_lsrc-lsrc))
+      batch_tgt.append(ldata_tgt[pos] + [tgt_idx_pad]*(max_ltgt-ltgt))
   return [batch_src, batch_tgt, batch_lsrc, batch_ltgt]
+
+  #max_lsrc = shard_batch[:,1].max()
+  #if ldata_tgt is not None:
+  #  max_ltgt = shard_batch[:,2].max()
+  #for example in shard_batch:
+  #  if ldata_tgt is not None:
+  #    pos, lsrc, ltgt = example
+  #  else:
+  #    pos, lsrc = example
+  #  batch_src.append(ldata_src[pos] + [src_idx_pad]*(max_lsrc-lsrc))
+  #  batch_lsrc.append(lsrc)
+  #  if ldata_tgt is not None:
+  #    batch_tgt.append(ldata_tgt[pos] + [tgt_idx_pad]*(max_ltgt-ltgt))
+  #    batch_ltgt.append(ltgt)
+  #return [batch_src, batch_tgt, batch_lsrc, batch_ltgt]
 
 ####################################################################
 ### OpenNMTTokenizer ###############################################
@@ -230,7 +251,7 @@ class Dataset():
       lsrc = shard[:,1]
       if ftxt_tgt is not None:
         ltgt = shard[:,2]
-        shard_inds_sorted = np.lexsort((lsrc, ltgt)) # sort by lsrc then ltgt 
+        shard_inds_sorted = np.lexsort((lsrc, ltgt)) # sort by lsrc then ltgt
       else:
         shard_inds_sorted = np.argsort(lsrc) # sort by lsrc
 
@@ -260,8 +281,8 @@ class Dataset():
     ### batch_tgt  = [tgt_1,  tgt_2,  ... tgt_N] 
     ### batch_lsrc = [lsrc_1, lsrc_2, ... lsrc_N] 
     ### batch_ltgt = [ltgt_1, ltgt_2, ... ltgt_N] 
-    ### src_n = [ idx_1, idx_2, ..., idx_I] (already padded)
-    ### tgt_n = [ idx_1, idx_2, ..., idx_J] (already padded)
+    ### src_n = [ <bos>, idx_2, ..., <eos>] (already padded)
+    ### tgt_n = [ <bos>, idx_2, ..., <eos>] (already padded)
     ### N is the batch size, I and J are source/target sentence lengths
     ### save batches into binary file
     if ofile is not None:
