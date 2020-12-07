@@ -6,11 +6,35 @@ import time
 import pickle
 import logging
 import torch
+import math
 from Options import Options
 from Data import Vocab, Dataset, OpenNMTTokenizer
-from Model import build_model, save_checkpoint, load_checkpoint_or_initialise
-from Optimizer import OptScheduler, build_AdamOptimizer, LabelSmoothing
+from Model import Encoder_Decoder, load_checkpoint_or_initialise, save_checkpoint, numparameters
+from Optimizer import OptScheduler, LabelSmoothing
 from Learning import Learning
+import matplotlib.pyplot as plt
+import numpy as np
+
+def plotPoints2d(X,Y,x=None,y=None,l=None,f=None):
+  plt.figure(figsize=(15, 5))
+  plt.plot(X,Y)
+  if x is not None:
+    plt.xlabel(x)
+  if y is not None:
+    plt.ylabel(y)
+  if l is not None:
+    plt.legend(l)
+  if f is not None:
+    plt.savefig(f)
+  plt.show()
+
+def plotMatrix2d(X,f=None):
+  #print(X.shape)
+  #print(X)
+  plt.figure(figsize=(10, 10))
+  if f is not None:
+    plt.savefig(f)
+  plt.imshow(X)
 
 ######################################################################
 ### MAIN #############################################################
@@ -22,6 +46,20 @@ if __name__ == '__main__':
   #print("a = {}\n{}".format(a.shape,a))
   #a = torch.index_select(a,dim=0,index=torch.tensor([1],dtype=torch.long)).squeeze()
   #print("a = {}\n{}".format(a.shape,a))
+  #sys.exit()
+
+  #lsrc = [5, 3, 2, 3, 3]
+  #ltgt = [1, 3, 2, 5, 4]
+  #print(lsrc)
+  #print(ltgt)
+  #print(np.lexsort((ltgt, lsrc)))
+  #print(np.argsort(lsrc))
+  #sys.exit()
+
+  #src = np.asarray([np.asarray([1,2,3]), np.asarray([2,3,4]), np.asarray([1,2])])
+  #src = [torch.tensor([1,2,3]), torch.tensor([2,3,4]), torch.tensor([1,2])]
+  #src = torch.nn.utils.rnn.pad_sequence(src, batch_first=True, padding_value=0)
+  #print(src)
   #sys.exit()
 
   tic = time.time()
@@ -38,31 +76,33 @@ if __name__ == '__main__':
   tgt_vocab = Vocab(od.tgt_vocab)
   assert src_vocab.idx_pad == tgt_vocab.idx_pad
 
+  model = Encoder_Decoder(on.n_layers, on.ff_dim, on.n_heads, on.emb_dim, on.qk_dim, on.v_dim, on.dropout, len(src_vocab), len(tgt_vocab), src_vocab.idx_pad)
+  logging.info('Built model (#params, size) = ({})'.format(', '.join([str(f) for f in numparameters(model)])))
+
   ################
   ### learning ###
   ################
   if od.train_set or (od.src_train and od.tgt_train):
+    optim = torch.optim.Adam(model.parameters(), lr=oo.lr, betas=(oo.beta1, oo.beta2), eps=oo.eps)
+    last_step, model, optim = load_checkpoint_or_initialise(opts.suffix, model, optim)
+    optScheduler = OptScheduler(optim, on.emb_dim, oo.noam_scale, oo.noam_warmup, last_step)
+    #plotPoints2d( [i for i in range(1,20000)],  [optScheduler.lrate(i) for i in range(1,20000)], '#Iter', 'LRate', ["dim={} scale={:.2f} warmup={}".format(on.emb_dim,oo.noam_scale,oo.noam_warmup)], 'kk.png')
+    criter = LabelSmoothing(len(tgt_vocab), src_vocab.idx_pad, oo.label_smoothing)
+    learning = Learning(model, optScheduler, criter, opts.suffix, ol)
     train = Dataset(src_vocab, tgt_vocab, src_token, tgt_token, od.src_train, od.tgt_train, od.shard_size, od.batch_size, od.train_set)
     if od.valid_set or (od.src_valid and od.tgt_valid):
       valid = Dataset(src_vocab, tgt_vocab, src_token, tgt_token, od.src_valid, od.tgt_valid, od.shard_size, od.batch_size, od.valid_set)
     else:
       valid = None
-    model = build_model(on, len(src_vocab), len(tgt_vocab), src_vocab.idx_pad)
-    optim = build_AdamOptimizer(model, oo.lr, oo.beta1, oo.beta2, oo.eps)
-    last_step, model, optim = load_checkpoint_or_initialise(opts.suffix, model, optim)
-    optScheduler = OptScheduler(optim, on.emb_dim, oo.noam_scale, oo.noam_warmup, last_step)
-    criter = LabelSmoothing(len(tgt_vocab), src_vocab.idx_pad, oo.label_smoothing)
-    learning = Learning(model, optScheduler, criter, opts.suffix, ol)
-    learning.learn(train, valid)
+    learning.learn(train, valid, src_vocab.idx_pad)
 
   #################
   ### inference ###
   #################
   if od.test_set or od.src_test:
-    test = Dataset(src_vocab, None, src_token, None, od.src_test, None, od.shard_size, od.batch_size, od.test_set)
-    model = build_model(on, len(src_vocab), len(tgt_vocab), src_vocab.idx_pad)
     _, model, _ = load_checkpoint(opts.suffix, model, None)
     inference = Inference(model, oi)
+    test = Dataset(src_vocab, None, src_token, None, od.src_test, None, od.shard_size, od.batch_size, od.test_set)
     inference.translate(test)
 
   toc = time.time()

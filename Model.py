@@ -28,18 +28,6 @@ def numparameters(model):
 
   return npars, size
 
-def lens2msk(lens): 
-  #lens is [bs]
-  maxl = torch.max(lens)
-  msk = torch.arange(maxl)[None, :] < lens[:, None]
-  return msk
-
-def build_model(on, Vs, Vt, idx_pad):
-  m = Encoder_Decoder(on.n_layers, on.ff_dim, on.n_heads, on.emb_dim, on.qk_dim, on.v_dim, on.dropout, Vs, Vt, idx_pad)
-  npars, size = numparameters(m)
-  logging.info('Built model #params = {} ({})'.format(npars,size))
-  return m
-
 def save_checkpoint(suffixmodel, optimizer, step, keep_last_n):
   checkpoint = { 'step': step, 'model': model.state_dict(), 'optimizer': optimizer.state_dict() }
   torch.save(checkpoint, "{}.checkpoint_{:08d}.pt".format(suffix,step))
@@ -79,6 +67,7 @@ def load_checkpoint_or_initialise(suffix, model, optimizer):
 class Encoder_Decoder(torch.nn.Module):
   def __init__(self, n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout, src_voc_size, tgt_voc_size, idx_pad): 
     super(Encoder_Decoder, self).__init__()
+    self.idx_pad = idx_pad
     self.src_emb = torch.nn.Embedding(src_voc_size, emb_dim, padding_idx=idx_pad)
     self.tgt_emb = torch.nn.Embedding(tgt_voc_size, emb_dim, padding_idx=idx_pad)
     self.pos_enc = PositionalEncoding(emb_dim, dropout, max_len=5000)
@@ -94,14 +83,12 @@ class Encoder_Decoder(torch.nn.Module):
     logging.debug('Vs={}'.format(src_voc_size))
     logging.debug('Vt={}'.format(tgt_voc_size))
 
-  def forward(self, src, tgt, ref, lsrc, ltgt):
+  def forward(self, src, tgt):
     src = torch.LongTensor(src) #[bs,ls]
     tgt = torch.LongTensor(tgt) #[bs,lt]
-    ref = torch.LongTensor(ref) #[bs,lt]
-    lsrc = torch.LongTensor(lsrc) #[bs]
-    ltgt = torch.LongTensor(ltgt) #[bs]
-    msk_src = lens2msk(torch.LongTensor(lsrc)) #[bs,ls]
-    msk_tgt = lens2msk(torch.LongTensor(ltgt)) #[bs,lt]
+    msk_src = (src != self.idx_pad).unsqueeze(-2) #[bs,1,ls] (False where <pad> True otherwise)
+    msk_tgt = (tgt != self.idx_pad).unsqueeze(-2) & (1 - torch.triu(torch.ones((1, tgt.size(1), tgt.size(1)), device=tgt.device), diagonal=1)).bool() #[bs,lt,lt]
+
     src = self.pos_enc(self.src_emb(src)) #[bs,ls,ed]
     tgt = self.pos_enc(self.tgt_emb(tgt)) #[bs,lt,ed]
     z_src = self.stacked_encoder(src, msk_src) #[bs,ls,ed]
@@ -214,11 +201,10 @@ class MultiHead_Attn(torch.nn.Module):
     #Q is [bs, slq, qd]
     #K is [bs, slk, kd]
     #V is [bs, slv, vd]
+    #msk is [bs, 1, ls] or [bs, lt, lt]
     ### implements scaled dot-product attention for q, k, v
-    s = Q.bmm(K.transpose(1, 2)) #[bs, slq, qd] x [bs, kd, slk] = [bs, slq, lsk] (qd must be equal to kd)
-    if msk is not None:
-      msk = torch.unsqueeze(msk,-2) #[bs,1,ls]
-      s = s.masked_fill(msk == 0, -1e9) #[bs, slq, slk] (very low score for <pad> words)
+    s = Q.bmm(K.transpose(1, 2)) #[bs, slq, qd] x [bs, kd, slk] = [bs, slq, slk] (qd must be equal to kd)
+    s = s.masked_fill(msk == 0, -1e9) #[bs, slq, slk] (very low score for <pad> words)
     w = torch.nn.functional.softmax(s / Q.shape[2]**0.5, dim=2) #[bs, slq, slk]
     z = w.bmm(V) #[bs, slq, slk] X [bs, slv, vd] = [bs, slq, vd]
     return z
@@ -240,10 +226,10 @@ class FeedForward(torch.nn.Module):
 ### LayerNorm ################################################################################################
 ##############################################################################################################
 class LayerNorm(torch.nn.Module):
-  def __init__(self, features, eps=1e-6):
+  def __init__(self, dim, eps=1e-6):
     super(LayerNorm, self).__init__()
-    self.a_2 = torch.nn.Parameter(torch.ones(features))
-    self.b_2 = torch.nn.Parameter(torch.zeros(features))
+    self.a_2 = torch.nn.Parameter(torch.ones(dim))
+    self.b_2 = torch.nn.Parameter(torch.zeros(dim))
     self.eps = eps
 
   def forward(self, x):

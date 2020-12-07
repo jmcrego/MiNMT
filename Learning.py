@@ -5,19 +5,22 @@ import os
 import logging
 import numpy as np
 import torch
+import time
 from Model import save_checkpoint
 from Optimizer import LabelSmoothing
 
+def shift_batch_tgt_ref(src, tgt, idx_pad):
+  #batch_tgt os [bs, sl]
+  batch_ref = trg[:, 1:] #does not consider the first in sl
+  batch_trg = trg[:, :-1] #does not consider the last in sl
 
-def shift_batch_tgt(batch_tgt, batch_ltgt):
   batch_ref = []
-  for i in range(len(batch_ltgt)):
-    batch_ltgt[i] -= 1
+  for i in range(len(batch_tgt)):
     ref = batch_tgt[i].copy()
     batch_ref.append(ref)
     batch_ref[i].pop(0)
     batch_tgt[i].pop(batch_ltgt[i])
-  return batch_tgt, batch_ref, batch_ltgt
+  return batch_tgt, batch_ref
 
 ##############################################################################################################
 ### Learning #################################################################################################
@@ -37,12 +40,11 @@ class Learning():
     self.keep_last_n = ol.keep_last_n
     self.clip_grad_norm = ol.clip_grad_norm
 
-  def learn(self, trainset, validset):
+  def learn(self, trainset, validset, idx_pad):
     logging.info('Running: learning')
-    learning_total_loss = 0.
-    loss_last_report = 0.
-    step_last_report = 0
-    msec_last_report = 0
+    loss_report = 0.
+    step_report = 0
+    msec_report = time.time()
     epoch = 0
 
     while True: #repeat epochs
@@ -50,29 +52,30 @@ class Learning():
       logging.info('Epoch {}'.format(epoch))
 
       trainset.shuffle()
-      for i_batch, (batch_src, batch_tgt, batch_lsrc, batch_ltgt) in enumerate(trainset):
-        batch_tgt, batch_ref, batch_ltgt = shift_batch_tgt(batch_tgt, batch_ltgt)
+      for i_batch, (batch_src, batch_tgt) in enumerate(trainset):
+        src = [torch.tensor(seq)      for seq in batch_src] #as is
+        tgt = [torch.tensor(seq[:-1]) for seq in batch_tgt] #delete <eos>
+        ref = [torch.tensor(seq[1:])  for seq in batch_tgt] #delete <bos>
+        src = torch.nn.utils.rnn.pad_sequence(src, batch_first=True, padding_value=idx_pad)
+        tgt = torch.nn.utils.rnn.pad_sequence(tgt, batch_first=True, padding_value=idx_pad)
+        ref = torch.nn.utils.rnn.pad_sequence(ref, batch_first=True, padding_value=idx_pad)
         self.model.train()
-        y_pred = self.model.forward(batch_src,batch_tgt,batch_ref,batch_lsrc,batch_ltgt) #src, tgt, ref, lsrc, ltgt
-        logging.info('y_pred = {}'.format(y_pred.shape))
-        logging.info('batch_ref = {}'.format(torch.IntTensor(batch_ref).shape))
-        loss = self.criter(y_pred, torch.IntTensor(batch_ref)) / sum(batch_ltgt) #or torch.sum(batch_ltgt)
-        learning_total_loss += loss.item()
-        self.optScheduler.optimizer.zero_grad()
-        loss.backward()
-        torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.clip_grad_norm)
-        self.optScheduler.step() #increments step, computes lr, updates model parameters
+        pred = self.model.forward(src, tgt) 
+        loss = self.criter(pred, ref) / torch.sum(ref != idx_pad)
+        loss_report += loss.item()
+        step_report += 1
+        self.optScheduler.optimizer.zero_grad()                                      #sets gradients to zero
+        loss.backward()                                                              #computes gradients
+        torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.clip_grad_norm) #clip gradients
+        self.optScheduler.step()                                                     #updates model parameters after incrementing step and updating lr
 
         if self.report_every and self.optScheduler._step % self.report_every == 0: ### report
-          loss_report = learning_total_loss
-          step_report = self.optScheduler._step
+          msec_per_batch = 1000.0*(time.time()-msec_report)/step_report
+          loss_per_batch = 1.0*loss_report/step_report
+          logging.info('Learning step:{} epoch:{} batch:{}/{} ms/batch:{:.2f} lr:{:.8f} loss/batch:{:.3f}'.format(self.optScheduler._step, epoch, i_batch+1, len(trainset), msec_per_batch, self.optScheduler._rate, loss_per_batch))
+          loss_report = 0
+          step_report = 0
           msec_report = time.time()
-          msec_per_batch = 1.0*(msec_report-msec_last_report)/(step_report-step_last_report)
-          loss_per_batch = 1.0*(loss_report-loss_last_report)/(step_report-step_last_report)
-          logging.info('Learning step:{} epoch:{} batch:{}/{} ms/batch: {:5.2f} lr:{:02.2f} loss/batch:{:5.2f}'.format(self.optScheduler._step, epoch, i_batch+1, len(trainset), msec_per_batch, self.optScheduler._rate, loss_per_batch))
-          loss_last_report = loss_report
-          step_last_report = step_report
-          msec_last_report = msec_report
 
         if self.validate_every and self.optScheduler._step % self.validate_every == 0: ### validate
           if validset is not None:

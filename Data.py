@@ -35,28 +35,13 @@ def file2idx(ftxt, vocab, token):
   logging.info('Found {} <unk> in {} tokens [{:.1f}%]'.format(nunks, ntokens, 100.0*nunks/ntokens))
   return ldata, idata
 
-def build_batch_idx(shard_batch, ldata_src, ldata_tgt, src_idx_pad, tgt_idx_pad):
-  batch_src, batch_tgt, batch_lsrc, batch_ltgt = [], [], [], []
-
-  if ldata_tgt is None: ### inference (only src side)
-    #shard_batch contains [pos, lsrc]
-    max_lsrc = shard_batch[:,1].max()
-    for example in shard_batch:
-      pos, lsrc = example
-      batch_src.append(ldata_src[pos] + [src_idx_pad]*(max_lsrc-lsrc))
-      batch_lsrc.append(lsrc) 
-
-  else: ### training (both src/tgt)  
-    #shard_batch contains [pos, lsrc, ltgt]
-    max_lsrc = shard_batch[:,1].max()
-    max_ltgt = shard_batch[:,2].max()
-    for example in shard_batch:
-      pos, lsrc, ltgt = example
-      batch_lsrc.append(lsrc)
-      batch_ltgt.append(ltgt)
-      batch_src.append(ldata_src[pos] + [src_idx_pad]*(max_lsrc-lsrc))
-      batch_tgt.append(ldata_tgt[pos] + [tgt_idx_pad]*(max_ltgt-ltgt))
-  return [batch_src, batch_tgt, batch_lsrc, batch_ltgt]
+def build_batch_idx(shard_batch, ldata_src, ldata_tgt):
+  batch_src, batch_tgt = [], []
+  for pos, lsrc, ltgt in shard_batch: ### inference (only src)
+    batch_src.append(ldata_src[pos])
+    if ldata_tgt is not None: ### training (both src/tgt)  
+      batch_tgt.append(ldata_tgt[pos])
+  return [batch_src, batch_tgt]
 
   #max_lsrc = shard_batch[:,1].max()
   #if ldata_tgt is not None:
@@ -214,6 +199,16 @@ class Dataset():
   def __init__(self, vocab_src, vocab_tgt, token_src, token_tgt, ftxt_src, ftxt_tgt, shard_size, batch_size, ofile):
     super(Dataset, self).__init__()
 
+    if ftxt_tgt is not None:
+      assert vocab_src.idx_pad == vocab_tgt.idx_pad
+      assert vocab_src.idx_bos == vocab_tgt.idx_bos
+      assert vocab_src.idx_eos == vocab_tgt.idx_eos
+
+    self.pad = vocab_src.idx_pad
+    self.bos = vocab_src.idx_bos
+    self.eos = vocab_src.idx_eos
+    self.batch_size = batch_size
+
     if ofile is not None and os.path.exists(ofile+'.bin'):
       self.batches = pickle.load(open(ofile+'.bin', 'rb'))
       if len(self.batches) == 0:
@@ -251,38 +246,31 @@ class Dataset():
       lsrc = shard[:,1]
       if ftxt_tgt is not None:
         ltgt = shard[:,2]
-        shard_inds_sorted = np.lexsort((lsrc, ltgt)) # sort by lsrc then ltgt
+        shard_inds_sorted = np.lexsort((ltgt, lsrc)) # sort by lsrc then ltgt (lower to higer lengths)
       else:
-        shard_inds_sorted = np.argsort(lsrc) # sort by lsrc
+        shard_inds_sorted = np.argsort(lsrc) # sort by lsrc (lower to higher lenghts)
 
-      shard = shard[shard_inds_sorted]
-      shards.append(shard) #shard is ndarray
+      shards.append(shard[shard_inds_sorted])
       logging.debug('Sorted shard #{} with {} examples'.format(len(shards),len(shard)))
 
     ### build batches
     self.batches = []
     for shard in shards:
-      for i in range(0,len(shard),batch_size):
-        batch = shard[i: min(len(shard),i+batch_size)]
+      for i in range(0,len(shard),batch_size): #build batchs of current shard
+        batch_shard = shard[i: min(len(shard),i+batch_size)]
         if ftxt_tgt is not None:
-          self.batches.append(build_batch_idx(batch, ldata_src, ldata_tgt, vocab_src.idx_pad, vocab_tgt.idx_pad)) 
+          self.batches.append(build_batch_idx(batch_shard, ldata_src, ldata_tgt))
         else:
-          self.batches.append(build_batch_idx(batch, ldata_src, None, vocab_src.idx_pad, None)) 
+          self.batches.append(build_batch_idx(batch_shard, ldata_src, None))
     self.batches = np.asarray(self.batches)
     logging.info('Built {} batches'.format(len(self.batches)))
 
-    ### shuffle batches
-    #np.random.shuffle(self.batches)
-    #logging.debug('Shuffled {} batches'.format(len(self.batches)))
-
     ### batches = list of batch
-    ### batch = [batch_src, batch_tgt, batch_lsrc, batch_ltgt] or [batch_src, batch_lsrc]
+    ### batch = [batch_src, batch_tgt] or [batch_src]
     ### batch_src  = [src_1,  src_2,  ... src_N] 
     ### batch_tgt  = [tgt_1,  tgt_2,  ... tgt_N] 
-    ### batch_lsrc = [lsrc_1, lsrc_2, ... lsrc_N] 
-    ### batch_ltgt = [ltgt_1, ltgt_2, ... ltgt_N] 
-    ### src_n = [ <bos>, idx_2, ..., <eos>] (already padded)
-    ### tgt_n = [ <bos>, idx_2, ..., <eos>] (already padded)
+    ### src_n = [ idx_1, ..., idx_J ] (not padded)
+    ### tgt_n = [ idx_1, ..., idx_I ] (not padded)
     ### N is the batch size, I and J are source/target sentence lengths
     ### save batches into binary file
     if ofile is not None:
@@ -299,15 +287,8 @@ class Dataset():
 
   def __iter__(self):
     for batch in self.batches:
+      if len(batch[0][-1]) > 9: continue
       yield batch
-
-
-
-
-
-
-
-
 
 
 

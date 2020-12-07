@@ -5,26 +5,25 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 import logging
 
-def build_AdamOptimizer(model, lr, beta1, beta2, eps): 
-  return torch.optim.Adam(model.parameters(), lr=lr, betas=(beta1, beta2), eps=eps)
-
 class OptScheduler(): ### Adam optimizer with scheduler
   def __init__(self, optimizer, size, factor, warmup, step):
     super(OptScheduler, self).__init__()
-    self.optimizer = optimizer  #optimizer
+    self.optimizer = optimizer  #Adam optimizer
     self.warmup = warmup
     self.factor = factor
     self.size = size
     self._step = step           #initial step
-    self._rate = 0.0
-        
-  def step(self): 
-    self._step += 1                                                                                                  # increments step
-    self._rate = self.factor * (self.size ** (-0.5) * min(self._step ** (-0.5), self._step * self.warmup ** (-1.5))) # compute lrate given step
-    for p in self.optimizer.param_groups:                                                                            # set new lrate in optimizer
-      p['lr'] = self._rate
-    self.optimizer.step()                                                                                            # parameters update (fwd) based on gradients computed and lrate
+    self._rate = 0.
+    
+  def lrate(self, step):
+    return self.factor * (self.size ** (-0.5) * min(step ** (-0.5), step * self.warmup ** (-1.5)))
 
+  def step(self): 
+    self._step += 1                       # increments step
+    self._rate =  self.lrate(self._step)  # update lrate given step
+    for p in self.optimizer.param_groups: # set new lrate in optimizer
+      p['lr'] = self._rate                
+    self.optimizer.step()                 # parameters update (fwd) based on gradients computed and lrate
 
 class LabelSmoothing(torch.nn.Module):
   def __init__(self, nclasses, padding_idx, smoothing=0.0):
@@ -45,6 +44,7 @@ class LabelSmoothing(torch.nn.Module):
     gold = gold.contiguous().view(-1).long() #gold is [bs*lt]
     #return F.cross_entropy(input=pred, target=gold, ignore_index=self.padding_idx, reduction='sum')
 
+    #true_dist is the gold distribution after label smoothing
     true_dist = pred.data.clone() #[bs*lt, Vt]
     true_dist.fill_(self.smoothing / (self.nclasses - 2))
     true_dist.scatter_(1, gold.data.unsqueeze(1), self.confidence)
