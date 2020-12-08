@@ -84,8 +84,8 @@ class Encoder_Decoder(torch.nn.Module):
     logging.debug('Vt={}'.format(tgt_voc_size))
 
   def forward(self, src, tgt):
-    src = torch.LongTensor(src) #[bs,ls]
-    tgt = torch.LongTensor(tgt) #[bs,lt]
+    src = torch.Tensor(src) #[bs,ls]
+    tgt = torch.Tensor(tgt) #[bs,lt]
     msk_src = (src != self.idx_pad).unsqueeze(-2) #[bs,1,ls] (False where <pad> True otherwise)
     msk_tgt = (tgt != self.idx_pad).unsqueeze(-2) & (1 - torch.triu(torch.ones((1, tgt.size(1), tgt.size(1)), device=tgt.device), diagonal=1)).bool() #[bs,lt,lt]
 
