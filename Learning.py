@@ -84,51 +84,50 @@ class Learning():
 
         if self.validate_every and self.optScheduler._step % self.validate_every == 0: ### validate
           if validset is not None:
-            vloss = self.validate(validset)
+            vloss = self.validate(validset, max_length)
 
         if self.save_every and self.optScheduler._step % self.save_every == 0: ### save
           save_checkpoint(self.suffix, self.model, self.optScheduler.optimizer, self.optScheduler._step, self.keep_last_n)
 
         if self.max_steps and self.optScheduler._step >= self.max_steps: ### stop by max_steps
           if validset is not None:
-            vloss = self.validate(validset)
+            vloss = self.validate(validset, max_length)
           save_checkpoint(self.suffix, self.model, self.OptScheduler.optimizer, self.optScheduler._step, self.keep_last_n)
           return
 
       if self.max_epochs and epoch >= self.max_epochs: ### stop by max_epochs
         if validset is not None:
-          vloss = self.validate(validset)
+          vloss = self.validate(validset, max_length)
         save_checkpoint(self.suffix, self.model, self.optScheduler.optimizer, self.optScheduler._step, self.keep_last_n)
         return
     return
 
-  def validate(self, validset):
+  def validate(self, validset, max_length):
     with torch.no_grad():
       model.eval()
 
-    logging.info('Validation step {}'.format(self.optScheduler._step))
-
-    tic = time.time()
-    valid_loss = 0.
-    n_batch = 0
-    for batch_src, batch_tgt in validset:
-      if max_length > 0 and (len(batch_src[-1]) > max_length or len(batch_tgt[-1]) > max_length): 
-        logging.debug('skipped batch with src/tgt size {}/{}'.format(len(batch_src[-1]), len(batch_tgt[-1])))
-        continue
-      n_batch += 1
-      src = [torch.tensor(seq)      for seq in batch_src] #as is
-      tgt = [torch.tensor(seq[:-1]) for seq in batch_tgt] #delete <eos>
-      ref = [torch.tensor(seq[1:])  for seq in batch_tgt] #delete <bos>
-      src = torch.nn.utils.rnn.pad_sequence(src, batch_first=True, padding_value=idx_pad).to(device)
-      tgt = torch.nn.utils.rnn.pad_sequence(tgt, batch_first=True, padding_value=idx_pad).to(device)
-      ref = torch.nn.utils.rnn.pad_sequence(ref, batch_first=True, padding_value=idx_pad).to(device)
-      pred = self.model.forward(src, tgt)
-      loss = self.criter(pred, ref) / torch.sum(ref != idx_pad)
-      valid_loss += loss.item()
+      tic = time.time()
+      valid_loss = 0.
+      n_batch = 0
+      for batch_src, batch_tgt in validset:
+        if max_length > 0 and (len(batch_src[-1]) > max_length or len(batch_tgt[-1]) > max_length): 
+          logging.debug('skipped batch with src/tgt size {}/{}'.format(len(batch_src[-1]), len(batch_tgt[-1])))
+          continue
+        n_batch += 1
+        src = [torch.tensor(seq)      for seq in batch_src] #as is
+        tgt = [torch.tensor(seq[:-1]) for seq in batch_tgt] #delete <eos>
+        ref = [torch.tensor(seq[1:])  for seq in batch_tgt] #delete <bos>
+        src = torch.nn.utils.rnn.pad_sequence(src, batch_first=True, padding_value=idx_pad).to(device)
+        tgt = torch.nn.utils.rnn.pad_sequence(tgt, batch_first=True, padding_value=idx_pad).to(device)
+        ref = torch.nn.utils.rnn.pad_sequence(ref, batch_first=True, padding_value=idx_pad).to(device)
+        pred = self.model.forward(src, tgt)
+        loss = self.criter(pred, ref) / torch.sum(ref != idx_pad)
+        valid_loss += loss.item()
 
     toc = time.time()
-
-    return 0.0
+    loss_per_batch = valid_loss/n_batch if n_batch else 0.0
+    logging.info('Validation #batchs:{} msec:{:.2f} loss/batch:{:.3f}'.format(len(validset), (toc-tic)*1000, loss_per_batch))
+    return loss_per_batch
 
 
 
