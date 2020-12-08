@@ -88,6 +88,8 @@ class Learning():
           save_checkpoint(self.suffix, self.model, self.OptScheduler.optimizer, self.optScheduler._step, self.keep_last_n)
           return
 
+      logging.info('End of epoch {} after {} batches out of {} (remaining were skipped by length)'.format(epoch,n_batch,len(trainset)))
+
       if self.max_epochs and epoch >= self.max_epochs: ### stop by max_epochs
         if validset is not None:
           vloss = self.validate(validset, idx_pad, device, max_length)
