@@ -76,9 +76,8 @@ if __name__ == '__main__':
   tgt_vocab = Vocab(od.tgt_vocab)
   assert src_vocab.idx_pad == tgt_vocab.idx_pad
   device = torch.device('cuda' if opts.cuda and torch.cuda.is_available() else 'cpu')
-  logging.info('using device: {}'.format(device))
   model = Encoder_Decoder(on.n_layers, on.ff_dim, on.n_heads, on.emb_dim, on.qk_dim, on.v_dim, on.dropout, len(src_vocab), len(tgt_vocab), src_vocab.idx_pad).to(device)
-  logging.info('Built model (#params, size) = ({}) in device: {}'.format(', '.join([str(f) for f in numparameters(model)]), next(model.parameters()).device ))
+  logging.info('Built model (#params, size) = ({}) in device {}'.format(', '.join([str(f) for f in numparameters(model)]), next(model.parameters()).device ))
 
   ################
   ### learning ###
