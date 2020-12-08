@@ -259,7 +259,7 @@ class learning_options():
   def __init__(self):
     self.max_steps = 5000000
     self.max_epochs = 0
-    self.validate_every = 1000
+    self.validate_every = 5000
     self.save_every =10000
     self.report_every = 200
     self.keep_last_n = 10
