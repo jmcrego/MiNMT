@@ -287,7 +287,6 @@ class Dataset():
 
   def __iter__(self):
     for batch in self.batches:
-      if len(batch[0][-1]) > 9: continue
       yield batch
 
 
