@@ -287,6 +287,10 @@ class Dataset():
 
   def __iter__(self):
     for batch in self.batches:
+      if len(batch[0][-1]) > 100: 
+        continue
+      if len(batch) == 2 and len(batch[1][-1]) > 100:
+        continue
       yield batch
 
 
