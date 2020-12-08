@@ -9,18 +9,16 @@ import time
 from Model import save_checkpoint
 from Optimizer import LabelSmoothing
 
-def shift_batch_tgt_ref(src, tgt, idx_pad):
-  #batch_tgt os [bs, sl]
-  batch_ref = trg[:, 1:] #does not consider the first in sl
-  batch_trg = trg[:, :-1] #does not consider the last in sl
-
-  batch_ref = []
-  for i in range(len(batch_tgt)):
-    ref = batch_tgt[i].copy()
-    batch_ref.append(ref)
-    batch_ref[i].pop(0)
-    batch_tgt[i].pop(batch_ltgt[i])
-  return batch_tgt, batch_ref
+def prepare_input(batch_src, batch_tgt, idx_pad, device):
+  src = [torch.tensor(seq)      for seq in batch_src] #as is
+  src = torch.nn.utils.rnn.pad_sequence(src, batch_first=True, padding_value=idx_pad).to(device)
+  if batch_tgt is None:
+    return src, None, None
+  tgt = [torch.tensor(seq[:-1]) for seq in batch_tgt] #delete <eos>
+  tgt = torch.nn.utils.rnn.pad_sequence(tgt, batch_first=True, padding_value=idx_pad).to(device)
+  ref = [torch.tensor(seq[1:])  for seq in batch_tgt] #delete <bos>
+  ref = torch.nn.utils.rnn.pad_sequence(ref, batch_first=True, padding_value=idx_pad).to(device)
+  return src, tgt, ref
 
 ##############################################################################################################
 ### Learning #################################################################################################
@@ -58,12 +56,7 @@ class Learning():
           logging.debug('skipped batch with src/tgt size {}/{}'.format(len(batch_src[-1]), len(batch_tgt[-1])))
           continue
         n_batch += 1
-        src = [torch.tensor(seq)      for seq in batch_src] #as is
-        tgt = [torch.tensor(seq[:-1]) for seq in batch_tgt] #delete <eos>
-        ref = [torch.tensor(seq[1:])  for seq in batch_tgt] #delete <bos>
-        src = torch.nn.utils.rnn.pad_sequence(src, batch_first=True, padding_value=idx_pad).to(device)
-        tgt = torch.nn.utils.rnn.pad_sequence(tgt, batch_first=True, padding_value=idx_pad).to(device)
-        ref = torch.nn.utils.rnn.pad_sequence(ref, batch_first=True, padding_value=idx_pad).to(device)
+        src, tgt, ref = prepare_input(batch_src, batch_tgt, idx_pad, device)
         self.model.train()
         pred = self.model.forward(src, tgt)
         loss = self.criter(pred, ref) / torch.sum(ref != idx_pad)
@@ -114,12 +107,7 @@ class Learning():
           logging.debug('skipped batch with src/tgt size {}/{}'.format(len(batch_src[-1]), len(batch_tgt[-1])))
           continue
         n_batch += 1
-        src = [torch.tensor(seq)      for seq in batch_src] #as is
-        tgt = [torch.tensor(seq[:-1]) for seq in batch_tgt] #delete <eos>
-        ref = [torch.tensor(seq[1:])  for seq in batch_tgt] #delete <bos>
-        src = torch.nn.utils.rnn.pad_sequence(src, batch_first=True, padding_value=idx_pad).to(device)
-        tgt = torch.nn.utils.rnn.pad_sequence(tgt, batch_first=True, padding_value=idx_pad).to(device)
-        ref = torch.nn.utils.rnn.pad_sequence(ref, batch_first=True, padding_value=idx_pad).to(device)
+        src, tgt, ref = prepare_input(batch_src, batch_tgt, idx_pad, device)
         pred = self.model.forward(src, tgt)
         loss = self.criter(pred, ref) / torch.sum(ref != idx_pad)
         valid_loss += loss.item()
