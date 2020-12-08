@@ -77,27 +77,27 @@ class Learning():
 
         if self.validate_every and self.optScheduler._step % self.validate_every == 0: ### validate
           if validset is not None:
-            vloss = self.validate(validset, self.model, max_length)
+            vloss = self.validate(validset, idx_pad, device, max_length)
 
         if self.save_every and self.optScheduler._step % self.save_every == 0: ### save
           save_checkpoint(self.suffix, self.model, self.optScheduler.optimizer, self.optScheduler._step, self.keep_last_n)
 
         if self.max_steps and self.optScheduler._step >= self.max_steps: ### stop by max_steps
           if validset is not None:
-            vloss = self.validate(validset, self.model, max_length)
+            vloss = self.validate(validset, idx_pad, device, max_length)
           save_checkpoint(self.suffix, self.model, self.OptScheduler.optimizer, self.optScheduler._step, self.keep_last_n)
           return
 
       if self.max_epochs and epoch >= self.max_epochs: ### stop by max_epochs
         if validset is not None:
-          vloss = self.validate(validset, self.model, max_length)
+          vloss = self.validate(validset, idx_pad, device, max_length)
         save_checkpoint(self.suffix, self.model, self.optScheduler.optimizer, self.optScheduler._step, self.keep_last_n)
         return
     return
 
-  def validate(self, validset, model, max_length):
+  def validate(self, validset, idx_pad, device, max_length):
     with torch.no_grad():
-      model.eval()
+      self.model.eval()
 
       tic = time.time()
       valid_loss = 0.
