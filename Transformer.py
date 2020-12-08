@@ -89,11 +89,11 @@ if __name__ == '__main__':
     #plotPoints2d( [i for i in range(1,20000)],  [optScheduler.lrate(i) for i in range(1,20000)], '#Iter', 'LRate', ["dim={} scale={:.2f} warmup={}".format(on.emb_dim,oo.noam_scale,oo.noam_warmup)], 'kk.png')
     criter = LabelSmoothing(len(tgt_vocab), src_vocab.idx_pad, oo.label_smoothing).to(device)
     learning = Learning(model, optScheduler, criter, opts.suffix, ol)
-    train = Dataset(src_vocab, tgt_vocab, src_token, tgt_token, od.src_train, od.tgt_train, od.shard_size, od.batch_size, od.train_set)
     if od.valid_set or (od.src_valid and od.tgt_valid):
-      valid = Dataset(src_vocab, tgt_vocab, src_token, tgt_token, od.src_valid, od.tgt_valid, od.shard_size, od.batch_size, od.valid_set)
+      valid = Dataset(src_vocab, tgt_vocab, src_token, tgt_token, od.src_valid, od.tgt_valid, od.shard_size, od.batch_size, od.batch_type, od.valid_set)
     else:
       valid = None
+    train = Dataset(src_vocab, tgt_vocab, src_token, tgt_token, od.src_train, od.tgt_train, od.shard_size, od.batch_size, od.batch_type, od.train_set)
     learning.learn(train, valid, src_vocab.idx_pad, device, ol.max_length)
 
   #################
@@ -102,7 +102,7 @@ if __name__ == '__main__':
   if od.test_set or od.src_test:
     _, model, _ = load_checkpoint(opts.suffix, model, None)
     inference = Inference(model, oi)
-    test = Dataset(src_vocab, None, src_token, None, od.src_test, None, od.shard_size, od.batch_size, od.test_set)
+    test = Dataset(src_vocab, None, src_token, None, od.src_test, None, od.shard_size, od.batch_size, od.batch_type, od.test_set)
     inference.translate(test)
 
   toc = time.time()

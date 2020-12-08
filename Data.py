@@ -196,7 +196,7 @@ class Vocab():
 ### Dataset ##################################################################################################
 ##############################################################################################################
 class Dataset():
-  def __init__(self, vocab_src, vocab_tgt, token_src, token_tgt, ftxt_src, ftxt_tgt, shard_size, batch_size, ofile):
+  def __init__(self, vocab_src, vocab_tgt, token_src, token_tgt, ftxt_src, ftxt_tgt, shard_size, batch_size, batch_type, ofile):
     super(Dataset, self).__init__()
 
     if ftxt_tgt is not None:
@@ -207,7 +207,6 @@ class Dataset():
     self.pad = vocab_src.idx_pad
     self.bos = vocab_src.idx_bos
     self.eos = vocab_src.idx_eos
-    self.batch_size = batch_size
 
     if ofile is not None and os.path.exists(ofile+'.bin'):
       self.batches = pickle.load(open(ofile+'.bin', 'rb'))
@@ -225,23 +224,26 @@ class Dataset():
       if len(ldata_src) != len(ldata_tgt):
         logging.error('Different number of lines in parallel data set {}-{}'.format(len(ldata_src),len(ldata_tgt)))
         sys.exit()
+    else:
+      ldata_tgt = None
 
     pos = [i for i in range(len(ldata_src))]
-    idata = np.column_stack((pos,len_src))
+    idata_pos_lsrc_ltgt = np.column_stack((pos,len_src))
     if ftxt_tgt is not None:
-      idata = np.column_stack((idata,len_tgt))
+      idata_pos_lsrc_ltgt = np.column_stack((idata_pos_lsrc_ltgt,len_tgt))
+    #idata_pos_lsrc_ltgt[i] = [pos, lsrc, ltgt] or [pos, lsrc]
 
     ### shuffle idata
-    np.random.shuffle(idata) #idata is np.ndarray
-    logging.debug('Shuffled Dataset {}'.format(idata.shape))
+    np.random.shuffle(idata_pos_lsrc_ltgt) #idata is np.ndarray
+    logging.debug('Shuffled Dataset {}'.format(idata_pos_lsrc_ltgt.shape))
 
     ### split in shards and sort each shard to minimize padding when building batches
     if shard_size == 0:
-      shard_size = len(idata)
+      shard_size = len(idata_pos_lsrc_ltgt)
 
     shards = []
-    for i in range(0,len(idata),shard_size):
-      shard = idata[i:min(len(idata),i+shard_size)]
+    for i in range(0,len(idata_pos_lsrc_ltgt),shard_size):
+      shard = idata_pos_lsrc_ltgt[i:min(len(idata_pos_lsrc_ltgt),i+shard_size)]
       pos = shard[:,0]
       lsrc = shard[:,1]
       if ftxt_tgt is not None:
@@ -256,12 +258,38 @@ class Dataset():
     ### build batches
     self.batches = []
     for shard in shards:
-      for i in range(0,len(shard),batch_size): #build batchs of current shard
-        batch_shard = shard[i: min(len(shard),i+batch_size)]
-        if ftxt_tgt is not None:
+      #shard contains a slice of idata_pos_lsrc_ltgt
+
+      if batch_type == 'sentences':
+        for i in range(0,len(shard),batch_size): #build batchs of current shard
+          batch_shard = shard[i: min(len(shard),i+batch_size)]
           self.batches.append(build_batch_idx(batch_shard, ldata_src, ldata_tgt))
-        else:
-          self.batches.append(build_batch_idx(batch_shard, ldata_src, None))
+
+      elif batch_type == 'tokens':
+        batch_shard = []
+        n_batch_src_tokens = 0
+        n_batch_tgt_tokens = 0
+        for i in range(len(shard)):
+          #shard[i] = [pos, lsrc, ltgt] or [pos, lsrc]
+          pos = shard[i][0] 
+          n_src_tokens = len(ldata_src[pos])
+          n_tgt_tokens = len(ldata_tgt[pos]) if ftxt_tgt is not None else 0
+          if n_batch_src_tokens+n_src_tokens > batch_size or n_batch_src_tokens+n_tgt_tokens > batch_size: ### cannot add current
+            self.batches.append(build_batch_idx(batch_shard, ldata_src, ldata_tgt))
+            batch_shard = []
+            n_batch_src_tokens = 0
+            n_batch_tgt_tokens = 0
+          #add
+          batch_shard.append(shard[i])
+          n_batch_src_tokens += n_src_tokens
+          n_batch_tgt_tokens += n_tgt_tokens
+        if len(batch_shard) > 0: ### last batch
+            self.batches.append(build_batch_idx(batch_shard, ldata_src, ldata_tgt))       
+
+      else:
+        logging.error('Bad -batch_type option')
+        sys.exit()
+
     self.batches = np.asarray(self.batches)
     logging.info('Built {} batches'.format(len(self.batches)))
 
