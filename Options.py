@@ -343,6 +343,7 @@ class Options():
     self.prog = argv.pop(0)
 
     self.suffix = None
+    self.cuda = False
     log_file = None
     log_level = 'info'
     seed = 12345
@@ -353,6 +354,8 @@ class Options():
         self.usage()
       elif tok=="-suffix" and len(sys.argv):
         self.suffix = sys.argv.pop(0)
+      elif tok=="-cuda":
+        self.cuda = True
       elif tok=="-log_file" and len(sys.argv):
         log_file = sys.argv.pop(0)
       elif tok=="-log_level" and len(sys.argv):
@@ -402,6 +405,7 @@ class Options():
   def usage(self):
     sys.stderr.write('''usage: {} -suffix FILE [net_options] [opt_options] [data_options] [learning_options] [inference_options] [-h] [-log_level LEVL] [-log_file FILE]
    -suffix    STRING : suffix for model/optim files
+   -cuda             : use cuda device instead of cpu
    -log_file    FILE : log file  (stderr)
    -log_level STRING : log level [debug, info, warning, critical, error] (info)
    -seeed        INT : seed for randomness (12345)

@@ -75,9 +75,11 @@ if __name__ == '__main__':
   src_vocab = Vocab(od.src_vocab)
   tgt_vocab = Vocab(od.tgt_vocab)
   assert src_vocab.idx_pad == tgt_vocab.idx_pad
+  device = torch.device('cuda' if opts.cuda else 'cpu')
 
-  model = Encoder_Decoder(on.n_layers, on.ff_dim, on.n_heads, on.emb_dim, on.qk_dim, on.v_dim, on.dropout, len(src_vocab), len(tgt_vocab), src_vocab.idx_pad)
+  model = Encoder_Decoder(on.n_layers, on.ff_dim, on.n_heads, on.emb_dim, on.qk_dim, on.v_dim, on.dropout, len(src_vocab), len(tgt_vocab), src_vocab.idx_pad).to(device)
   logging.info('Built model (#params, size) = ({})'.format(', '.join([str(f) for f in numparameters(model)])))
+
 
   ################
   ### learning ###
@@ -94,7 +96,7 @@ if __name__ == '__main__':
       valid = Dataset(src_vocab, tgt_vocab, src_token, tgt_token, od.src_valid, od.tgt_valid, od.shard_size, od.batch_size, od.valid_set)
     else:
       valid = None
-    learning.learn(train, valid, src_vocab.idx_pad)
+    learning.learn(train, valid, src_vocab.idx_pad, device)
 
   #################
   ### inference ###
