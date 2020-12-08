@@ -177,6 +177,7 @@ class MultiHead_Attn(torch.nn.Module):
     #q is [bs, slq, ed]
     #k is [bs, slk, ed]
     #v is [bs, slv, ed]
+    #msk is [bs, 1, ls] or [bs, lt, lt]    #ls,lt are slk,slq
     bs = q.shape[0]
     slq = q.shape[1] 
     slk = k.shape[1]
@@ -185,29 +186,19 @@ class MultiHead_Attn(torch.nn.Module):
     assert self.ed == q.shape[2] == k.shape[2] == v.shape[2]
     assert slk == slv #when applied in decoder both may be be referred to the seq-length of the source-side while slq is referred to the target-side
 
-    Q = self.WQ(q.contiguous().view([bs*slq,self.ed])) #[bs*slq,qd*nh]
-    K = self.WK(k.contiguous().view([bs*slk,self.ed])) #[bs*slk,kd*nh]
-    V = self.WV(v.contiguous().view([bs*slv,self.ed])) #[bs*slv,vd*nh]
+    Q = self.WQ(q).contiguous().view([bs,slq,self.nh,self.qd]).permute(0,2,1,3) #=> [bs,slq,nh*qd] => [bs,slq,nh,qd] => [bs,nh,slq,qd]
+    K = self.WK(k).contiguous().view([bs,slk,self.nh,self.kd]).permute(0,2,1,3) #=> [bs,slk,nh*kd] => [bs,slk,nh,kd] => [bs,nh,slk,kd]
+    V = self.WV(v).contiguous().view([bs,slv,self.nh,self.vd]).permute(0,2,1,3) #=> [bs,slv,nh*vd] => [bs,slv,nh,vd] => [bs,nh,slv,vd]
 
-    Q = Q.contiguous().view([bs,slq,self.qd,self.nh]).permute(3,0,1,2) #=> [bs,slq,qd,nh] => [nh,bs,slq,qd]
-    K = K.contiguous().view([bs,slk,self.kd,self.nh]).permute(3,0,1,2) #=> [bs,slk,kd,nh] => [nh,bs,slk,kd]
-    V = V.contiguous().view([bs,slv,self.vd,self.nh]).permute(3,0,1,2) #=> [bs,slv,vd,nh] => [nh,bs,slv,vd]
-
-    z = torch.cat([self.Attn(Q[n], K[n], V[n], msk) for n in range(self.nh)], dim=2) #cancats the nh 3d-matrices in the last (d=2) dimension [bs, slk, vd*nh]
-    z = self.WO(z) #[bs, slk, ed]
+    #Scaled dot-product Attn from Q, K, V vectors (sized of qd, kd, vd)
+    s = torch.matmul(Q, K.transpose(2, 3)) / self.kd**0.5 #[bs,nh,slq,qd] x [bs,nh,kd,slk] = [bs,nh,slq,slk] # thanks to qd==kd #in decoder slq are target words and slk are source words
+    msk = msk.unsqueeze(1) #[bs, 1, 1, ls] or [bs, 1, lt, lt]
+    s = s.masked_fill(msk == 0, -1e9)
+    w = torch.nn.functional.softmax(s, dim=-1) #[bs,nh,slq,slk] (these are the attention weights)
+    z = torch.matmul(w,V) #[bs,nh,slq,slk] x [bs,nh,slv,vd] = [bs,nh,slq,vd] #thanks to slk==slv
+    z = z.transpose(1, 2).contiguous().view([bs,slq,-1]) #=> [bs,slq,nh,vd] => [bs,slq,nh*vd]
+    z = self.WO(z) #[bs,slq,ed]
     return self.dropout(z)
-
-  def Attn(self, Q, K, V, msk): 
-    #Q is [bs, slq, qd]
-    #K is [bs, slk, kd]
-    #V is [bs, slv, vd]
-    #msk is [bs, 1, ls] or [bs, lt, lt]
-    ### implements scaled dot-product attention for q, k, v
-    s = Q.bmm(K.transpose(1, 2)) #[bs, slq, qd] x [bs, kd, slk] = [bs, slq, slk] (qd must be equal to kd)
-    s = s.masked_fill(msk == 0, -1e9) #[bs, slq, slk] (very low score for <pad> words)
-    w = torch.nn.functional.softmax(s / Q.shape[2]**0.5, dim=2) #[bs, slq, slk]
-    z = w.bmm(V) #[bs, slq, slk] X [bs, slv, vd] = [bs, slq, vd]
-    return z
 
 ##############################################################################################################
 ### FeedForward ##############################################################################################
