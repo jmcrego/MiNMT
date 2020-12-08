@@ -56,7 +56,6 @@ class Learning():
         src = [torch.tensor(seq)      for seq in batch_src] #as is
         tgt = [torch.tensor(seq[:-1]) for seq in batch_tgt] #delete <eos>
         ref = [torch.tensor(seq[1:])  for seq in batch_tgt] #delete <bos>
-        device=torch.device('cuda' if self.cuda else 'cpu')
         src = torch.nn.utils.rnn.pad_sequence(src, batch_first=True, padding_value=idx_pad).to(device)
         tgt = torch.nn.utils.rnn.pad_sequence(tgt, batch_first=True, padding_value=idx_pad).to(device)
         ref = torch.nn.utils.rnn.pad_sequence(ref, batch_first=True, padding_value=idx_pad).to(device)
