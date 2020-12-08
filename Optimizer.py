@@ -49,7 +49,7 @@ class LabelSmoothing(torch.nn.Module):
     true_dist.fill_(self.smoothing / (self.nclasses - 2))
     true_dist.scatter_(1, gold.data.unsqueeze(1), self.confidence)
     true_dist[:, self.padding_idx] = 0
-    mask = torch.nonzero(gold.data == self.padding_idx)
+    mask = torch.nonzero(gold.data == self.padding_idx, as_tuple=False)
     true_dist.index_fill_(0, mask.squeeze(), 0.0)
     return self.criterion(pred, Variable(true_dist, requires_grad=False)) ### sum of loss of all words (other than <pad> in reference)
 
