@@ -261,7 +261,7 @@ class learning_options():
     self.max_epochs = 0
     self.validate_every = 0
     self.save_every = 0
-    self.report_every = 10000
+    self.report_every = 200
     self.keep_last_n = 10
     self.clip_grad_norm = 0.5
 
