@@ -55,7 +55,7 @@ class Learning():
       n_batch = 0
       for batch_src, batch_tgt in trainset:
         if max_length > 0 and (len(batch_src[-1]) > max_length or len(batch_tgt[-1]) > max_length): 
-          logging.info('skipped batch with src/tgt size {}/{}'.format(len(batch_src[-1]), len(batch_tgt[-1])))
+          logging.debug('skipped batch with src/tgt size {}/{}'.format(len(batch_src[-1]), len(batch_tgt[-1])))
           continue
         n_batch += 1
         src = [torch.tensor(seq)      for seq in batch_src] #as is
