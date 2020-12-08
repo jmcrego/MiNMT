@@ -28,7 +28,7 @@ def numparameters(model):
 
   return npars, size
 
-def save_checkpoint(suffixmodel, optimizer, step, keep_last_n):
+def save_checkpoint(suffix, model, optimizer, step, keep_last_n):
   checkpoint = { 'step': step, 'model': model.state_dict(), 'optimizer': optimizer.state_dict() }
   torch.save(checkpoint, "{}.checkpoint_{:08d}.pt".format(suffix,step))
   logging.info('Saved {}.checkpoint_{:08d}.pt'.format(suffix,step))

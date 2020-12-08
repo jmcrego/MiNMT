@@ -107,6 +107,27 @@ class Learning():
       model.eval()
 
     logging.info('Validation step {}'.format(self.optScheduler._step))
+
+    tic = time.time()
+    valid_loss = 0.
+    n_batch = 0
+    for batch_src, batch_tgt in validset:
+      if max_length > 0 and (len(batch_src[-1]) > max_length or len(batch_tgt[-1]) > max_length): 
+        logging.debug('skipped batch with src/tgt size {}/{}'.format(len(batch_src[-1]), len(batch_tgt[-1])))
+        continue
+      n_batch += 1
+      src = [torch.tensor(seq)      for seq in batch_src] #as is
+      tgt = [torch.tensor(seq[:-1]) for seq in batch_tgt] #delete <eos>
+      ref = [torch.tensor(seq[1:])  for seq in batch_tgt] #delete <bos>
+      src = torch.nn.utils.rnn.pad_sequence(src, batch_first=True, padding_value=idx_pad).to(device)
+      tgt = torch.nn.utils.rnn.pad_sequence(tgt, batch_first=True, padding_value=idx_pad).to(device)
+      ref = torch.nn.utils.rnn.pad_sequence(ref, batch_first=True, padding_value=idx_pad).to(device)
+      pred = self.model.forward(src, tgt)
+      loss = self.criter(pred, ref) / torch.sum(ref != idx_pad)
+      valid_loss += loss.item()
+
+    toc = time.time()
+
     return 0.0
 
 
