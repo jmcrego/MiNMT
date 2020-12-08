@@ -12,8 +12,8 @@ from Data import Vocab, Dataset, OpenNMTTokenizer
 from Model import Encoder_Decoder, load_checkpoint_or_initialise, save_checkpoint, numparameters
 from Optimizer import OptScheduler, LabelSmoothing
 from Learning import Learning
-import matplotlib.pyplot as plt
 import numpy as np
+#import matplotlib.pyplot as plt
 
 def plotPoints2d(X,Y,x=None,y=None,l=None,f=None):
   plt.figure(figsize=(15, 5))
