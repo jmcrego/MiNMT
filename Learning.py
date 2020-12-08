@@ -40,7 +40,7 @@ class Learning():
     self.keep_last_n = ol.keep_last_n
     self.clip_grad_norm = ol.clip_grad_norm
 
-  def learn(self, trainset, validset, idx_pad, device):
+  def learn(self, trainset, validset, idx_pad, device, max_length):
     logging.info('Running: learning')
     loss_report = 0.
     step_report = 0
@@ -52,7 +52,11 @@ class Learning():
       logging.info('Epoch {}'.format(epoch))
 
       trainset.shuffle()
-      for i_batch, (batch_src, batch_tgt) in enumerate(trainset):
+      n_batch = 0
+      for batch_src, batch_tgt in trainset:
+        if len(batch_src[-1]) > max_length or len(batch_tgt[-1]) > max_length: 
+          continue
+        n_batch += 1
         src = [torch.tensor(seq)      for seq in batch_src] #as is
         tgt = [torch.tensor(seq[:-1]) for seq in batch_tgt] #delete <eos>
         ref = [torch.tensor(seq[1:])  for seq in batch_tgt] #delete <bos>
@@ -72,7 +76,7 @@ class Learning():
         if self.report_every and self.optScheduler._step % self.report_every == 0: ### report
           msec_per_batch = 1000.0*(time.time()-msec_report)/step_report
           loss_per_batch = 1.0*loss_report/step_report
-          logging.info('Learning step:{} epoch:{} batch:{}/{} ms/batch:{:.2f} lr:{:.8f} loss/batch:{:.3f}'.format(self.optScheduler._step, epoch, i_batch+1, len(trainset), msec_per_batch, self.optScheduler._rate, loss_per_batch))
+          logging.info('Learning step:{} epoch:{} batch:{}/{} ms/batch:{:.2f} lr:{:.8f} loss/batch:{:.3f}'.format(self.optScheduler._step, epoch, n_batch, len(trainset), msec_per_batch, self.optScheduler._rate, loss_per_batch))
           loss_report = 0
           step_report = 0
           msec_report = time.time()

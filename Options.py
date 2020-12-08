@@ -264,6 +264,7 @@ class learning_options():
     self.report_every = 200
     self.keep_last_n = 10
     self.clip_grad_norm = 0.5
+    self.max_length = 0
 
   def usage(self):
     return '''
@@ -275,7 +276,8 @@ class learning_options():
    -save_every        INT : save model every INT model updates ({})
    -report_every      INT : report every INT model updates ({})
    -keep_last_n       INT : save last INT checkpoints ({})
-   -clip_grad_norm  FLOAT : clip gradients ({})'''.format(self.max_steps, self.max_epochs, self.validate_every, self.save_every, self.report_every, self.keep_last_n, self.clip_grad_norm)
+   -clip_grad_norm  FLOAT : clip gradients ({})   
+   -max_length        INT : max number of tokens for src/tgt sentences ({})'''.format(self.max_steps, self.max_epochs, self.validate_every, self.save_every, self.report_every, self.keep_last_n, self.clip_grad_norm, self.max_length)
 
   def read_opt(self, key, value):
       if key=='-learning_options':
@@ -301,6 +303,9 @@ class learning_options():
         return True
       elif key=='-clip_grad_norm':
         self.clip_grad_norm = float(value)
+        return True
+      elif key=='-max_length':
+        self.max_length = int(value)
         return True
 
       return False

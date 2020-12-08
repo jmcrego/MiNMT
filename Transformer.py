@@ -94,7 +94,7 @@ if __name__ == '__main__':
       valid = Dataset(src_vocab, tgt_vocab, src_token, tgt_token, od.src_valid, od.tgt_valid, od.shard_size, od.batch_size, od.valid_set)
     else:
       valid = None
-    learning.learn(train, valid, src_vocab.idx_pad, device)
+    learning.learn(train, valid, src_vocab.idx_pad, device, ol.max_length)
 
   #################
   ### inference ###
