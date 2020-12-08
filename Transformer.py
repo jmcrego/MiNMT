@@ -86,7 +86,7 @@ if __name__ == '__main__':
   ################
   if od.train_set or (od.src_train and od.tgt_train):
     optim = torch.optim.Adam(model.parameters(), lr=oo.lr, betas=(oo.beta1, oo.beta2), eps=oo.eps)
-    last_step, model, optim = load_checkpoint_or_initialise(opts.suffix, model, optim)
+    last_step, model, optim = load_checkpoint_or_initialise(opts.suffix, model, optim, device)
     optScheduler = OptScheduler(optim, on.emb_dim, oo.noam_scale, oo.noam_warmup, last_step)
     #plotPoints2d( [i for i in range(1,20000)],  [optScheduler.lrate(i) for i in range(1,20000)], '#Iter', 'LRate', ["dim={} scale={:.2f} warmup={}".format(on.emb_dim,oo.noam_scale,oo.noam_warmup)], 'kk.png')
     criter = LabelSmoothing(len(tgt_vocab), src_vocab.idx_pad, oo.label_smoothing).to(device)

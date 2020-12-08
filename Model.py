@@ -38,7 +38,7 @@ def save_checkpoint(suffixmodel, optimizer, step, keep_last_n):
     os.remove(f) ### first is the oldest
     logging.debug('Removed checkpoint {}'.format(f))
 
-def load_checkpoint_or_initialise(suffix, model, optimizer):
+def load_checkpoint_or_initialise(suffix, model, optimizer, device):
   step = 0
   files = sorted(glob.glob("{}.checkpoint_????????.pt".format(suffix))) ### I check if there is one model
   if len(files) == 0:
@@ -49,7 +49,7 @@ def load_checkpoint_or_initialise(suffix, model, optimizer):
     return step, model, optimizer
 
   file = files[-1] ### last is the newest
-  checkpoint = torch.load(file)
+  checkpoint = torch.load(file, map_location=device)
   step = checkpoint['step']
   ### assert checkpoint['model'] has same options than model
   model.load_state_dict(checkpoint['model'])
@@ -86,8 +86,14 @@ class Encoder_Decoder(torch.nn.Module):
   def forward(self, src, tgt):
     src = torch.LongTensor(src) #[bs,ls]
     tgt = torch.LongTensor(tgt) #[bs,lt]
+    if self.src_emb.weight.is_cuda:
+      src = src.cuda()
+      tgt = tgt.cuda()
     msk_src = (src != self.idx_pad).unsqueeze(-2) #[bs,1,ls] (False where <pad> True otherwise)
     msk_tgt = (tgt != self.idx_pad).unsqueeze(-2) & (1 - torch.triu(torch.ones((1, tgt.size(1), tgt.size(1)), device=tgt.device), diagonal=1)).bool() #[bs,lt,lt]
+    if self.src_emb.weight.is_cuda:
+      msk_src = msk_src.cuda()
+      msk_tgt = msk_tgt.cuda()
 
     src = self.pos_enc(self.src_emb(src)) #[bs,ls,ed]
     tgt = self.pos_enc(self.tgt_emb(tgt)) #[bs,lt,ed]
