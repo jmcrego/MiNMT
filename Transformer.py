@@ -89,7 +89,7 @@ if __name__ == '__main__':
     last_step, model, optim = load_checkpoint_or_initialise(opts.suffix, model, optim)
     optScheduler = OptScheduler(optim, on.emb_dim, oo.noam_scale, oo.noam_warmup, last_step)
     #plotPoints2d( [i for i in range(1,20000)],  [optScheduler.lrate(i) for i in range(1,20000)], '#Iter', 'LRate', ["dim={} scale={:.2f} warmup={}".format(on.emb_dim,oo.noam_scale,oo.noam_warmup)], 'kk.png')
-    criter = LabelSmoothing(len(tgt_vocab), src_vocab.idx_pad, oo.label_smoothing)
+    criter = LabelSmoothing(len(tgt_vocab), src_vocab.idx_pad, oo.label_smoothing).to(device)
     learning = Learning(model, optScheduler, criter, opts.suffix, ol)
     train = Dataset(src_vocab, tgt_vocab, src_token, tgt_token, od.src_train, od.tgt_train, od.shard_size, od.batch_size, od.train_set)
     if od.valid_set or (od.src_valid and od.tgt_valid):
