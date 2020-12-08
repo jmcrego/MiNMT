@@ -50,7 +50,7 @@ class network_options():
     self.qk_dim = 64
     self.v_dim = 64
     self.ff_dim = 1024
-    self.n_heads = 8
+    self.n_heads = 4
     self.n_layers = 6
     self.dropout = 0.3
 

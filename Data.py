@@ -8,7 +8,7 @@ import logging
 import operator
 import pickle
 import numpy as np
-import concurrent.futures
+#import concurrent.futures
 from collections import defaultdict
 
 def file2idx(ftxt, vocab, token):
@@ -274,9 +274,10 @@ class Dataset():
           pos = shard[i][0] 
           n_src_tokens = len(ldata_src[pos])
           n_tgt_tokens = len(ldata_tgt[pos]) if ftxt_tgt is not None else 0
-          if n_batch_src_tokens+n_src_tokens > batch_size or n_batch_src_tokens+n_tgt_tokens > batch_size: ### cannot add current
+          if n_batch_src_tokens+n_src_tokens > batch_size or n_batch_tgt_tokens+n_tgt_tokens > batch_size: ### cannot add current
             self.batches.append(build_batch_idx(batch_shard, ldata_src, ldata_tgt))
-            batch_shard = []
+            logging.info('added batch with {} sentences and {}/{} src/tgt tokens'.format(len(batch_shard),n_batch_src_tokens,n_batch_tgt_tokens))
+            batch_shard = []     
             n_batch_src_tokens = 0
             n_batch_tgt_tokens = 0
           #add
