@@ -264,7 +264,7 @@ class learning_options():
     self.report_every = 200
     self.keep_last_n = 10
     self.clip_grad_norm = 0.5
-    self.max_length = 0
+    self.max_length = 100
 
   def usage(self):
     return '''
