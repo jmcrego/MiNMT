@@ -64,7 +64,7 @@ class Learning():
         print('tgt device is {}'.format(tgt.device))
         print('ref device is {}'.format(ref.device))
         print('model device is {}'.format(next(self.model.parameters()).device))
-        pred = self.model.forward(src, tgt) 
+        pred = self.model.forward(src, tgt)
         loss = self.criter(pred, ref) / torch.sum(ref != idx_pad)
         loss_report += loss.item()
         step_report += 1
