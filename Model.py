@@ -86,14 +86,8 @@ class Encoder_Decoder(torch.nn.Module):
   def forward(self, src, tgt):
     src = torch.LongTensor(src) #[bs,ls]
     tgt = torch.LongTensor(tgt) #[bs,lt]
-    if self.src_emb.weight.is_cuda:
-      src = src.cuda()
-      tgt = tgt.cuda()
     msk_src = (src != self.idx_pad).unsqueeze(-2) #[bs,1,ls] (False where <pad> True otherwise)
     msk_tgt = (tgt != self.idx_pad).unsqueeze(-2) & (1 - torch.triu(torch.ones((1, tgt.size(1), tgt.size(1)), device=tgt.device), diagonal=1)).bool() #[bs,lt,lt]
-    if self.src_emb.weight.is_cuda:
-      msk_src = msk_src.cuda()
-      msk_tgt = msk_tgt.cuda()
 
     src = self.pos_enc(self.src_emb(src)) #[bs,ls,ed]
     tgt = self.pos_enc(self.tgt_emb(tgt)) #[bs,lt,ed]
