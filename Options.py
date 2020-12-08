@@ -171,7 +171,7 @@ class data_options():
     self.train_set = None
     self.valid_set = None
     self.test_set = None
-    self.shard_size = 10000
+    self.shard_size = 100000
     self.batch_size = 32
     self.batch_type = 'sentences'    
 
