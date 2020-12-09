@@ -70,7 +70,7 @@ class Encoder_Decoder(torch.nn.Module):
     self.idx_pad = idx_pad
     self.src_emb = torch.nn.Embedding(src_voc_size, emb_dim, padding_idx=idx_pad)
     self.tgt_emb = torch.nn.Embedding(tgt_voc_size, emb_dim, padding_idx=idx_pad)
-    self.pos_enc = PositionalEncoding(emb_dim, dropout, max_len=5000)
+    self.add_pos_enc = AddPositionalEncoding(emb_dim, dropout, max_len=5000)
     self.stacked_encoder = Stacked_Encoder(n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout)
     self.stacked_decoder = Stacked_Decoder(n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout)
     self.generator = Generator(emb_dim, tgt_voc_size)
@@ -88,8 +88,8 @@ class Encoder_Decoder(torch.nn.Module):
     #tgt is [bs,lt]
     #msk_src is [bs,1,ls] (False where <pad> True otherwise)
     #mst_tgt is [bs,lt,lt]
-    src = self.pos_enc(self.src_emb(src)) #[bs,ls,ed]
-    tgt = self.pos_enc(self.tgt_emb(tgt)) #[bs,lt,ed]
+    src = self.add_pos_enc(self.src_emb(src)) #[bs,ls,ed]
+    tgt = self.add_pos_enc(self.tgt_emb(tgt)) #[bs,lt,ed]
     z_src = self.stacked_encoder(src, msk_src) #[bs,ls,ed]
     z_tgt = self.stacked_decoder(z_src, tgt, msk_src, msk_tgt) #[bs,lt,ed]
     y = self.generator(z_tgt) #[bs, lt, Vt]
@@ -129,13 +129,17 @@ class Encoder(torch.nn.Module):
     super(Encoder, self).__init__()
     self.feedforward = FeedForward(emb_dim, ff_dim, dropout)
     self.multihead_attn = MultiHead_Attn(n_heads, emb_dim, qk_dim, v_dim, dropout)
-    self.norm = LayerNorm(emb_dim)
+    self.norm_att = torch.nn.LayerNorm(emb_dim, eps=1e-6) #LayerNorm(emb_dim)
+    self.norm_ff = torch.nn.LayerNorm(emb_dim, eps=1e-6) #LayerNorm(emb_dim)
 
   def forward(self, src, msk):
-    #logging.info('begin Encoder fwd')
-    tmp = self.norm(self.multihead_attn(q=src, k=src, v=src, msk=msk) + src) #[bs, ls, ed] # self-attention to src embeddings
-    z = self.norm(self.feedforward(tmp) + tmp) #[bs, ls, ed]  
-    #logging.info('end Encoder fwd')
+    #src_norm = self.norm_att(src)
+    #tmp = self.multihead_attn(q=src, k=src, v=src, msk=msk) + src #[bs, ls, ed] # src embeddings after self-attention to src embeddings
+    #tmp_norm = self.norm_ff(tmp)
+    #z = self.feedforward(tmp_norm) + tmp #[bs, ls, ed] 
+
+    tmp = self.norm_att(self.multihead_attn(q=src, k=src, v=src, msk=msk) + src) #[bs, ls, ed] # src embeddings after self-attention to src embeddings
+    z = self.norm_ff(self.feedforward(tmp) + tmp) #[bs, ls, ed]  
     return z
 
 ##############################################################################################################
@@ -146,13 +150,21 @@ class Decoder(torch.nn.Module):
     super(Decoder, self).__init__()
     self.feedforward = FeedForward(emb_dim, ff_dim, dropout)
     self.multihead_attn = MultiHead_Attn(n_heads, emb_dim, qk_dim, v_dim, dropout)
-    self.norm = LayerNorm(emb_dim)
+    self.norm_att1 = torch.nn.LayerNorm(emb_dim, eps=1e-6) #LayerNorm(emb_dim)
+    self.norm_att2 = torch.nn.LayerNorm(emb_dim, eps=1e-6) #LayerNorm(emb_dim)
+    self.norm_ff = torch.nn.LayerNorm(emb_dim, eps=1e-6) #LayerNorm(emb_dim)
 
   def forward(self, z_src, tgt, msk_src, msk_tgt):
-    #add causal mask to msk_tgt
-    tmp = self.norm(self.multihead_attn(q=tgt, k=tgt, v=tgt, msk=msk_tgt) + tgt) #[bs, lt, ed] causal attention to previous tgt words (decoder attention)
-    tmp = self.norm(self.multihead_attn(q=tmp, k=z_src, v=z_src, msk=msk_src) + tmp) #[bs, ls, ed] self-attention to src embeddings (encoder attention)
-    z = self.norm(self.feedforward(tmp) + tmp)
+    #tgt_norm = self.norm_att1(tgt)
+    #tmp = self.multihead_attn(q=tgt_norm, k=tgt_norm, v=tgt_norm, msk=msk_tgt) + tgt #[bs, lt, ed] causal attention to previous tgt words (decoder attention)
+    #tmp_norm = self.norm_att2(tmp)
+    #tmp = self.multihead_attn(q=tmp_norm, k=z_src,    v=z_src,    msk=msk_src) + tmp #[bs, lt, ed] self-attention to src embeddings (encoder attention)
+    #tmp_norm = self.norm_ff(tmp)
+    #z = self.feedforward(tmp_norm) + tmp #[bs, lt, ed] 
+
+    tmp = self.norm_att1(self.multihead_attn(q=tgt, k=tgt, v=tgt, msk=msk_tgt) + tgt) #[bs, lt, ed] causal attention to previous tgt words (decoder attention)
+    tmp = self.norm_att2(self.multihead_attn(q=tmp, k=z_src, v=z_src, msk=msk_src) + tmp) #[bs, ls, ed] self-attention to src embeddings (encoder attention)
+    z = self.norm_ff(self.feedforward(tmp) + tmp)
     return z
 
 ##############################################################################################################
@@ -191,11 +203,7 @@ class MultiHead_Attn(torch.nn.Module):
     V = self.WV(v).contiguous().view([bs,slv,self.nh,self.vd]).permute(0,2,1,3) #=> [bs,slv,nh*vd] => [bs,slv,nh,vd] => [bs,nh,slv,vd]
     #Scaled dot-product Attn from multiple Q, K, V vectors (bs*nh*sl vectors)
     s = torch.matmul(Q, K.transpose(2, 3)) / self.kd**0.5 #[bs,nh,slq,qd] x [bs,nh,kd,slk] = [bs,nh,slq,slk] # thanks to qd==kd #in decoder slq are target words and slk are source words
-    #logging.info('s')
-    #print('\n'.join([' '.join(["{:.2f}".format(v) for v in l]) for l in s[0][0]]))
     s = s.masked_fill(msk == 0, -1e9) #score=-1e9 to masked tokens
-    #logging.info('masked s')
-    #print('\n'.join([' '.join(["{:.2f}".format(v) for v in l]) for l in s[0][0]]))
     w = torch.nn.functional.softmax(s, dim=-1) #[bs,nh,slq,slk] (these are the attention weights)
     z = torch.matmul(w,V) #[bs,nh,slq,slk] x [bs,nh,slv,vd] = [bs,nh,slq,vd] #thanks to slk==slv
     z = z.transpose(1, 2).contiguous().view([bs,slq,-1]) #=> [bs,slq,nh,vd] => [bs,slq,nh*vd]
@@ -213,7 +221,7 @@ class FeedForward(torch.nn.Module):
     self.dropout = torch.nn.Dropout(dropout) #this regularization is not used in the original model
 
   def forward(self, x):
-    return self.FF_out(self.dropout(torch.nn.functional.relu(self.FF_in(x))))
+    return self.dropout(self.FF_out(self.dropout(torch.nn.functional.relu(self.FF_in(x)))))
 
 ##############################################################################################################
 ### LayerNorm ################################################################################################
@@ -233,9 +241,9 @@ class LayerNorm(torch.nn.Module):
 ##############################################################################################################
 ### PositionalEncoding #######################################################################################
 ##############################################################################################################
-class PositionalEncoding(torch.nn.Module):
+class AddPositionalEncoding(torch.nn.Module):
   def __init__(self, emb_dim, dropout, max_len=5000):
-    super(PositionalEncoding, self).__init__()
+    super(AddPositionalEncoding, self).__init__()
     self.dropout = torch.nn.Dropout(dropout)
     pe = torch.zeros(max_len, emb_dim)
     position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1)

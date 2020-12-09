@@ -83,7 +83,7 @@ class Learning():
         loss_report += loss_token.item()
         step_report += 1
         self.optScheduler.optimizer.zero_grad()                                      #sets gradients to zero
-        loss_batch.backward()                                                        #computes gradients
+        loss_token.backward()                                                        #computes gradients
         torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.clip_grad_norm) #clip gradients
         self.optScheduler.step()                                                     #updates model parameters after incrementing step and updating lr
 
