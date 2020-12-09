@@ -229,21 +229,6 @@ class FeedForward(torch.nn.Module):
     return tmp 
 
 ##############################################################################################################
-### LayerNorm ################################################################################################
-##############################################################################################################
-class LayerNorm(torch.nn.Module):
-  def __init__(self, dim, eps=1e-6):
-    super(LayerNorm, self).__init__()
-    self.a_2 = torch.nn.Parameter(torch.ones(dim))
-    self.b_2 = torch.nn.Parameter(torch.zeros(dim))
-    self.eps = eps
-
-  def forward(self, x):
-    mean = x.mean(-1, keepdim=True)
-    std = x.std(-1, keepdim=True)
-    return self.a_2 * (x - mean) / (std + self.eps) + self.b_2
-
-##############################################################################################################
 ### PositionalEncoding #######################################################################################
 ##############################################################################################################
 class AddPositionalEncoding(torch.nn.Module):
