@@ -54,8 +54,8 @@ class Learning():
       trainset.shuffle()
       n_batch = 0
       for batch_src, batch_tgt in trainset:
-        if len(batch_src[-1]) != 10 or len(batch_tgt[-1]) != 10:
-          continue
+#        if len(batch_src[-1]) != 10 or len(batch_tgt[-1]) != 10:
+#          continue
         if max_length > 0 and (len(batch_src[-1]) > max_length or len(batch_tgt[-1]) > max_length): 
           logging.debug('skipped batch with src/tgt size {}/{}'.format(len(batch_src[-1]), len(batch_tgt[-1])))
           continue
