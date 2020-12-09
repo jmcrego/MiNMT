@@ -316,12 +316,6 @@ class Dataset():
 
   def __iter__(self):
     for batch in self.batches:
-#      if len(batch[0][-1]) > self.max_length: 
-#        logging.info('skipped batch with src.size={}'.format(len(batch[0][-1])))
-#        continue
-#      if len(batch) == 2 and len(batch[1][-1]) > self.max_length:
-#        logging.info('skipped batch with tgt.size={}'.format(len(batch[1][-1])))
-#        continue
       yield batch
 
 

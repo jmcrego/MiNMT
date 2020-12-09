@@ -83,14 +83,11 @@ class Encoder_Decoder(torch.nn.Module):
     logging.debug('Vs={}'.format(src_voc_size))
     logging.debug('Vt={}'.format(tgt_voc_size))
 
-  def forward(self, src, tgt):
+  def forward(self, src, tgt, msk_src, msk_tgt):
     #src is [bs,ls]
     #tgt is [bs,lt]
-    msk_src = (src != self.idx_pad).unsqueeze(-2) #[bs,1,ls] (False where <pad> True otherwise)
-    msk_tgt = (tgt != self.idx_pad).unsqueeze(-2) & (1 - torch.triu(torch.ones((1, tgt.size(1), tgt.size(1)), device=tgt.device), diagonal=1)).bool() #[bs,lt,lt]
-    msk_src = msk_src.unsqueeze(1) #[bs, 1, 1, ls] 
-    msk_tgt = msk_tgt.unsqueeze(1) #[bs, 1, 1, ls] or [bs, 1, lt, lt]
-
+    #msk_src is [bs,1,ls] (False where <pad> True otherwise)
+    #mst_tgt is [bs,lt,lt]
     src = self.pos_enc(self.src_emb(src)) #[bs,ls,ed]
     tgt = self.pos_enc(self.tgt_emb(tgt)) #[bs,lt,ed]
     z_src = self.stacked_encoder(src, msk_src) #[bs,ls,ed]
@@ -179,22 +176,26 @@ class MultiHead_Attn(torch.nn.Module):
     #q is [bs, slq, ed]
     #k is [bs, slk, ed]
     #v is [bs, slv, ed]
-    #msk is [bs, 1, 1, ls] or [bs, 1, lt, lt]
+    #msk is [bs, 1, ls] or [bs, lt, lt]
+    msk = msk.unsqueeze(1) #[bs, 1, 1, ls] or [bs, 1, lt, lt]
     bs = q.shape[0]
     slq = q.shape[1] 
     slk = k.shape[1]
     slv = v.shape[1]
     ed = q.shape[2]
     assert self.ed == q.shape[2] == k.shape[2] == v.shape[2]
-    assert slk == slv #when applied in decoder both may be be referred to the seq-length of the source-side while slq is referred to the target-side
+    assert slk == slv #when applied in decoder both refer the source-side (slq refers the target-side)
 
     Q = self.WQ(q).contiguous().view([bs,slq,self.nh,self.qd]).permute(0,2,1,3) #=> [bs,slq,nh*qd] => [bs,slq,nh,qd] => [bs,nh,slq,qd]
     K = self.WK(k).contiguous().view([bs,slk,self.nh,self.kd]).permute(0,2,1,3) #=> [bs,slk,nh*kd] => [bs,slk,nh,kd] => [bs,nh,slk,kd]
     V = self.WV(v).contiguous().view([bs,slv,self.nh,self.vd]).permute(0,2,1,3) #=> [bs,slv,nh*vd] => [bs,slv,nh,vd] => [bs,nh,slv,vd]
-
     #Scaled dot-product Attn from multiple Q, K, V vectors (bs*nh*sl vectors)
     s = torch.matmul(Q, K.transpose(2, 3)) / self.kd**0.5 #[bs,nh,slq,qd] x [bs,nh,kd,slk] = [bs,nh,slq,slk] # thanks to qd==kd #in decoder slq are target words and slk are source words
-    s = s.masked_fill(msk == 0, -1e9)
+    #logging.info('s')
+    #print('\n'.join([' '.join(["{:.2f}".format(v) for v in l]) for l in s[0][0]]))
+    s = s.masked_fill(msk == 0, -1e9) #score=-1e9 to masked tokens
+    #logging.info('masked s')
+    #print('\n'.join([' '.join(["{:.2f}".format(v) for v in l]) for l in s[0][0]]))
     w = torch.nn.functional.softmax(s, dim=-1) #[bs,nh,slq,slk] (these are the attention weights)
     z = torch.matmul(w,V) #[bs,nh,slq,slk] x [bs,nh,slv,vd] = [bs,nh,slq,vd] #thanks to slk==slv
     z = z.transpose(1, 2).contiguous().view([bs,slq,-1]) #=> [bs,slq,nh,vd] => [bs,slq,nh*vd]

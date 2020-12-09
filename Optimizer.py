@@ -40,9 +40,11 @@ class LabelSmoothing(torch.nn.Module):
     assert pred.size(0) == gold.size(0)
     assert pred.size(1) == gold.size(1)
     assert pred.size(2) == self.nclasses
+
     pred = pred.contiguous().view(-1, pred.size(-1)) #[bs*lt, Vt]
     gold = gold.contiguous().view(-1).long() #gold is [bs*lt]
-    #return F.cross_entropy(input=pred, target=gold, ignore_index=self.padding_idx, reduction='sum')
+    return F.cross_entropy(pred, gold, ignore_index=self.padding_idx, reduction='sum')
+
 
     #true_dist is the gold distribution after label smoothing
     true_dist = pred.data.clone() #[bs*lt, Vt]
