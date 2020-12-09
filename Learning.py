@@ -62,10 +62,8 @@ class Learning():
 
         src, tgt, ref, msk_src, msk_tgt = prepare_input(batch_src, batch_tgt, idx_pad, device)
         pred = self.model.forward(src, tgt, msk_src, msk_tgt)
-
         loss_batch = self.criter(pred, ref)
         loss_token = loss_batch / torch.sum(ref != idx_pad)
-        #print(loss_batch.item(), loss_token.item())
 
         loss_report += loss_token.item()
         step_report += 1
