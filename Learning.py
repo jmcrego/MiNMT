@@ -90,7 +90,7 @@ class Learning():
         if self.report_every and self.optScheduler._step % self.report_every == 0: ### report
           msec_per_batch = 1000.0*(time.time()-msec_report)/step_report
           loss = 1.0*loss_report/step_report
-          logging.info('Learning step:{} epoch:{} batch:{}/{} ms/batch:{:.2f} lr:{:.8f} loss:{:.3f}'.format(self.optScheduler._step, epoch, n_batch, len(trainset), msec_per_batch, self.optScheduler._rate, loss))
+          logging.info('Learning step:{} epoch:{} batch:{}/{} ms/batch:{:.2f} lr:{:.6f} loss:{:.3f}'.format(self.optScheduler._step, epoch, n_batch, len(trainset), msec_per_batch, self.optScheduler._rate, loss))
           loss_report = 0
           step_report = 0
           msec_report = time.time()
