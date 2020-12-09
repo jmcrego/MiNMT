@@ -102,11 +102,12 @@ class Stacked_Encoder(torch.nn.Module):
   def __init__(self, n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout): 
     super(Stacked_Encoder, self).__init__()
     self.encoderlayers = torch.nn.ModuleList([Encoder(ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout) for _ in range(n_layers)])
+    self.norm = torch.nn.LayerNorm(emb_dim, eps=1e-6) 
 
   def forward(self, src, msk):
     for i,encoderlayer in enumerate(self.encoderlayers):
       src = encoderlayer(src, msk) #[bs, ls, ed]
-    return src 
+    return self.norm(src)
 
 ##############################################################################################################
 ### Stacked_Decoder ##########################################################################################
@@ -115,11 +116,12 @@ class Stacked_Decoder(torch.nn.Module):
   def __init__(self, n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout): 
     super(Stacked_Decoder, self).__init__()
     self.decoderlayers = torch.nn.ModuleList([Decoder(ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout) for _ in range(n_layers)])
+    self.norm = torch.nn.LayerNorm(emb_dim, eps=1e-6) 
 
   def forward(self, z_src, tgt, msk_src, msk_tgt):
     for i,decoderlayer in enumerate(self.decoderlayers):
       tgt = decoderlayer(z_src, tgt, msk_src, msk_tgt)
-    return tgt 
+    return self.norm(tgt)
 
 ##############################################################################################################
 ### Encoder ##################################################################################################
@@ -129,8 +131,8 @@ class Encoder(torch.nn.Module):
     super(Encoder, self).__init__()
     self.feedforward = FeedForward(emb_dim, ff_dim, dropout)
     self.multihead_attn = MultiHead_Attn(n_heads, emb_dim, qk_dim, v_dim, dropout)
-    self.norm_att = torch.nn.LayerNorm(emb_dim, eps=1e-6) #LayerNorm(emb_dim)
-    self.norm_ff = torch.nn.LayerNorm(emb_dim, eps=1e-6) #LayerNorm(emb_dim)
+    self.norm_att = torch.nn.LayerNorm(emb_dim, eps=1e-6) 
+    self.norm_ff = torch.nn.LayerNorm(emb_dim, eps=1e-6) 
 
   def forward(self, src, msk):
     src_norm = self.norm_att(src)
@@ -150,9 +152,9 @@ class Decoder(torch.nn.Module):
     super(Decoder, self).__init__()
     self.feedforward = FeedForward(emb_dim, ff_dim, dropout)
     self.multihead_attn = MultiHead_Attn(n_heads, emb_dim, qk_dim, v_dim, dropout)
-    self.norm_att1 = torch.nn.LayerNorm(emb_dim, eps=1e-6) #LayerNorm(emb_dim)
-    self.norm_att2 = torch.nn.LayerNorm(emb_dim, eps=1e-6) #LayerNorm(emb_dim)
-    self.norm_ff = torch.nn.LayerNorm(emb_dim, eps=1e-6) #LayerNorm(emb_dim)
+    self.norm_att1 = torch.nn.LayerNorm(emb_dim, eps=1e-6) 
+    self.norm_att2 = torch.nn.LayerNorm(emb_dim, eps=1e-6) 
+    self.norm_ff = torch.nn.LayerNorm(emb_dim, eps=1e-6) 
 
   def forward(self, z_src, tgt, msk_src, msk_tgt):
     tgt_norm = self.norm_att1(tgt)
