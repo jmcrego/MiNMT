@@ -54,8 +54,6 @@ class Learning():
       trainset.shuffle()
       n_batch = 0
       for batch_src, batch_tgt in trainset:
-#        if len(batch_src[-1]) != 10 or len(batch_tgt[-1]) != 10:
-#          continue
         if max_length > 0 and (len(batch_src[-1]) > max_length or len(batch_tgt[-1]) > max_length): 
           logging.debug('skipped batch with src/tgt size {}/{}'.format(len(batch_src[-1]), len(batch_tgt[-1])))
           continue
@@ -63,18 +61,7 @@ class Learning():
         self.model.train()
 
         src, tgt, ref, msk_src, msk_tgt = prepare_input(batch_src, batch_tgt, idx_pad, device)
-#        print('src = {}'.format(src.shape))
-#        for l in src:
-#          print(' '.join(map(str,l.tolist())))
-#        print('tgt = {}'.format(tgt.shape))
-#        for l in tgt:
-#          print(' '.join(map(str,l.tolist())))
-
         pred = self.model.forward(src, tgt, msk_src, msk_tgt)
-#        print('pred = {}'.format(pred.shape))
-#        print('ref = {}'.format(ref.shape))
-#        for l in ref:
-#          print(' '.join(map(str,l.tolist())))
 
         loss_batch = self.criter(pred, ref)
         loss_token = loss_batch / torch.sum(ref != idx_pad)
@@ -120,7 +107,6 @@ class Learning():
   def validate(self, validset, idx_pad, device, max_length):
     with torch.no_grad():
       self.model.eval()
-
       tic = time.time()
       valid_loss = 0.
       n_batch = 0
@@ -129,8 +115,8 @@ class Learning():
           logging.debug('skipped batch with src/tgt size {}/{}'.format(len(batch_src[-1]), len(batch_tgt[-1])))
           continue
         n_batch += 1
-        src, tgt, ref = prepare_input(batch_src, batch_tgt, idx_pad, device)
-        pred = self.model.forward(src, tgt)
+        src, tgt, ref, msk_src, msk_tgt = prepare_input(batch_src, batch_tgt, idx_pad, device)
+        pred = self.model.forward(src, tgt, msk_src, msk_tgt)
         loss_batch = self.criter(pred, ref)
         loss_token = loss_batch / torch.sum(ref != idx_pad)
         valid_loss += loss_token.item()

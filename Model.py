@@ -134,9 +134,9 @@ class Encoder(torch.nn.Module):
 
   def forward(self, src, msk):
     src_norm = self.norm_att(src)
-    tmp = self.multihead_attn(q=src_norm, k=src_norm, v=src_norm, msk=msk) + src #[bs, ls, ed] contains dropout, input after normlayer
+    tmp = self.multihead_attn(q=src_norm, k=src_norm, v=src_norm, msk=msk) + src #[bs, ls, ed] contains dropout
     tmp_norm = self.norm_ff(tmp)
-    z = self.feedforward(tmp_norm) + tmp #[bs, ls, ed] contains dropout, input after normlayer
+    z = self.feedforward(tmp_norm) + tmp #[bs, ls, ed] contains dropout
 
     #tmp = self.norm_att(self.multihead_attn(q=src, k=src, v=src, msk=msk) + src) #[bs, ls, ed] # src embeddings after self-attention to src embeddings
     #z = self.norm_ff(self.feedforward(tmp) + tmp) #[bs, ls, ed]  
@@ -156,11 +156,11 @@ class Decoder(torch.nn.Module):
 
   def forward(self, z_src, tgt, msk_src, msk_tgt):
     tgt_norm = self.norm_att1(tgt)
-    tmp = self.multihead_attn(q=tgt_norm, k=tgt_norm, v=tgt_norm, msk=msk_tgt) + tgt #[bs, lt, ed] contains dropout, input after normlayer
+    tmp = self.multihead_attn(q=tgt_norm, k=tgt_norm, v=tgt_norm, msk=msk_tgt) + tgt #[bs, lt, ed] contains dropout
     tmp_norm = self.norm_att2(tmp)
-    tmp = self.multihead_attn(q=tmp_norm, k=z_src,    v=z_src,    msk=msk_src) + tmp #[bs, lt, ed] contains dropout, input after normlayer
+    tmp = self.multihead_attn(q=tmp_norm, k=z_src,    v=z_src,    msk=msk_src) + tmp #[bs, lt, ed] contains dropout
     tmp_norm = self.norm_ff(tmp)
-    z = self.feedforward(tmp_norm) + tmp #[bs, lt, ed] contains dropout, input after normlayer
+    z = self.feedforward(tmp_norm) + tmp #[bs, lt, ed] contains dropout
 
     #tmp = self.norm_att1(self.multihead_attn(q=tgt, k=tgt, v=tgt, msk=msk_tgt) + tgt) #[bs, lt, ed] causal attention to previous tgt words (decoder attention)
     #tmp = self.norm_att2(self.multihead_attn(q=tmp, k=z_src, v=z_src, msk=msk_src) + tmp) #[bs, ls, ed] self-attention to src embeddings (encoder attention)
