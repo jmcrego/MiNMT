@@ -122,7 +122,7 @@ class Learning():
     toc = time.time()
     loss = valid_loss/n_batch if n_batch else 0.0
     logging.info('Validation #batchs:{} sec:{:.2f} loss:{:.3f}'.format(n_batch, toc-tic, loss))
-    return loss_per_batch
+    return loss
 
 
 
