@@ -104,7 +104,7 @@ class optim_options():
     self.beta1 = 0.9
     self.beta2 = 0.998
     self.eps = 1e-9
-    self.noam_scale = 1.0
+    self.noam_scale = 2.0
     self.noam_warmup = 4000
     self.label_smoothing = 0.1
 
