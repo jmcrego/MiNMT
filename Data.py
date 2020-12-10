@@ -177,7 +177,7 @@ class Vocab():
         tok_to_frq[tok] += 1
     logging.debug('Read {} stdin lines with {} distinct tokens'.format(nlines,len(tok_to_frq)))
     ### dump vocab from tok_to_frq
-    print(self.str_pad)
+    print(self.str_pad) 
     print(self.str_unk)
     print(self.str_bos)
     print(self.str_eos)

@@ -55,15 +55,3 @@ further details on onmt-tokenizer at: https://github.com/OpenNMT/Tokenizer/tree/
     voc.build(ftokconf,min_freq,max_size)
     toc = time.time()
     logging.info('Done ({:.3f} seconds)'.format(toc-tic))
-
-
-
-
-
-
-
-
-
-
-
-    
