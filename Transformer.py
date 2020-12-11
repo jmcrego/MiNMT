@@ -42,7 +42,7 @@ def load_dataset(src_vocab, tgt_vocab, fset, fsrc, ftgt, shard_size, max_length,
   if fset or (fsrc and ftgt):
     d = Dataset(src_vocab, tgt_vocab)
     if fset is not None and os.path.exists(fset):
-      d.load_shards(binfile)
+      d.load_shards(fset)
       d.split_in_batches(max_length, batch_size, batch_type)
     else:
       d.numberize(fsrc, ftgt)
