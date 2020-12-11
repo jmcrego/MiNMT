@@ -105,11 +105,9 @@ if __name__ == '__main__':
     #plotPoints2d( [i for i in range(1,20000)],  [optScheduler.lrate(i) for i in range(1,20000)], '#Iter', 'LRate', ["dim={} scale={:.2f} warmup={}".format(on.emb_dim,oo.noam_scale,oo.noam_warmup)], 'kk.png')
     criter = LabelSmoothing(len(tgt_vocab), src_vocab.idx_pad, oo.label_smoothing).to(device)
     learning = Learning(model, optScheduler, criter, opts.suffix, ol)
-
     valid = load_dataset(src_vocab, tgt_vocab, od.valid_set, od.src_valid, od.tgt_valid, od.shard_size, ol.max_length, ol.batch_size, ol.batch_type)
     train = load_dataset(src_vocab, tgt_vocab, od.train_set, od.src_train, od.tgt_train, od.shard_size, ol.max_length, ol.batch_size, ol.batch_type)
-    sys.exit()
-    learning.learn(train, valid, src_vocab.idx_pad, device, ol.max_length)
+    learning.learn(train, valid, src_vocab.idx_pad, device)
 
   #################
   ### inference ###

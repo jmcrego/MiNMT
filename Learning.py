@@ -40,7 +40,7 @@ class Learning():
     self.keep_last_n = ol.keep_last_n
     self.clip_grad_norm = ol.clip_grad_norm
 
-  def learn(self, trainset, validset, idx_pad, device, max_length):
+  def learn(self, trainset, validset, idx_pad, device):
     logging.info('Running: learning')
     loss_report = 0.
     step_report = 0
@@ -54,9 +54,6 @@ class Learning():
       trainset.shuffle()
       n_batch = 0
       for batch_src, batch_tgt in trainset:
-        if max_length > 0 and (len(batch_src[-1]) > max_length or len(batch_tgt[-1]) > max_length): 
-          logging.debug('skipped batch with src/tgt size {}/{}'.format(len(batch_src[-1]), len(batch_tgt[-1])))
-          continue
         n_batch += 1
         self.model.train()
 
@@ -82,14 +79,14 @@ class Learning():
 
         if self.validate_every and self.optScheduler._step % self.validate_every == 0: ### validate
           if validset is not None:
-            vloss = self.validate(validset, idx_pad, device, max_length)
+            vloss = self.validate(validset, idx_pad, device)
 
         if self.save_every and self.optScheduler._step % self.save_every == 0: ### save
           save_checkpoint(self.suffix, self.model, self.optScheduler.optimizer, self.optScheduler._step, self.keep_last_n)
 
         if self.max_steps and self.optScheduler._step >= self.max_steps: ### stop by max_steps
           if validset is not None:
-            vloss = self.validate(validset, idx_pad, device, max_length)
+            vloss = self.validate(validset, idx_pad, device)
           save_checkpoint(self.suffix, self.model, self.OptScheduler.optimizer, self.optScheduler._step, self.keep_last_n)
           return
 
@@ -97,21 +94,18 @@ class Learning():
 
       if self.max_epochs and epoch >= self.max_epochs: ### stop by max_epochs
         if validset is not None:
-          vloss = self.validate(validset, idx_pad, device, max_length)
+          vloss = self.validate(validset, idx_pad, device)
         save_checkpoint(self.suffix, self.model, self.optScheduler.optimizer, self.optScheduler._step, self.keep_last_n)
         return
     return
 
-  def validate(self, validset, idx_pad, device, max_length):
+  def validate(self, validset, idx_pad, device):
     with torch.no_grad():
       self.model.eval()
       tic = time.time()
       valid_loss = 0.
       n_batch = 0
       for batch_src, batch_tgt in validset:
-        if max_length > 0 and (len(batch_src[-1]) > max_length or len(batch_tgt[-1]) > max_length): 
-          logging.debug('skipped batch with src/tgt size {}/{}'.format(len(batch_src[-1]), len(batch_tgt[-1])))
-          continue
         n_batch += 1
         src, tgt, ref, msk_src, msk_tgt = prepare_input(batch_src, batch_tgt, idx_pad, device)
         pred = self.model.forward(src, tgt, msk_src, msk_tgt)
