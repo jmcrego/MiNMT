@@ -253,8 +253,6 @@ class Generator(torch.nn.Module):
 
   def forward(self, x):
     y = torch.nn.functional.log_softmax(self.proj(x), dim=-1)
-    logging.info('y = {}'.format(y.shape))
-    sys.exit()
     return y
 
 
