@@ -3,7 +3,8 @@
 import sys
 import time
 import logging
-from Data import Vocab
+from Vocab import Vocab
+from ONMTTokenizer import ONMTTokenizer
 
 def create_logger(logfile, loglevel):
     numeric_level = getattr(logging, loglevel.upper(), None)
@@ -28,6 +29,7 @@ if __name__ == '__main__':
    -tokenizer_config FILE : tokenizer config file (if not used mode=space)
    -min_freq          INT : minimum frequence to keep a word (default 1)
    -max_size          INT : maximum number of words in vocab (default 0:all) 
+   -log_level       LEVEL : log level [debug, info, warning, critical, error] (info)
 
 further details on onmt-tokenizer at: https://github.com/OpenNMT/Tokenizer/tree/master/bindings/python
 '''.format(prog)
@@ -35,6 +37,7 @@ further details on onmt-tokenizer at: https://github.com/OpenNMT/Tokenizer/tree/
     ftokconf = None
     min_freq = 1
     max_size = 0
+    log_level = 'info'
     while len(sys.argv):
         tok = sys.argv.pop(0)
         if tok=="-h":
@@ -46,12 +49,19 @@ further details on onmt-tokenizer at: https://github.com/OpenNMT/Tokenizer/tree/
             min_freq = int(sys.argv.pop(0))
         elif tok=="-max_size":
             max_size = int(sys.argv.pop(0))
+        elif tok=="-log_level":
+            log_level = sys.argv.pop(0)
 
-    create_logger(None, 'info')
+    create_logger(None, log_level)
     logging.info('min_freq={}'.format(min_freq))
     logging.info('max_size={}'.format(max_size))
+    token = ONMTTokenizer()
+    if ftokconf is not None:
+        token.update_yaml(ftokconf)
+    token.build()
     tic = time.time()
-    voc = Vocab()
-    voc.build(ftokconf,min_freq,max_size)
+    voc = Vocab(token)
+    voc.build(min_freq,max_size)
+    voc.dump()
     toc = time.time()
     logging.info('Done ({:.3f} seconds)'.format(toc-tic))

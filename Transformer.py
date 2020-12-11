@@ -8,7 +8,9 @@ import logging
 import torch
 import math
 from Options import Options
-from Data import Vocab, Dataset, OpenNMTTokenizer
+from Data import Dataset
+from Vocab import Vocab
+from ONMTTokenizer import ONMTTokenizer
 from Model import Encoder_Decoder, load_checkpoint_or_initialise, save_checkpoint, numparameters
 from Optimizer import OptScheduler, LabelSmoothing
 from Learning import Learning
@@ -35,6 +37,21 @@ def plotMatrix2d(X,f=None):
   if f is not None:
     plt.savefig(f)
   plt.imshow(X)
+
+def load_dataset(src_vocab, tgt_vocab, fset, fsrc, ftgt, shard_size, max_length, batch_size, batch_type):
+  if fset or (fsrc and ftgt):
+    d = Dataset(src_vocab, tgt_vocab)
+    if fset is not None and os.path.exists(fset):
+      d.load_shards(binfile)
+      d.split_in_batches(max_length, batch_size, batch_type)
+    else:
+      d.numberize(fsrc, ftgt)
+      d.split_in_shards(shard_size)
+      d.dump_shards(fset)
+      d.split_in_batches(fset, max_length, batch_size, batch_type)
+  else:
+    d = None
+  return d
 
 ######################################################################
 ### MAIN #############################################################
@@ -70,11 +87,10 @@ if __name__ == '__main__':
   od = opts.data
   oi = opts.inference
 
-  src_token = OpenNMTTokenizer(od.src_token)
-  tgt_token = OpenNMTTokenizer(od.tgt_token)
-  src_vocab = Vocab(od.src_vocab)
-  tgt_vocab = Vocab(od.tgt_vocab)
+  src_vocab = Vocab(ONMTTokenizer(fyaml=od.src_token), file=od.src_vocab)
+  tgt_vocab = Vocab(ONMTTokenizer(fyaml=od.tgt_token), file=od.tgt_vocab)
   assert src_vocab.idx_pad == tgt_vocab.idx_pad
+
   device = torch.device('cuda' if opts.cuda and torch.cuda.is_available() else 'cpu')
   model = Encoder_Decoder(on.n_layers, on.ff_dim, on.n_heads, on.emb_dim, on.qk_dim, on.v_dim, on.dropout, len(src_vocab), len(tgt_vocab), src_vocab.idx_pad).to(device)
   logging.info('Built model (#params, size) = ({}) in device {}'.format(', '.join([str(f) for f in numparameters(model)]), next(model.parameters()).device ))
@@ -89,11 +105,10 @@ if __name__ == '__main__':
     #plotPoints2d( [i for i in range(1,20000)],  [optScheduler.lrate(i) for i in range(1,20000)], '#Iter', 'LRate', ["dim={} scale={:.2f} warmup={}".format(on.emb_dim,oo.noam_scale,oo.noam_warmup)], 'kk.png')
     criter = LabelSmoothing(len(tgt_vocab), src_vocab.idx_pad, oo.label_smoothing).to(device)
     learning = Learning(model, optScheduler, criter, opts.suffix, ol)
-    if od.valid_set or (od.src_valid and od.tgt_valid):
-      valid = Dataset(src_vocab, tgt_vocab, src_token, tgt_token, od.src_valid, od.tgt_valid, od.shard_size, od.batch_size, od.batch_type, od.valid_set)
-    else:
-      valid = None
-    train = Dataset(src_vocab, tgt_vocab, src_token, tgt_token, od.src_train, od.tgt_train, od.shard_size, od.batch_size, od.batch_type, od.train_set)
+
+    valid = load_dataset(src_vocab, tgt_vocab, od.valid_set, od.src_valid, od.tgt_valid, od.shard_size, ol.max_length, ol.batch_size, ol.batch_type)
+    train = load_dataset(src_vocab, tgt_vocab, od.train_set, od.src_train, od.tgt_train, od.shard_size, ol.max_length, ol.batch_size, ol.batch_type)
+    sys.exit()
     learning.learn(train, valid, src_vocab.idx_pad, device, ol.max_length)
 
   #################
@@ -102,7 +117,7 @@ if __name__ == '__main__':
   if od.test_set or od.src_test:
     _, model, _ = load_checkpoint(opts.suffix, model, None)
     inference = Inference(model, oi)
-    test = Dataset(src_vocab, None, src_token, None, od.src_test, None, od.shard_size, od.batch_size, od.batch_type, od.test_set)
+    test = Dataset(src_vocab, None, od.src_test, None, od.shard_size, od.batch_size, od.batch_type, od.test_set)
     inference.translate(test)
 
   toc = time.time()

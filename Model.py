@@ -7,7 +7,7 @@ import torch
 import math
 import numpy as np
 import glob
-from Data import Vocab
+from Vocab import Vocab
 
 def numparameters(model):
   npars = 0 #pars
@@ -140,9 +140,6 @@ class Encoder(torch.nn.Module):
     tmp = self.multihead_attn(q=src_norm, k=src_norm, v=src_norm, msk=msk) + src #[bs, ls, ed] contains dropout
     tmp_norm = self.norm_ff(tmp)
     z = self.feedforward(tmp_norm) + tmp #[bs, ls, ed] contains dropout
-
-    #tmp = self.norm_att(self.multihead_attn(q=src, k=src, v=src, msk=msk) + src) #[bs, ls, ed] # src embeddings after self-attention to src embeddings
-    #z = self.norm_ff(self.feedforward(tmp) + tmp) #[bs, ls, ed]  
     return z
 
 ##############################################################################################################
@@ -164,10 +161,6 @@ class Decoder(torch.nn.Module):
     tmp = self.multihead_attn(q=tmp_norm, k=z_src,    v=z_src,    msk=msk_src) + tmp #[bs, lt, ed] contains dropout
     tmp_norm = self.norm_ff(tmp)
     z = self.feedforward(tmp_norm) + tmp #[bs, lt, ed] contains dropout
-
-    #tmp = self.norm_att1(self.multihead_attn(q=tgt, k=tgt, v=tgt, msk=msk_tgt) + tgt) #[bs, lt, ed] causal attention to previous tgt words (decoder attention)
-    #tmp = self.norm_att2(self.multihead_attn(q=tmp, k=z_src, v=z_src, msk=msk_src) + tmp) #[bs, ls, ed] self-attention to src embeddings (encoder attention)
-    #z = self.norm_ff(self.feedforward(tmp) + tmp)
     return z
 
 ##############################################################################################################
@@ -256,10 +249,13 @@ class AddPositionalEncoding(torch.nn.Module):
 class Generator(torch.nn.Module):
   def __init__(self, emb_dim, voc_size):
     super(Generator, self).__init__()
-    self.proj = torch.nn.Linear(emb_dim, voc_size)
+    self.proj = torch.nn.Linear(emb_dim, voc_size) #[bs, Vt]
 
   def forward(self, x):
-    return torch.nn.functional.log_softmax(self.proj(x), dim=-1)
+    y = torch.nn.functional.log_softmax(self.proj(x), dim=-1)
+    loggging.info('y = {}'.format(y.shape))
+    sys.exit()
+    return y
 
 
 
