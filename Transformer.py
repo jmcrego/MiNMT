@@ -39,18 +39,17 @@ def plotMatrix2d(X,f=None):
   plt.imshow(X)
 
 def load_dataset(src_vocab, tgt_vocab, fset, fsrc, ftgt, shard_size, max_length, batch_size, batch_type):
-  if fset or (fsrc and ftgt):
-    d = Dataset(src_vocab, tgt_vocab)
-    if fset is not None and os.path.exists(fset):
-      d.load_shards(fset)
-      d.split_in_batches(max_length, batch_size, batch_type)
-    else:
-      d.numberize(fsrc, ftgt)
-      d.split_in_shards(shard_size)
-      d.dump_shards(fset)
-      d.split_in_batches(fset, max_length, batch_size, batch_type)
-  else:
-    d = None
+  d = Dataset(src_vocab, tgt_vocab)
+  if fset is not None and os.path.exists(fset):
+    d.load_shards(fset)
+    d.split_in_batches(max_length, batch_size, batch_type)
+    return d
+
+  d.numberize(fsrc, ftgt)
+  d.split_in_shards(shard_size)
+  if fset is not None:
+    d.dump_shards(fset)
+  d.split_in_batches(fset, max_length, batch_size, batch_type)
   return d
 
 ######################################################################

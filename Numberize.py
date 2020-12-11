@@ -105,6 +105,12 @@ class Options():
    -log_file    FILE : log file  (stderr)
    -log_level STRING : log level [debug, info, warning, critical, error] (info)
    -h                : this help
+This program:
+- numberizes text files using given Vocabs and Tokenizers 
+- ranomizes all examples
+- splits examples in a set of shards
+- examples in each shard are sorted by src and tgt lengths
+- saves the set of shards in a binary file
 '''.format(self.prog))
     sys.exit()
 
