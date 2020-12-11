@@ -49,7 +49,7 @@ def load_dataset(src_vocab, tgt_vocab, fset, fsrc, ftgt, shard_size, max_length,
   d.split_in_shards(shard_size)
   if fset is not None:
     d.dump_shards(fset)
-  d.split_in_batches(fset, max_length, batch_size, batch_type)
+  d.split_in_batches(max_length, batch_size, batch_type)
   return d
 
 ######################################################################
@@ -106,6 +106,7 @@ if __name__ == '__main__':
     learning = Learning(model, optScheduler, criter, opts.suffix, ol)
     valid = load_dataset(src_vocab, tgt_vocab, od.valid_set, od.src_valid, od.tgt_valid, od.shard_size, ol.max_length, ol.batch_size, ol.batch_type)
     train = load_dataset(src_vocab, tgt_vocab, od.train_set, od.src_train, od.tgt_train, od.shard_size, ol.max_length, ol.batch_size, ol.batch_type)
+    sys.exit()
     learning.learn(train, valid, src_vocab.idx_pad, device)
 
   #################

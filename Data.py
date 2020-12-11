@@ -155,7 +155,7 @@ class Dataset():
         logging.debug('Sorted shard #{} {}'.format(len(self.shards),self.shards[-1].shape))
         shard = []
 
-  def split_in_batches(self, binfile=None, max_length=100, batch_size=64, batch_type='sentences'):
+  def split_in_batches(self, max_length=100, batch_size=64, batch_type='sentences'):
     if self.shards is None:
       self.load_shards(binfile)
     self.batches = []
@@ -187,14 +187,16 @@ class Dataset():
     if binfile is None:
       logging.error('Attempt to read None binfile')
       sys.exit()
-    self.shards, self.idxs_src, self.idxs_tgt = pickle.load(open(binfile, 'rb'))
-    logging.info('Loaded {} shards from binfile {}'.format(len(self.shards),binfile))
+   
+    data = pickle.load(open(binfile, 'rb'))
+    self.shards, self.idxs_src, self.idxs_tgt = data
+    logging.info('Loaded {} shards {} idxs_src {} idxs_tgt from binfile {}'.format(len(self.shards), len(self.idxs_src), len(self.idxs_tgt), binfile))
 
   def dump_shards(self, binfile):
     if binfile is None:
       logging.error('Attempt to write None binfile')
       sys.exit()
-    logging.info('Dumping shards to binfile {}'.format(binfile))
+    logging.info('Dumping {} shards {} idxs_src {} idxs_tgt to binfile {}'.format(len(self.shards), len(self.idxs_src), len(self.idxs_tgt), binfile))
     pickle.dump([self.shards, self.idxs_src, self.idxs_tgt], open(binfile, 'wb'), pickle.HIGHEST_PROTOCOL)
 
   def shuffle(self):
