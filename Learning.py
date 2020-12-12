@@ -50,26 +50,26 @@ class Score():
     self.ntoks_report += ntoks_batch
     self.nsteps_report += 1
 
-  def report():
+  def report(self):
     tnow = time.time()
     if self.ntoks_report and self.nsteps_report:
-      loss_per_tok = 1.0 * self.loss_report / self.ntoks_report
-      ms_per_step = 1.0 * (tnow - self.msec_report) / self.nsteps_report
+      loss_per_tok = self.loss_report / (1.0*self.ntoks_report)
+      ms_per_step = (tnow - self.msec_report) / (1.0*self.nsteps_report)
     else:
       loss_per_tok = 0.
       ms_per_step = 0.
       logging.warning('Requested report after 0 tokens optimised')
-    #initialize report
+    #initialize for next report
     self.loss_report = 0.
     self.ntoks_report = 0
     self.nsteps_report = 0
     self.msec_report = tnow
     return loss_per_tok, ms_per_step
 
-  def epoch():
+  def epoch(self):
     tnow = time.time()
     if self.ntoks and self.nsteps:
-      loss_per_tok = 1.0 * self.loss / self.ntoks
+      loss_per_tok = self.loss / (1.0*self.ntoks)
       ms_epoch = 1.0 * tnow - self.msec_epoch
     else:
       loss_per_tok = 0.
@@ -119,7 +119,7 @@ class Learning():
 
         if self.report_every and self.optScheduler._step % self.report_every == 0: ### report
           loss_per_tok, ms_per_step = s.report()
-          logging.info('Learning step:{} epoch:{} batch:{}/{} ms/batch:{:.2f} lr:{:.6f} loss/tok:{:.3f}'.format(self.optScheduler._step, n_epoch, n_batch, len(trainset), msec_per_step, self.optScheduler._rate, loss_per_tok))
+          logging.info('Learning step:{} epoch:{} batch:{}/{} ms/batch:{:.2f} lr:{:.6f} loss/tok:{:.3f}'.format(self.optScheduler._step, n_epoch, n_batch, len(trainset), ms_per_step, self.optScheduler._rate, loss_per_tok))
 
         if self.validate_every and self.optScheduler._step % self.validate_every == 0: ### validate
           if validset is not None:
@@ -135,7 +135,7 @@ class Learning():
           return
 
       loss_per_tok, ms_epoch = s.epoch()
-      logging.info('End of epoch {} #batches:{} loss/tok:{:.3f} ms:{}'.format(n_epoch,n_batch,loss_per_tok,ms_epoch))
+      logging.info('End of epoch {} #batches:{} loss/tok:{:.3f} ms:{:.2f}'.format(n_epoch,n_batch,loss_per_tok,ms_epoch))
 
       if self.max_epochs and n_epoch >= self.max_epochs: ### stop by max_epochs
         if validset is not None:
