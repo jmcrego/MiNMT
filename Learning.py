@@ -90,7 +90,7 @@ class Learning():
           save_checkpoint(self.suffix, self.model, self.OptScheduler.optimizer, self.optScheduler._step, self.keep_last_n)
           return
 
-      logging.info('End of epoch {} after {} batches out of {} (remaining were skipped by length)'.format(epoch,n_batch,len(trainset)))
+      logging.info('End of epoch {} after {} batches out of {}'.format(epoch,n_batch,len(trainset)))
 
       if self.max_epochs and epoch >= self.max_epochs: ### stop by max_epochs
         if validset is not None:
@@ -115,7 +115,7 @@ class Learning():
 
     toc = time.time()
     loss = valid_loss/n_batch if n_batch else 0.0
-    logging.info('Validation #batchs:{} sec:{:.2f} loss:{:.3f}'.format(n_batch, toc-tic, loss))
+    logging.info('Validation after steps:{} #batchs:{} sec:{:.2f} loss:{:.3f}'.format(self.optScheduler._step, n_batch, toc-tic, loss))
     return loss
 
 
