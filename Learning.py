@@ -135,7 +135,7 @@ class Learning():
           return
 
       loss_per_tok, ms_epoch = s.epoch()
-      logging.info('End of epoch {} #batches:{} loss/tok:{:.3f} ms:{:.2f}'.format(n_epoch,n_batch,loss_per_tok,ms_epoch))
+      logging.info('End of epoch {} #batches:{} loss/tok:{:.3f} sec:{:.2f}'.format(n_epoch,n_batch,loss_per_tok,ms_epoch/1000.0))
 
       if self.max_epochs and n_epoch >= self.max_epochs: ### stop by max_epochs
         if validset is not None:
