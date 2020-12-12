@@ -50,7 +50,7 @@ def load_checkpoint_or_initialise(suffix, model, optimizer, device):
     return step, model, optimizer
 
   file = files[-1] ### last is the newest
-  logging.info('Reading file={}'.format(file))
+  logging.info('Loading checkpoint file={}'.format(file))
   checkpoint = torch.load(file, map_location=device)
   step = checkpoint['step']
   ### assert checkpoint['model'] has same options than model

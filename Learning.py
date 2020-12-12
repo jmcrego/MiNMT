@@ -51,6 +51,8 @@ class Learning():
       epoch += 1
       logging.info('Epoch {}'.format(epoch))
 
+      loss_epoch = 0.
+      toks_epoch = 0
       trainset.shuffle()
       n_batch = 0
       for batch_src, batch_tgt in trainset:
@@ -61,6 +63,8 @@ class Learning():
         pred = self.model.forward(src, tgt, msk_src, msk_tgt)
         loss_batch = self.criter(pred, ref)
         loss_token = loss_batch / torch.sum(ref != idx_pad)
+        loss_epoch += loss.batch.item()
+        toks_epoch += torch.sum(ref != idx_pad)
 
         loss_report += loss_token.item()
         step_report += 1
@@ -90,7 +94,8 @@ class Learning():
           save_checkpoint(self.suffix, self.model, self.OptScheduler.optimizer, self.optScheduler._step, self.keep_last_n)
           return
 
-      logging.info('End of epoch {} after {} batches out of {}'.format(epoch,n_batch,len(trainset)))
+      loss_epoch = loss_epoch/toks_epoch if toks_epoch else 0.
+      logging.info('End of epoch {} #batches:{} loss:{:.3f}'.format(epoch,n_batch,loss_epoch))
 
       if self.max_epochs and epoch >= self.max_epochs: ### stop by max_epochs
         if validset is not None:
