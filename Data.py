@@ -160,6 +160,7 @@ class Dataset():
       self.load_shards(binfile)
     self.batches = []
     n_filtered = 0
+    n_examples = 0
     for shard in self.shards:
       b = Batch(batch_size, batch_type) #new embty batch
       for i in range(len(shard)):
@@ -169,6 +170,7 @@ class Dataset():
         if max_length > 0 and (len(idx_src) > max_length or len(idx_tgt) > max_length):
           n_filtered += 1
           continue
+        n_examples += 1
         if not b.add(idx_src, idx_tgt): #cannot continue adding in current batch b
           padded_src, padded_tgt = b.pad_batch(self.vocab_src.idx_pad)
           self.batches.append([padded_src, padded_tgt])
@@ -178,10 +180,10 @@ class Dataset():
         self.batches.append(b.pad_batch([padded_src, padded_tgt])) #last batch
 
     self.batches = np.asarray(self.batches)
+    logging.info('Built {} batches [size={},type={}] with {} examples over {} shards, {} examples filtered by [length > {}]'.format(self.batches.shape, batch_size, batch_type, n_examples, len(self.shards), n_filtered, max_length))
     self.shards = None
     self.idxs_src = None
     self.idxs_tgt = None
-    logging.info('Built {} batches [size={},type={}], {} sentences filtered by [length > {}]'.format(self.batches.shape, batch_size, batch_type, n_filtered, max_length))
 
   def load_shards(self, binfile):
     if binfile is None:
