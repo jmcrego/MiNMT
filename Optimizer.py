@@ -6,24 +6,24 @@ from torch.autograd import Variable
 import logging
 
 class OptScheduler(): ### Adam optimizer with scheduler
-  def __init__(self, optimizer, size, factor, warmup, step):
+  def __init__(self, optimizer, size, scale, warmup, step):
     super(OptScheduler, self).__init__()
     self.optimizer = optimizer  #Adam optimizer
     self.warmup = warmup
-    self.factor = factor
+    self.scale = scale
     self.size = size
     self._step = step           #initial step
     self._rate = 0.
     
   def lrate(self, step):
-    return self.factor * (self.size ** (-0.5) * min(step ** (-0.5), step * self.warmup ** (-1.5)))
+    return self.scale * (self.size ** (-0.5) * min(step ** (-0.5), step * self.warmup ** (-1.5)))
 
   def step(self):
     self._step += 1                       # increments step
     self._rate =  self.lrate(self._step)  # update lrate given step
     for p in self.optimizer.param_groups: # set new lrate in optimizer
       p['lr'] = self._rate                
-    self.optimizer.step()                 # parameters update (fwd) based on gradients computed and lrate
+    self.optimizer.step()                 # parameters update (fwd) based on gradients and lrate
 
 class LabelSmoothing(torch.nn.Module):
   def __init__(self, nclasses, padding_idx, smoothing=0.0):
@@ -43,8 +43,6 @@ class LabelSmoothing(torch.nn.Module):
 
     pred = pred.contiguous().view(-1, pred.size(-1)) #[bs*lt, Vt]
     gold = gold.contiguous().view(-1).long() #gold is [bs*lt]
-    return F.cross_entropy(pred, gold, ignore_index=self.padding_idx, reduction='sum')
-
 
     #true_dist is the gold distribution after label smoothing
     true_dist = pred.data.clone() #[bs*lt, Vt]

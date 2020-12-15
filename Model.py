@@ -39,6 +39,22 @@ def save_checkpoint(suffix, model, optimizer, step, keep_last_n):
     os.remove(f) ### first is the oldest
     logging.debug('Removed checkpoint {}'.format(f))
 
+def load_checkpoint(suffix, model, device):
+  step = 0
+  files = sorted(glob.glob("{}.checkpoint_????????.pt".format(suffix))) ### I check if there is one model
+  if len(files) == 0:
+    logging.error('No checkpoint found')
+    sys.exit()
+
+  file = files[-1] ### last is the newest
+  logging.info('Loading checkpoint file={}'.format(file))
+  checkpoint = torch.load(file, map_location=device)
+  step = checkpoint['step']
+  logging.info('Checkpoint step={}'.format(step))
+  ### assert checkpoint['model'] has same options than model
+  model.load_state_dict(checkpoint['model'])
+  return model
+
 def load_checkpoint_or_initialise(suffix, model, optimizer, device):
   step = 0
   files = sorted(glob.glob("{}.checkpoint_????????.pt".format(suffix))) ### I check if there is one model
@@ -96,6 +112,24 @@ class Encoder_Decoder(torch.nn.Module):
     z_tgt = self.stacked_decoder(z_src, tgt, msk_src, msk_tgt) #[bs,lt,ed]
     y = self.generator(z_tgt) #[bs, lt, Vt]
     return y
+
+  def encode(self, src, msk_src):
+    src = self.add_pos_enc(self.src_emb(src)) #[bs,ls,ed]
+    z_src = self.stacked_encoder(src, msk_src) #[bs,ls,ed]
+    return z_src
+
+  def decode(self, z_src, z_tgt, tgt, msk_src, msk_tgt): 
+    #z_src are the embeddings of the source words (encoder) [bs, sl, ed]
+    #z_tgt are the embeddings of the previous words (history) [bs, l, ed] (l is the length of the tgt words decoded so far)
+    #tgt is the input for current step or embedding of the last word generated add_pos_enc(src_emb(y_pred)) [bs, k, ed] (k is the beam size)
+    #initially tgt contains only <s>
+
+    for i,decoderlayer in enumerate(self.stacked_decoder.decoderlayers):
+
+      tgt = decoderlayer.decode_step(z_src, z_tgt, tgt, msk_src)
+    z_tgt = self.norm(tgt)
+    y = self.generator(z_tgt)
+    return 
 
 ##############################################################################################################
 ### Stacked_Encoder ##########################################################################################
@@ -163,6 +197,7 @@ class Decoder(torch.nn.Module):
     tmp_norm = self.norm_ff(tmp)
     z = self.feedforward(tmp_norm) + tmp #[bs, lt, ed] contains dropout
     return z
+
 
 ##############################################################################################################
 ### MultiHead_Attn ###########################################################################################

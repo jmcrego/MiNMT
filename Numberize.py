@@ -79,25 +79,26 @@ class Options():
       logging.error("Missing -src option")
       self.usage()
 
-    if self.ftgt is None:
-      logging.error("Missing -tgt option")
-      self.usage()
 
     if self.fvoc_src is None:
       logging.error("Missing -voc_src option")
-      self.usage()
-
-    if self.fvoc_tgt is None:
-      logging.error("Missing -voc_tgt option")
       self.usage()
 
     if self.ftok_src is None:
       logging.error("Missing -tok_src option")
       self.usage()
 
-    if self.ftok_tgt is None:
-      logging.error("Missing -tok_tgt option")
-      self.usage()
+#    if self.ftgt is None:
+#      logging.error("Missing -tgt option")
+#      self.usage()
+
+#    if self.fvoc_tgt is None:
+#      logging.error("Missing -voc_tgt option")
+#      self.usage()
+
+#    if self.ftok_tgt is None:
+#      logging.error("Missing -tok_tgt option")
+#      self.usage()
 
   def usage(self):
     sys.stderr.write('''usage: {} -src FILE -tgt FILE -set FILE -voc_src FILE -voc_tgt FILE -tok_src FILE -tok_tgt FILE [-h] [-log_level LEVEL] [-log_file FILE]
@@ -125,8 +126,11 @@ if __name__ == '__main__':
   tic = time.time()
   o = Options(sys.argv)
   src_vocab = Vocab(ONMTTokenizer(fyaml=o.ftok_src), file=o.fvoc_src)
-  tgt_vocab = Vocab(ONMTTokenizer(fyaml=o.ftok_tgt), file=o.fvoc_tgt)
-  assert src_vocab.idx_pad == tgt_vocab.idx_pad
+  if o.fvoc_tgt:
+    tgt_vocab = Vocab(ONMTTokenizer(fyaml=o.ftok_tgt), file=o.fvoc_tgt)
+    assert src_vocab.idx_pad == tgt_vocab.idx_pad
+  else:
+    tgt_vocab = None
 
   d = Dataset(src_vocab, tgt_vocab)
   d.numberize(o.fsrc, o.ftgt)

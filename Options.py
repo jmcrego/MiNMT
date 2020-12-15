@@ -316,20 +316,30 @@ class learning_options():
 class inference_options():
 
   def __init__(self):
-    self.beam = 5
+    self.beam_size = 5
+    self.n_best = 1
+    self.max_length = 250
 
   def usage(self):
     return '''
   Inference options
    -inference_options YAML : yaml file with inference options
-   -beam               INT : size of beam ({})'''.format(self.beam)
+   -beam_size          INT : size of beam ({})
+   -n_best             INT : return n-best translation hypotheses ({})
+   -max_length         INT : max hypothesis length ({})'''.format(self.beam, self.n_best, self.max_length, self.max_length)
 
   def read_opt(self, key, value):
       if key=='-inference_options':
         self.read_file_options(value, self)
         return True
-      if key=='-beam':
-        self.beam = int(value)
+      if key=='-beam_size':
+        self.beam_size = int(value)
+        return True
+      if key=='-n_best':
+        self.n_best = int(value)
+        return True
+      if key=='-max_length':
+        self.max_length = int(value)
         return True
 
       return False

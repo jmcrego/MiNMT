@@ -102,27 +102,32 @@ class Batch():
 ### Dataset ##################################################################################################
 ##############################################################################################################
 class Dataset():
-  def __init__(self, vocab_src, vocab_tgt):
+  def __init__(self, vocab_src, vocab_tgt=None):
     super(Dataset, self).__init__()
+    self.txts_src = None
+    self.idxs_src = None
+    self.lens_src = None
+    self.txts_tgt = None
+    self.idxs_tgt = None
+    self.lens_tgt = None
+    self.shards = None
+    self.batches = None
     self.vocab_src = vocab_src
+    if vocab_tgt is None:
+      self.bitext = False
+      return
+    self.bitext = True
+
     self.vocab_tgt = vocab_tgt
     assert vocab_src.idx_pad == vocab_tgt.idx_pad
     assert vocab_src.idx_bos == vocab_tgt.idx_bos
     assert vocab_src.idx_eos == vocab_tgt.idx_eos
-    self.txts_src = None
-    self.idxs_src = None
-    self.lens_src = None
 
-    self.txts_tgt = None
-    self.idxs_tgt = None
-    self.lens_tgt = None
-
-    self.shards = None
-    self.batches = None
-
-  def numberize(self, ftxt_src, ftxt_tgt):
+  def numberize(self, ftxt_src, ftxt_tgt=None):
     logging.info('Numberizing dataset from files {} {}'.format(ftxt_src, ftxt_tgt))
     self.txts_src, self.idxs_src, self.lens_src = file2idx(ftxt_src, self.vocab_src)
+    if not self.bitext:
+      return
     self.txts_tgt, self.idxs_tgt, self.lens_tgt = file2idx(ftxt_tgt, self.vocab_tgt)
     if len(self.lens_src) != len(self.lens_tgt):
       logging.error('Different number of lines in parallel data set {}-{}'.format(len(self.lens_src),len(self.lens_tgt)))
@@ -130,16 +135,16 @@ class Dataset():
 
   def split_in_shards(self, shard_size=0):
     pos_lens = [i for i in range(len(self.lens_src))]
-    pos_lens = np.column_stack((pos_lens,self.lens_src))
-    pos_lens = np.column_stack((pos_lens,self.lens_tgt)) #[nsents, 3]
+    pos_lens = np.column_stack((pos_lens,self.lens_src)) #[nsents, 2]
+    if self.bitext:
+      pos_lens = np.column_stack((pos_lens,self.lens_tgt)) #[nsents, 3]
     self.lens_src = None
     self.lens_tgt = None
     np.random.shuffle(pos_lens)
     if shard_size == 0:
       shard_size = len(pos_lens)
     logging.debug('Shuffled Dataset {}'.format(pos_lens.shape))
-    #pos_lens_lent is [n_examples, 3]
-    #each example is [pos, len_src, len_tgt]
+    #pos_lens_lent is [n_examples, 3] or [n_examples, 2]
     #pos is the position of the example in idx_src and idx_tgt
     #len_src/len_tgt are the respective sentence lenghts
     self.shards = []
@@ -148,8 +153,10 @@ class Dataset():
       shard.append(pos_lens[i]) #[pos, lens, lent]
       if len(shard) == shard_size or i==len(pos_lens)-1: ### filled shard
         shard = np.asarray(shard)
-        shard_sorted = np.lexsort((shard[:,2], shard[:,1])) # sort by len_src then len_tgt (lower to higer lengths)
-        #shard_sorted = np.argsort(shard[:,1]) # sort by lsrc (lower to higher lenghts)
+        if self.bitext:
+          shard_sorted = np.lexsort((shard[:,2], shard[:,1])) # sort by len_src then len_tgt (lower to higer lengths)
+        else:
+          shard_sorted = np.argsort(shard[:,1]) # sort by lsrc (lower to higher lenghts)
         shard = shard[:,0] #keep only pos
         self.shards.append(shard[shard_sorted]) #sort 
         logging.debug('Sorted shard #{} {}'.format(len(self.shards),self.shards[-1].shape))
@@ -162,11 +169,14 @@ class Dataset():
     n_filtered = 0
     n_examples = 0
     for shard in self.shards:
-      b = Batch(batch_size, batch_type) #new embty batch
+      b = Batch(batch_size, batch_type) #new empty batch
       for i in range(len(shard)):
         pos = shard[i]
         idx_src = self.idxs_src[pos]
-        idx_tgt = self.idxs_tgt[pos]
+        if self.parallel:
+          idx_tgt = self.idxs_tgt[pos]
+        else:
+          idx_tgt = []
         if max_length > 0 and (len(idx_src) > max_length or len(idx_tgt) > max_length):
           n_filtered += 1
           continue
@@ -174,10 +184,10 @@ class Dataset():
         if not b.add(idx_src, idx_tgt): #cannot continue adding in current batch b
           padded_src, padded_tgt = b.pad_batch(self.vocab_src.idx_pad)
           self.batches.append([padded_src, padded_tgt])
-          b = Batch(batch_size, batch_type) #new embty batch
+          b = Batch(batch_size, batch_type) #new empty batch
       if len(b):
         padded_src, padded_tgt = b.pad_batch(self.vocab_src.idx_pad)
-        self.batches.append(b.pad_batch([padded_src, padded_tgt])) #last batch
+        self.batches.append([padded_src, padded_tgt]) #last batch
 
     self.batches = np.asarray(self.batches)
     logging.info('Built {} batches [size={},type={}] with {} examples over {} shards, {} examples filtered by [length > {}]'.format(self.batches.shape, batch_size, batch_type, n_examples, len(self.shards), n_filtered, max_length))
@@ -189,16 +199,19 @@ class Dataset():
     if binfile is None:
       logging.error('Attempt to read None binfile')
       sys.exit()
-   
     data = pickle.load(open(binfile, 'rb'))
     self.shards, self.idxs_src, self.idxs_tgt = data
-    logging.info('Loaded {} shards {} idxs_src {} idxs_tgt from binfile {}'.format(len(self.shards), len(self.idxs_src), len(self.idxs_tgt), binfile))
+    if self.idxs_tgt is None:
+      self.parallel = False
+    else:
+      self.parallel = True
+    logging.info('Loaded {} shards [{}] from binfile {}'.format(len(self.shards), 'Bilingual' if self.parallel else 'Monolingual', binfile))
 
   def dump_shards(self, binfile):
     if binfile is None:
       logging.error('Attempt to write None binfile')
       sys.exit()
-    logging.info('Dumping {} shards {} idxs_src {} idxs_tgt to binfile {}'.format(len(self.shards), len(self.idxs_src), len(self.idxs_tgt), binfile))
+    logging.info('Dumping {} shards to binfile {}'.format(len(self.shards), binfile))
     pickle.dump([self.shards, self.idxs_src, self.idxs_tgt], open(binfile, 'wb'), pickle.HIGHEST_PROTOCOL)
 
   def shuffle(self):

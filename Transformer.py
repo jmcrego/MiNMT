@@ -11,9 +11,10 @@ from Options import Options
 from Data import Dataset
 from Vocab import Vocab
 from ONMTTokenizer import ONMTTokenizer
-from Model import Encoder_Decoder, load_checkpoint_or_initialise, save_checkpoint, numparameters
+from Model import Encoder_Decoder, load_checkpoint_or_initialise, save_checkpoint, load_checkpoint, numparameters
 from Optimizer import OptScheduler, LabelSmoothing
 from Learning import Learning
+from Inference import Inference
 import numpy as np
 #import matplotlib.pyplot as plt
 
@@ -103,19 +104,19 @@ if __name__ == '__main__':
     optScheduler = OptScheduler(optim, on.emb_dim, oo.noam_scale, oo.noam_warmup, last_step)
     #plotPoints2d( [i for i in range(1,20000)],  [optScheduler.lrate(i) for i in range(1,20000)], '#Iter', 'LRate', ["dim={} scale={:.2f} warmup={}".format(on.emb_dim,oo.noam_scale,oo.noam_warmup)], 'kk.png')
     criter = LabelSmoothing(len(tgt_vocab), src_vocab.idx_pad, oo.label_smoothing).to(device)
-    learning = Learning(model, optScheduler, criter, opts.suffix, ol)
+    learning = Learning(model, optScheduler, criter, opts.suffix, src_vocab.idx_pad, ol)
     valid = load_dataset(src_vocab, tgt_vocab, od.valid_set, od.src_valid, od.tgt_valid, od.shard_size, ol.max_length, ol.batch_size, ol.batch_type)
     train = load_dataset(src_vocab, tgt_vocab, od.train_set, od.src_train, od.tgt_train, od.shard_size, ol.max_length, ol.batch_size, ol.batch_type)
-    learning.learn(train, valid, src_vocab.idx_pad, device)
+    learning.learn(train, valid, device)
 
   #################
   ### inference ###
   #################
   if od.test_set or od.src_test:
-    _, model, _ = load_checkpoint(opts.suffix, model, None)
-    inference = Inference(model, oi)
-    test = Dataset(src_vocab, None, od.src_test, None, od.shard_size, od.batch_size, od.batch_type, od.test_set)
-    inference.translate(test)
+    model = load_checkpoint(opts.suffix, model, device)
+    inference = Inference(model, src_vocab.idx_pad, oi)
+    test = load_dataset(src_vocab, None     , od.test_set,  od.src_test , None        , od.shard_size, ol.max_length, ol.batch_size, ol.batch_type)
+    inference.translate(test, device)
 
   toc = time.time()
   logging.info('Done ({:.2f} seconds)'.format(toc-tic))
