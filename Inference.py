@@ -56,7 +56,7 @@ class BeamSearch():
         logging.info("y:{}".format(y.shape)) #[kbeam, lt, Vt]
         val_kbest, ind_kbest = torch.topk(y, K)
         logging.info("step:{} ind_kbest:{}".format(step,ind_kbest.shape)) #[kbeam, lt, K]
-        print([self.tgt_vocab[int(ind)] for ind in ind_kbest])
+        print([self.tgt_vocab[ind.item()] for ind in ind_kbest[0][-1]])
       sys.exit()
 
 
