@@ -44,7 +44,7 @@ class BeamSearch():
     z_src = self.model.encode(src, msk_src)
     logging.info('z_src = {}'.format(z_src.shape))
 
-    hyps = [[self.idx_bos, 6]]
+    hyps = [[self.idx_bos]]
     for step in range(self.max_length):
       logging.info("hyps:{}".format(hyps)) #[kbeam, lt]
       tgt, msk_tgt = prepare_input_tgt(hyps, self.idx_pad, self.device)
