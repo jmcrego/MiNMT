@@ -50,14 +50,17 @@ class BeamSearch():
         tgt, msk_tgt = prepare_input_tgt(history[k], self.tgt_vocab.idx_pad, self.device)
         #tgt is [bs, lt]
         #msk_tgt is [bs, lt, lt]
-        logging.info("tgt:{}".format(tgt.shape)) #[kbeam, lt]
-        logging.info("msk_tgt:{}".format(msk_tgt.shape)) #[kbeam, lt]
-        y = self.model.decode(z_src, tgt, msk_src, msk_tgt) #[kbeam, lt, Vt]
-        logging.info("y:{}".format(y.shape)) #[kbeam, lt, Vt]
+        logging.info("tgt:{}".format(tgt.shape)) #[bs, lt]
+        logging.info("msk_tgt:{}".format(msk_tgt.shape)) #[bs, lt]
+        y = self.model.decode(z_src, tgt, msk_src, msk_tgt) #[bs, lt, Vt]
+        logging.info("y:{}".format(y.shape)) #[bs, lt, Vt]
         val_kbest, ind_kbest = torch.topk(y, K)
-        logging.info("step:{} ind_kbest:{}".format(step,ind_kbest.shape)) #[kbeam, lt, K]
-        print([self.tgt_vocab[ind.item()] for ind in ind_kbest[0][-1]])
-      sys.exit()
+        logging.info("step:{} ind_kbest:{}".format(step,ind_kbest.shape)) #[bs, lt, K]
+        ind_kbest = ind_kbest.numpy()
+        print([self.tgt_vocab[ind] for ind in ind_kbest[0][-1]])
+        #concat result with corresponding hystory and assign score
+
+        sys.exit()
 
 
 ##############################################################################################################
