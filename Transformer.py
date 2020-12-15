@@ -115,7 +115,7 @@ if __name__ == '__main__':
   if od.test_set or od.src_test:
     model = load_checkpoint(opts.suffix, model, device)
     test = load_dataset(src_vocab, None, od.test_set, od.src_test, None, od.shard_size, ol.max_length, ol.batch_size, ol.batch_type)
-    inference = Inference(model, tgt_vocab.idx_pad, tgt_vocab.idx_bos, tgt_vocab.idx_eos, oi)
+    inference = Inference(model, tgt_vocab, oi)
     inference.translate(test, device)
 
   toc = time.time()

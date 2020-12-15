@@ -108,6 +108,7 @@ class Encoder_Decoder(torch.nn.Module):
     #mst_tgt is [bs,lt,lt]
     src = self.add_pos_enc(self.src_emb(src)) #[bs,ls,ed]
     tgt = self.add_pos_enc(self.tgt_emb(tgt)) #[bs,lt,ed]
+    assert src.shape[0] == tgt.shape[0] ### src/tgt batch_sizes must be equal
     z_src = self.stacked_encoder(src, msk_src) #[bs,ls,ed]
     z_tgt = self.stacked_decoder(z_src, tgt, msk_src, msk_tgt) #[bs,lt,ed]
     y = self.generator(z_tgt) #[bs, lt, Vt]
@@ -119,11 +120,11 @@ class Encoder_Decoder(torch.nn.Module):
     return z_src
 
   def decode(self, z_src, tgt, msk_src, msk_tgt): 
+    assert z_src.shape[0] == tgt.shape[0] ### src/tgt batch_sizes must be equal
     #this is used on inference
     #z_src are the embeddings of the source words (encoder) [bs, sl, ed]
     #tgt is the history (words already generated) for current step [bs, k]
     #initially tgt contains only <eos> 
-
     #logging.info('tgt = {}'.format(tgt.shape))
     tgt = self.add_pos_enc(self.tgt_emb(tgt)) #[bs,lt,ed]
     #logging.info('tgt = {}'.format(tgt.shape))
