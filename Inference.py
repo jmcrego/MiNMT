@@ -56,7 +56,8 @@ class BeamSearch():
         logging.info("y:{}".format(y.shape)) #[bs, lt, Vt]
         val_kbest, ind_kbest = torch.topk(y, K)
         logging.info("step:{} ind_kbest:{}".format(step,ind_kbest.shape)) #[bs, lt, K]
-        print([self.tgt_vocab[ind.item()] for ind in ind_kbest[0][-1]])
+        for ind in ind_kbest[0][-1]:
+          print("{}:{}".format(ind.item(), self.tgt_vocab[ind.item()]))
         #concat result with corresponding hystory and assign score
 
         sys.exit()
