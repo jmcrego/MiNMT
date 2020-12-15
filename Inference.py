@@ -57,7 +57,7 @@ class BeamSearch():
 
         val_kbest, ind_kbest = torch.topk(y, K)
         logging.info("step:{} ind_kbest:{}".format(step,ind_kbest.shape)) #[kbeam, lt, K]
-        sys.exit()
+      sys.exit()
 
 
 ##############################################################################################################
