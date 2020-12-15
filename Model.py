@@ -118,18 +118,20 @@ class Encoder_Decoder(torch.nn.Module):
     z_src = self.stacked_encoder(src, msk_src) #[bs,ls,ed]
     return z_src
 
-  def decode(self, z_src, z_tgt, tgt, msk_src, msk_tgt): 
+  def decode(self, z_src, tgt, msk_src, msk_tgt): 
+    #this is used on inference
     #z_src are the embeddings of the source words (encoder) [bs, sl, ed]
-    #z_tgt are the embeddings of the previous words (history) [bs, l, ed] (l is the length of the tgt words decoded so far)
-    #tgt is the input for current step or embedding of the last word generated add_pos_enc(src_emb(y_pred)) [bs, k, ed] (k is the beam size)
-    #initially tgt contains only <s>
+    #tgt is the history (words already generated) for current step [bs, k]
+    #initially tgt contains only <eos> 
 
-    for i,decoderlayer in enumerate(self.stacked_decoder.decoderlayers):
-
-      tgt = decoderlayer.decode_step(z_src, z_tgt, tgt, msk_src)
-    z_tgt = self.norm(tgt)
-    y = self.generator(z_tgt)
-    return 
+    #logging.info('tgt = {}'.format(tgt.shape))
+    tgt = self.add_pos_enc(self.tgt_emb(tgt)) #[bs,lt,ed]
+    #logging.info('tgt = {}'.format(tgt.shape))
+    z_tgt = self.stacked_decoder(z_src, tgt, msk_src, msk_tgt) #[bs,lt,ed]
+    #logging.info('z_tgt = {}'.format(z_tgt.shape))
+    y = self.generator(z_tgt) #[bs, lt, Vt]
+    #logging.info('y = {}'.format(y.shape))
+    return y
 
 ##############################################################################################################
 ### Stacked_Encoder ##########################################################################################
@@ -191,8 +193,10 @@ class Decoder(torch.nn.Module):
 
   def forward(self, z_src, tgt, msk_src, msk_tgt):
     tgt_norm = self.norm_att1(tgt)
+    #attention over tgt (previous) words : q, k, v are tgt words
     tmp = self.multihead_attn(q=tgt_norm, k=tgt_norm, v=tgt_norm, msk=msk_tgt) + tgt #[bs, lt, ed] contains dropout
     tmp_norm = self.norm_att2(tmp)
+    #attention over src words : q are tgt words, k, v are src words
     tmp = self.multihead_attn(q=tmp_norm, k=z_src,    v=z_src,    msk=msk_src) + tmp #[bs, lt, ed] contains dropout
     tmp_norm = self.norm_ff(tmp)
     z = self.feedforward(tmp_norm) + tmp #[bs, lt, ed] contains dropout

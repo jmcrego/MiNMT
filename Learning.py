@@ -107,15 +107,18 @@ class Learning():
       for batch_src, batch_tgt in trainset:
         n_batch += 1
         self.model.train()
-
+        ### predict (forward)
         src, tgt, ref, msk_src, msk_tgt = prepare_input(batch_src, batch_tgt, self.idx_pad, device)
         pred = self.model.forward(src, tgt, msk_src, msk_tgt)
+        ### compute loss
         loss_batch = self.criter(pred, ref)
         loss_token = loss_batch / torch.sum(ref != self.idx_pad)
-        self.optScheduler.optimizer.zero_grad()                                      #sets gradients to zero
-        loss_token.backward()                                                        #computes gradients
-        torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.clip_grad_norm) #clip gradients
-        self.optScheduler.step()                                                     #updates model parameters after incrementing step and updating lr
+        ### optimize
+        self.optScheduler.optimizer.zero_grad()                                      ### sets gradients to zero
+        loss_token.backward()                                                        ### computes gradients
+        torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.clip_grad_norm) ### clip gradients
+        self.optScheduler.step()                                                     ### updates model parameters after incrementing step and updating lr
+        ### accumulate score
         s.step(loss_batch.item(), torch.sum(ref != self.idx_pad))
 
         if self.report_every and self.optScheduler._step % self.report_every == 0: ### report

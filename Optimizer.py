@@ -35,7 +35,7 @@ class LabelSmoothing(torch.nn.Module):
     self.nclasses = nclasses #size of tgt vocab
 
   def forward(self, pred, gold):
-    #pred is [bs, lt, Vt]
+    #pred is [bs, lt, Vt] (after softmax)
     #gold is [bs, lt]
     assert pred.size(0) == gold.size(0)
     assert pred.size(1) == gold.size(1)
