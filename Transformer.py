@@ -63,6 +63,9 @@ if __name__ == '__main__':
   #print("a = {}\n{}".format(a.shape,a))
   #a = torch.index_select(a,dim=0,index=torch.tensor([1],dtype=torch.long)).squeeze()
   #print("a = {}\n{}".format(a.shape,a))
+  #a = a.unsqueeze(1).repeat_interleave(repeats=2, dim=1)
+  #a = a.repeat_interleave(repeats=2, dim=0)
+  #print("a = {}\n{}".format(a.shape,a))
   #sys.exit()
 
   #lsrc = [5, 3, 2, 3, 3]
