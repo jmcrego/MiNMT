@@ -46,14 +46,13 @@ class BeamSearch():
     ### initialize beam stack (it will always contain bs:batch_size and K:beam_size sentences) [initially sentences are '<bos>'] with logP=0.0
     beam_hyps = torch.ones([bs*K,1], dtype=int) * self.tgt_vocab['<bos>'] #(bs batches) (K beams) with one sentence each '<bos>' [bs*K,lt=1]
     beam_logP = torch.zeros([bs*K], dtype=torch.float32) #[bs*K]
-    reached_eos = [False] * bs*K #[bs*K] indicates if hyp has produced <eos>
 
     for lt in range(1,self.max_size+1):
       tgt, msk_tgt = prepare_input_tgt(beam_hyps, self.tgt_vocab.idx_pad, self.device) #tgt is [bs*K, lt] msk_tgt is [bs*K, lt, lt]
       y = self.model.decode(z_src, tgt, msk_src, msk_tgt) #[bs*K, lt, Vt]
       y_next = y[:,-1,:] #[bs*K,Vt] #only interested on the last predicted token (next token)
       next_logP, next_hyps = torch.topk(y_next, k=K, dim=1) #both are [bs*K,K]
-      beam_hyps, beam_logP, reached_eos = self.extend_beam_with_next(beam_hyps, beam_logP, next_hyps, next_logP, reached_eos) #[bs*K,lt] and [bs*K]
+      beam_hyps, beam_logP = self.extend_beam_with_next(beam_hyps, beam_logP, next_hyps, next_logP) #[bs*K,lt] and [bs*K]
 
       print('step {}'.format(lt))      
       for h in range(len(beam_hyps)):
@@ -62,14 +61,18 @@ class BeamSearch():
           sys.stdout.write(' {}:{}'.format(idx.item(),self.tgt_vocab[idx.item()]))
         print(' {:.5f}'.format(beam_logP[h]))
 
-      if all(reached_eos):
+      n_reached = 0
+      for h in range(len(beam_hyps)):
+        if self.tgt_vocab.idx_eos in beam_hyps[h]:
+          n_reached += 1
+
+      if n_reached == len(beam_hyps):
         break
 
-    print(reached_eos)
     sys.exit()
 
 
-  def extend_beam_with_next(self, beam_hyps, beam_logP, next_hyps, next_logP, reached_eos):
+  def extend_beam_with_next(self, beam_hyps, beam_logP, next_hyps, next_logP):
     #beam_hyps is [bs*K,lt]
     #beam_logP is [bs*K]
     #next_hyps is [bs*K,K]
@@ -121,14 +124,11 @@ class BeamSearch():
     new_beam_hyps = torch.stack([beam_hyps[t][inds] for t,inds in enumerate(kbest_hyps)], dim=0).contiguous().view(bs*K,lt)
     new_beam_logP = torch.gather(beam_logP, 1, kbest_hyps).contiguous().view(bs*K)
 
-    for h in range(len(reached_eos)):
-      if reached_eos[h]:
+    for h in range(len(new_beam_hyps)):
+      if self.tgt_vocab.idx_eos in new_beam_hyps[h]:
         new_beam_hyps[h,-1] = self.tgt_vocab.idx_eos
-      elif new_beam_hyps[h,-1].item() == self.tgt_vocab.idx_eos:
-        reached_eos[h] = True
-    print(reached_eos)
 
-    return new_beam_hyps, new_beam_logP, reached_eos
+    return new_beam_hyps, new_beam_logP
 
 
 
