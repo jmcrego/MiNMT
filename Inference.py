@@ -55,6 +55,7 @@ class BeamSearch():
       next_logP, next_hyps = torch.topk(y_next, k=K, dim=1) #both are [bs*K,K]
       beam_hyps, beam_logP, reached_eos = self.extend_beam_with_next(beam_hyps, beam_logP, next_hyps, next_logP, reached_eos) #[bs*K,lt] and [bs*K]
 
+      print('step {}'.format(lt))      
       for h in range(len(beam_hyps)):
         sys.stdout.write('hyp[{}]:'.format(h))
         for idx in beam_hyps[h]:
