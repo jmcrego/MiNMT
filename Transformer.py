@@ -59,7 +59,27 @@ def load_dataset(src_vocab, tgt_vocab, fset, fsrc, ftgt, shard_size, max_length,
             
 if __name__ == '__main__':
 
-  #a = torch.IntTensor([[[1,2,3],[4,5,6],[7,8,9]],[[10,11,12],[13,14,15],[16,17,18]],[[19,20,21],[22,23,24],[25,26,27]]])
+
+
+  #a = torch.IntTensor([1,2,1,2,1,2])
+  #a = a.view([3,2])
+  #print(a)
+
+  #b = torch.IntTensor([3,3,3])
+  #b = b.view(3,1)
+  #print(b)
+
+  #a = torch.cat((a, b), dim=1)
+  #print(a)
+
+  #sys.exit()
+
+  #K=3
+  #a = a.view([-1])
+  #a = a.repeat_interleave(repeats=K, dim=0)
+  #print(a.shape)  
+  #print(a)
+  #sys.exit()
   #print("a = {}\n{}".format(a.shape,a))
   #a = torch.index_select(a,dim=0,index=torch.tensor([1],dtype=torch.long)).squeeze()
   #print("a = {}\n{}".format(a.shape,a))

@@ -79,24 +79,21 @@ class BeamSearch():
     K = next_hyps.shape[1]
     bs = beam_hyps.shape[0] // K
 
-    next_hyps = next_hyps.contiguous().view(bs*K*K,1) #[bs*K*K,1]
-    next_logP = next_logP.contiguous().view(bs*K*K,1) #[bs*K*K,1]
-    #logging.info('(2a) next_hyps = {} next_logP = {}'.format(next_hyps.shape, next_logP.shape))
-    #print(next_hyps)
-    #print(next_logP)
+#    next_hyps = next_hyps.view(bs*K*K,1) #[bs*K,1]
 
-    beam_hyps = beam_hyps.repeat_interleave(repeats=K, dim=1).contiguous().view(bs*K*K,-1) #[bs*K,K*l] => [bs*K*K,l]
-    beam_logP = beam_logP.contiguous().view(bs*K,1).repeat_interleave(repeats=K, dim=1).contiguous().view(bs*K*K,-1) #[bs*K,1] => [bs*K,K] => [bs*K*K, 1]
+
+    next_hyps = next_hyps.contiguous().view(bs*K*K) #[bs*K*K]
+    next_logP = next_logP.contiguous().view(bs*K*K) #[bs*K*K]
+    #logging.info('(2a) next_hyps = {} next_logP = {}'.format(next_hyps.shape, next_logP.shape))
+
+    beam_hyps = beam_hyps.repeat_interleave(repeats=K, dim=0).contiguous().view(bs*K*K,lt) #[bs*K,K*l] => [bs*K*K,l]
+    beam_logP = beam_logP.repeat_interleave(repeats=K, dim=0).contiguous().view(bs*K*K)    #[bs*K] => [bs*K*K]
     #logging.info('(2a) beam_hyps = {} beam_logP = {}'.format(beam_hyps.shape, beam_logP.shape))
-    #print(beam_hyps)
-    #print(beam_logP)
 
     ### extend beam with new hyps (next)
-    beam_hyps = torch.cat((beam_hyps, next_hyps), dim=-1) #[bs*K*K, lt]
-    beam_logP += next_logP #[bs*K*K,1] + [bs*K*K,1] = [bs*K*K,1]
+    beam_hyps = torch.cat((beam_hyps, next_hyps.view(-1,1)), dim=-1) #[bs*K*K, lt+1]
+    beam_logP += next_logP #[bs*K*K] + [bs*K*K] = [bs*K*K]
     #logging.info('(2b) beam_hyps = {} beam_logP = {}'.format(beam_hyps.shape, beam_logP.shape))
-    #print(beam_hyps)
-    #print(beam_logP)
 
     lt = beam_hyps.shape[1]
     beam_hyps = beam_hyps.contiguous().view(bs,K*K,lt) #[bs, K*K, lt]
@@ -106,8 +103,6 @@ class BeamSearch():
     ### keep the K-best of each batch
     kbest_logP, kbest_hyps = torch.topk(beam_logP, k=K, dim=1) #both are [bs, K]
     #logging.info('(2) kbest_hyps = {} kbest_logP = {}'.format(kbest_hyps.shape, kbest_logP.shape))
-    #print(kbest_hyps)
-    #print(kbest_logP)
 
     if False:
       new_beam_hyps = torch.zeros([bs,K,lt], dtype=int)
@@ -129,7 +124,6 @@ class BeamSearch():
       if reached_eos[h]:
         new_beam_hyps[h,-1] = self.tgt_vocab.idx_eos
       elif new_beam_hyps[h,-1].item() == self.tgt_vocab.idx_eos:
-        logging.info('h={} idx={}'.format(h,new_beam_hyps[h,-1].item()))
         reached_eos[h] = True
 
     return new_beam_hyps, new_beam_logP, reached_eos
