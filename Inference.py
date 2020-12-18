@@ -42,8 +42,6 @@ class BeamSearch():
     z_src = self.model.encode(src, msk_src) #[bs,ls,ed]
     z_src = z_src.repeat_interleave(repeats=K, dim=0) #[bs*K,ls,ed] (repeats dimesion 0, K times)
     msk_src = msk_src.repeat_interleave(repeats=K, dim=0) #[bs*K,1,ls]
-    #logging.info('z_src = {}'.format(z_src.shape))
-    #logging.info('msk_src = {}'.format(msk_src.shape))
 
     ### initialize beam stack (it will always contain bs:batch_size and K:beam_size sentences) [initially sentences are '<bos>'] with logP=0.0
     beam_hyps = torch.ones([bs*K,1], dtype=int) * self.tgt_vocab['<bos>'] #(bs batches) (K beams) with one sentence each '<bos>' [bs*K,lt=1]
@@ -60,7 +58,7 @@ class BeamSearch():
         sys.stdout.write('hyp[{}]:'.format(h))
         for idx in beam_hyps[h]:
           sys.stdout.write(' {}:{}'.format(idx.item(),self.tgt_vocab[idx.item()]))
-        print()
+        print(' {:.5f}'.format(beam_logP[h]))
 
     sys.exit()
 
