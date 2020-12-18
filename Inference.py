@@ -60,7 +60,7 @@ class BeamSearch():
       for h in range(len(beam_hyps)):
         sys.stdout.write('hyp[{}]:'.format(h))
         for idx in beam_hyps[h]:
-          sys.stdout.write(' {}'.format(idx.item()))
+          sys.stdout.write(' {}:{}'.format(idx.item(),self.tgt_vocab[idx.item()]))
         print()
 
     sys.exit()
