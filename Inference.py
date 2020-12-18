@@ -77,7 +77,7 @@ class BeamSearch():
     assert next_hyps.shape[1] == next_logP.shape[1]
     lt = beam_hyps.shape[1]
     K = next_hyps.shape[1]
-    bs = beam_hyps.shape[0] / K
+    bs = beam_hyps.shape[0] // K
 
     next_hyps = next_hyps.contiguous().view(bs*K*K,1) #[bs*K*K,1]
     next_logP = next_logP.contiguous().view(bs*K*K,1) #[bs*K*K,1]
