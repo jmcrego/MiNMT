@@ -120,7 +120,8 @@ class BeamSearch():
     for b in range(len(beam_eos)):
       if beam_eos[b]:
         new_beam_hyps[b,-1] = self.tgt_vocab.idx_eos
-      elif new_beam_hyps[b,-1] == self.tgt_vocab.idx_eos:
+      elif new_beam_hyps[b,-1].item() == self.tgt_vocab.idx_eos:
+        logging.info('b={} idx={}'.format(b,new_beam_hyps[b,-1].item()))
         beam_eos[b] = True
 
     return new_beam_hyps, new_beam_logP, beam_eos
