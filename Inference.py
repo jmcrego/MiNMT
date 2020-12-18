@@ -53,7 +53,7 @@ class BeamSearch():
       y = self.model.decode(z_src, tgt, msk_src, msk_tgt) #[bs*K, lt, Vt]
       y_next = y[:,-1,:] #[bs*K,Vt] #only interested on the last predicted token (next token)
       next_logP, next_hyps = torch.topk(y_next, k=K, dim=1) #both are [bs*K,K]
-      beam_hyps, beam_logP, reached_eos = self.extend_beam_with_next(beam_hyps, beam_logP, next_hyps, next_logP, bs, K, reached_eos) #[bs*K,lt] and [bs*K]
+      beam_hyps, beam_logP, reached_eos = self.extend_beam_with_next(beam_hyps, beam_logP, next_hyps, next_logP, reached_eos) #[bs*K,lt] and [bs*K]
 
       for h in range(len(beam_hyps)):
         sys.stdout.write('hyp[{}]:'.format(h))
@@ -68,9 +68,16 @@ class BeamSearch():
     sys.exit()
 
 
-  def extend_beam_with_next(self, beam_hyps, beam_logP, next_hyps, next_logP, bs, K, reached_eos):
+  def extend_beam_with_next(self, beam_hyps, beam_logP, next_hyps, next_logP, reached_eos):
+    #beam_hyps is [bs*K,lt]
+    #beam_logP is [bs*K]
+    #next_hyps is [bs*K,K]
+    #next_logP is [bs*K,K]
+    assert beam_hyps.shape[0] == beam_logP.shape[0]
+    assert beam_hyps.shape[1] == beam_logP.shape[1]
     lt = beam_hyps.shape[1]
-    assert bs*K == beam_hyps.shape[0]
+    K = beam_hyps.shape[1]
+    bs = beam_hyps.shape[0] / K
 
     next_hyps = next_hyps.contiguous().view(bs*K*K,1) #[bs*K*K,1]
     next_logP = next_logP.contiguous().view(bs*K*K,1) #[bs*K*K,1]
