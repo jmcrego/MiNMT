@@ -7,7 +7,7 @@ import numpy as np
 import torch
 
 def prepare_input_src(batch_src, max_length, idx_pad, device):
-  src = [torch.tensor(seq)      for seq in batch_src] #as is
+  src = [torch.tensor(seq)      for seq in batch_src] 
   src = torch.nn.utils.rnn.pad_sequence(src, batch_first=True, padding_value=idx_pad).to(device)
   msk_src = (src != idx_pad).unsqueeze(-2) #[bs,1,ls] (False where <pad> True otherwise)
   return src, msk_src #, msk_tgt
@@ -48,7 +48,8 @@ class BeamSearch():
     history_logP = torch.zeros([bs*K,1], dtype=torch.float32) #[bs*K, 1]
 
     for step in range(self.max_length):
-      #logging.info('(1) history = {} history_logP = {}'.format(history.shape, history_logP.shape))
+      logging.info('step {}'.format(step))
+      logging.info('(1) history = {} history_logP = {}'.format(history.shape, history_logP.shape))
       tgt, msk_tgt = prepare_input_tgt(history, self.tgt_vocab.idx_pad, self.device) #tgt is [bs*K, lt] msk_tgt is [bs*K, lt, lt]
       #logging.info('z_src = {}'.format(z_src.shape))
       #logging.info('msk_src = {}'.format(msk_src.shape))
@@ -57,34 +58,31 @@ class BeamSearch():
       y = self.model.decode(z_src, tgt, msk_src, msk_tgt) #[bs*K, lt, Vt]
       #only interested on the last predicted token 
       y = y[:,-1] #[bs*K,Vt]
-      #logging.info('y = {}'.format(y.shape))
+      logging.info('y = {}'.format(y.shape))
 
       kbest_logP, kbest = torch.topk(y, k=K, dim=1) #both are [bs*K, K]
-      #logging.info('(1) kbest = {} kbest_logP = {}'.format(kbest.shape, kbest_logP.shape))
-      kbest_logP = kbest_logP.view(bs*K*K,1)
-      kbest = kbest.view(bs*K*K,1)
-      #logging.info('(2) kbest = {} kbest_logP = {}'.format(kbest.shape, kbest_logP.shape))
+      logging.info('(1) kbest = {} kbest_logP = {}'.format(kbest.shape, kbest_logP.shape))
+      kbest_logP = kbest_logP.contiguous().view(bs*K*K,1)
+      kbest = kbest.contiguous().view(bs*K*K,1)
+      logging.info('(2) kbest = {} kbest_logP = {}'.format(kbest.shape, kbest_logP.shape))
 
-      history_logP = history_logP.repeat_interleave(repeats=K, dim=1).view(bs*K*K,-1) #[bs*K*K, 1]
-      history = history.repeat_interleave(repeats=K, dim=1).view(bs*K*K,-1) #[bs*K*K, 1]
-      #logging.info('(2) history = {} history_logP = {}'.format(history.shape, history_logP.shape))
+      history_logP = history_logP.repeat_interleave(repeats=K, dim=1).contiguous().view(bs*K*K,-1) #[bs*K,K] => [bs*K*K, 1]
+      history = history.repeat_interleave(repeats=K, dim=1).contiguous().view(bs*K*K,-1) #[bs*K,K*l] => [bs*K*K,l]
+      logging.info('(2) history = {} history_logP = {}'.format(history.shape, history_logP.shape))
 
       history = torch.cat((history, kbest), dim=-1) #[bs*K*K, lt]
       history_logP += kbest_logP #[bs*K*K,1] + [bs*K*K,1] = [bs*K*K,1]
-      #logging.info('(3) history = {} history_logP = {}'.format(history.shape, history_logP.shape))
+      logging.info('(3) history = {} history_logP = {}'.format(history.shape, history_logP.shape))
 
       history = history.view(bs,K*K,-1) #[bs, K*K, lt]
-      history_logP = history_logP.view(bs,K*K) #[bs, K*K]
-      #logging.info('(4) history = {} history_logP = {}'.format(history.shape, history_logP.shape))
-      #print(history_logP[0])
+      history_logP = history_logP.contiguous().view(bs,K*K) #[bs, K*K]
+      logging.info('(4) history = {} history_logP = {}'.format(history.shape, history_logP.shape))
 
       kbest_logP, kbest = torch.topk(history_logP, k=K, dim=1) #both are [bs, K]
-      #print(kbest_logP[0])
-      #print(kbest[0])
-      #logging.info('(3) kbest = {} kbest_logP = {}'.format(kbest.shape, kbest_logP.shape))
+      logging.info('(3) kbest = {} kbest_logP = {}'.format(kbest.shape, kbest_logP.shape))
 
-      history = torch.stack([history[t][inds] for t,inds in enumerate(kbest)], dim=0).view(bs*K,-1)
-      history_logP = torch.gather(history_logP, 1, kbest).view(bs*K,1)
+      history = torch.stack([history[t][inds] for t,inds in enumerate(kbest)], dim=0).contiguous().view(bs*K,-1)
+      history_logP = torch.gather(history_logP, 1, kbest).contiguous().view(bs*K,1)
       logging.info('(5) history = {} history_logP = {}'.format(history.shape, history_logP.shape))
       logging.info([self.tgt_vocab[w] for w in history[0]])
     sys.exit()

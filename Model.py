@@ -263,7 +263,7 @@ class FeedForward(torch.nn.Module):
     tmp = self.dropout(tmp)
     tmp = self.FF_out(tmp)
     tmp = self.dropout(tmp)
-    return tmp 
+    return tmp
 
 ##############################################################################################################
 ### PositionalEncoding #######################################################################################
