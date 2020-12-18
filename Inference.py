@@ -61,7 +61,7 @@ class BeamSearch():
           sys.stdout.write(' {}:{}'.format(idx.item(),self.tgt_vocab[idx.item()]))
         print(' {:.5f}'.format(beam_logP[h]))
 
-      if not any(reached_eos):
+      if all(reached_eos):
         break
 
     print(reached_eos)
