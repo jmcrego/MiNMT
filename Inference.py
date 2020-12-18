@@ -99,23 +99,21 @@ class BeamSearch():
     #print(kbest_hyps)
     #print(kbest_logP)
 
-    new_beam_hyps = torch.zeros([bs,K,lt], dtype=int)
-    new_beam_logP = torch.zeros([bs,K], dtype=torch.float32)
-    for b in range(bs):
-      for k in range(K):
-        myk = kbest_hyps[b,k]
-        new_beam_logP[b,k] = beam_logP[b,myk].item()
-        for l in range(lt):
-          new_beam_hyps[b,k,l] = beam_hyps[b,myk,l].item()
+    if False:
+      new_beam_hyps = torch.zeros([bs,K,lt], dtype=int)
+      new_beam_logP = torch.zeros([bs,K], dtype=torch.float32)
+      for b in range(bs):
+        for k in range(K):
+          myk = kbest_hyps[b,k]
+          new_beam_logP[b,k] = beam_logP[b,myk].item()
+          for l in range(lt):
+            new_beam_hyps[b,k,l] = beam_hyps[b,myk,l].item()
   
-    new_beam_hyps = new_beam_hyps.view(bs*K,lt)
-    new_beam_logP = new_beam_logP.view(bs*K)
+      new_beam_hyps = new_beam_hyps.view(bs*K,lt)
+      new_beam_logP = new_beam_logP.view(bs*K)
 
-    #new_beam_hyps = torch.stack([beam_hyps[t][inds] for t,inds in enumerate(kbest_hyps)], dim=0).contiguous().view(bs*K,-1)
-    #new_beam_logP = torch.gather(beam_logP, 1, kbest_hyps).contiguous().view(bs*K,1)
-    #logging.info('(2d) new_beam_hyps = {} new_beam_logP = {}'.format(new_beam_hyps.shape, new_beam_logP.shape))
-    #for b in range(bs):
-    #logging.info(["{}:{}".format(w,self.tgt_vocab[w.item()]) for w in new_beam_hyps[b]])
+    new_beam_hyps = torch.stack([beam_hyps[t][inds] for t,inds in enumerate(kbest_hyps)], dim=0).contiguous().view(bs*K,-1)
+    new_beam_logP = torch.gather(beam_logP, 1, kbest_hyps).contiguous().view(bs*K,1)
 
     return new_beam_hyps, new_beam_logP
 
