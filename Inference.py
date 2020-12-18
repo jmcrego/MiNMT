@@ -73,6 +73,10 @@ class BeamSearch():
     #beam_logP is [bs*K]
     #next_hyps is [bs*K,K]
     #next_logP is [bs*K,K]
+    logging.info('beam_hyps = {}'.format(beam_hyps.shape))
+    logging.info('beam_logP = {}'.format(beam_logP.shape))
+    logging.info('next_hyps = {}'.format(next_hyps.shape))
+    logging.info('next_logP = {}'.format(next_logP.shape))
     assert beam_hyps.shape[0] == beam_logP.shape[0] == next_hyps[0] == next_logP[0]
     assert next_hyps.shape[1] == next_logP.shape[1]
     lt = beam_hyps.shape[1]
