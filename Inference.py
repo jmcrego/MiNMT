@@ -126,6 +126,7 @@ class BeamSearch():
         new_beam_hyps[h,-1] = self.tgt_vocab.idx_eos
       elif new_beam_hyps[h,-1].item() == self.tgt_vocab.idx_eos:
         reached_eos[h] = True
+    print(reached_eos)
 
     return new_beam_hyps, new_beam_logP, reached_eos
 
