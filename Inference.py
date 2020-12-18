@@ -64,6 +64,7 @@ class BeamSearch():
       if not any(reached_eos):
         break
 
+    print(reached_eos)
     sys.exit()
 
 
