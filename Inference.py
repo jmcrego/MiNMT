@@ -46,13 +46,14 @@ class BeamSearch():
     ### initialize beam stack (it will always contain bs:batch_size and K:beam_size sentences) [initially sentences are '<bos>'] with logP=0.0
     beam_hyps = torch.ones([bs*K,1], dtype=int) * self.tgt_vocab['<bos>'] #(bs batches) (K beams) with one sentence each '<bos>' [bs*K,lt=1]
     beam_logP = torch.zeros([bs*K], dtype=torch.float32) #[bs*K]
+    beam_eos = [False] * bs*K #[bs*K] indicates if hyp has produced <eos>
 
     for lt in range(1,self.max_size+1):
       tgt, msk_tgt = prepare_input_tgt(beam_hyps, self.tgt_vocab.idx_pad, self.device) #tgt is [bs*K, lt] msk_tgt is [bs*K, lt, lt]
       y = self.model.decode(z_src, tgt, msk_src, msk_tgt) #[bs*K, lt, Vt]
       y_next = y[:,-1,:] #[bs*K,Vt] #only interested on the last predicted token (next token)
       next_logP, next_hyps = torch.topk(y_next, k=K, dim=1) #both are [bs*K,K]
-      beam_hyps, beam_logP = self.extend_beam_with_next(beam_hyps, beam_logP, next_hyps, next_logP, bs, K) #[bs*K,lt] and [bs*K]
+      beam_hyps, beam_logP, beam_eos = self.extend_beam_with_next(beam_hyps, beam_logP, next_hyps, next_logP, bs, K, beam_eos) #[bs*K,lt] and [bs*K]
 
       for h in range(len(beam_hyps)):
         sys.stdout.write('hyp[{}]:'.format(h))
@@ -60,9 +61,13 @@ class BeamSearch():
           sys.stdout.write(' {}:{}'.format(idx.item(),self.tgt_vocab[idx.item()]))
         print(' {:.5f}'.format(beam_logP[h]))
 
+      if not any(beam_eos):
+        break
+
     sys.exit()
 
-  def extend_beam_with_next(self, beam_hyps, beam_logP, next_hyps, next_logP, bs, K):
+
+  def extend_beam_with_next(self, beam_hyps, beam_logP, next_hyps, next_logP, bs, K, beam_eos):
     lt = beam_hyps.shape[1]
     assert bs*K == beam_hyps.shape[0]
 
@@ -112,7 +117,13 @@ class BeamSearch():
     new_beam_hyps = torch.stack([beam_hyps[t][inds] for t,inds in enumerate(kbest_hyps)], dim=0).contiguous().view(bs*K,lt)
     new_beam_logP = torch.gather(beam_logP, 1, kbest_hyps).contiguous().view(bs*K)
 
-    return new_beam_hyps, new_beam_logP
+    for b in range(len(beam_eos)):
+      if beam_eos[b]:
+        beam_hyps[b,-1] = self.tgt_vocab.idx_pad
+      elif beam_hyps[b,-1] == self.tgt_vocab.idx_pad:
+        beam_eos[b] = True
+
+    return new_beam_hyps, new_beam_logP, beam_eos
 
 
 
