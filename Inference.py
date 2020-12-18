@@ -78,6 +78,8 @@ class BeamSearch():
     beam_hyps = torch.cat((beam_hyps, next_hyps), dim=-1) #[bs*K*K, lt]
     beam_logP += next_logP #[bs*K*K,1] + [bs*K*K,1] = [bs*K*K,1]
     logging.info('(3) beam_hyps = {} beam_logP = {}'.format(beam_hyps.shape, beam_logP.shape))
+    print(beam_hyps)
+    sys.exit()
 
     beam_hyps = beam_hyps.contiguous().view(bs,K*K,-1) #[bs, K*K, lt]
     beam_logP = beam_logP.contiguous().view(bs,K*K)    #[bs, K*K]
@@ -86,11 +88,14 @@ class BeamSearch():
     kbest_logP, kbest = torch.topk(beam_logP, k=K, dim=1) #both are [bs, K]
     logging.info('(1) kbest = {} kbest_logP = {}'.format(kbest.shape, kbest_logP.shape))
 
-    beam_hyps = torch.stack([beam_hyps[t][inds] for t,inds in enumerate(kbest)], dim=0).contiguous().view(bs*K,-1)
-    beam_logP = torch.gather(beam_logP, 1, kbest).contiguous().view(bs*K,1)
-    logging.info('(5) beam_hyps = {} beam_logP = {}'.format(beam_hyps.shape, beam_logP.shape))
-    for b in range(bs):
-      logging.info(["{}:{}".format(w,self.tgt_vocab[w.item()]) for w in beam_hyps[b]])
+
+
+
+#    beam_hyps = torch.stack([beam_hyps[t][inds] for t,inds in enumerate(kbest)], dim=0).contiguous().view(bs*K,-1)
+#    beam_logP = torch.gather(beam_logP, 1, kbest).contiguous().view(bs*K,1)
+#    logging.info('(5) beam_hyps = {} beam_logP = {}'.format(beam_hyps.shape, beam_logP.shape))
+#    for b in range(bs):
+#      logging.info(["{}:{}".format(w,self.tgt_vocab[w.item()]) for w in beam_hyps[b]])
     return beam_hyps, beam_logP
 
 
