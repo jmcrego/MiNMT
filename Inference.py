@@ -50,7 +50,6 @@ class BeamSearch():
     beam_logP = torch.zeros([bs*K], dtype=torch.float32) #[bs*K]
 
     for lt in range(1,self.max_size+1):
-      logging.info('Step {}'.format(lt))
       tgt, msk_tgt = prepare_input_tgt(beam_hyps, self.tgt_vocab.idx_pad, self.device) #tgt is [bs*K, lt] msk_tgt is [bs*K, lt, lt]
       y = self.model.decode(z_src, tgt, msk_src, msk_tgt) #[bs*K, lt, Vt]
       y_next = y[:,-1,:] #[bs*K,Vt] #only interested on the last predicted token (next token)
