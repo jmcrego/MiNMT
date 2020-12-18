@@ -112,8 +112,8 @@ class BeamSearch():
       new_beam_hyps = new_beam_hyps.view(bs*K,lt)
       new_beam_logP = new_beam_logP.view(bs*K)
 
-    new_beam_hyps = torch.stack([beam_hyps[t][inds] for t,inds in enumerate(kbest_hyps)], dim=0).contiguous().view(bs*K,-1)
-    new_beam_logP = torch.gather(beam_logP, 1, kbest_hyps).contiguous().view(bs*K,1)
+    new_beam_hyps = torch.stack([beam_hyps[t][inds] for t,inds in enumerate(kbest_hyps)], dim=0).contiguous().view(bs*K,lt)
+    new_beam_logP = torch.gather(beam_logP, 1, kbest_hyps).contiguous().view(bs*K)
 
     return new_beam_hyps, new_beam_logP
 
