@@ -159,10 +159,11 @@ class BeamSearch():
     lt = beam_hyps.shape[1]
     beam_hyps = beam_hyps.view(bs,K,lt) #[bs,K,lt]
     beam_logP = beam_logP.view(bs,K,lt) #[bs,K,lt]
+    assert beam_hyps.shape == torch.Size([bs,K,lt])
     pad_eos = self.pad_eos(beam_hyps)
     beam_hyps *= pad_eos
     beam_logP *= pad_eos
-    assert beam_hyps.shape = (bs,K,lt)    
+    assert beam_hyps.shape == torch.Size([bs,K,lt])
     #print('beam_hyps = {}'.format(beam_hyps.shape))
 
     for b in range(bs):
