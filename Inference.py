@@ -57,7 +57,7 @@ class BeamSearch():
       next_logP, next_hyps = torch.topk(y_next, k=K, dim=1) #both are [bs*K,K]
       beam_hyps, beam_logP = self.expand_beam_with_next(beam_hyps, beam_logP, next_hyps.contiguous().view(bs,K,K), next_logP.contiguous().view(bs,K,K)) #both are [bs*K,lt]
       self.print(beam_hyps, beam_logP)
-      if torch.all(torch.any(beam_hyps == self.tgt_vocab.idx_eos, dim=1)): #all hypotheses have produced <eos>
+      if torch.all(torch.any(beam_hyps == self.tgt_vocab.idx_eos, dim=2)): #all hypotheses have produced <eos>
         break
 
     sys.exit()
@@ -166,7 +166,6 @@ class BeamSearch():
     K = beam_hyps.shape[1]
     lt = beam_hyps.shape[2]
     pad_eos = self.pad_eos(beam_hyps)
-    beam_hyps *= pad_eos
     beam_logP *= pad_eos
     #print('beam_hyps = {}'.format(beam_hyps.shape))
 
