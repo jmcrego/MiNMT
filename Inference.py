@@ -162,7 +162,7 @@ class BeamSearch():
     pad_eos = self.pad_eos(beam_hyps)
     beam_hyps *= pad_eos
     beam_logP *= pad_eos
-
+    assert beam_hyps.shape = (bs,K,lt)    
     #print('beam_hyps = {}'.format(beam_hyps.shape))
 
     for b in range(bs):
