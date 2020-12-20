@@ -119,11 +119,11 @@ class Encoder_Decoder(torch.nn.Module):
     z_src = self.stacked_encoder(src, msk_src) #[bs,ls,ed]
     return z_src
 
-  def decode(self, z_src, tgt, msk_src, msk_tgt): 
+  def decode(self, z_src, tgt, msk_src, msk_tgt=None): 
     assert z_src.shape[0] == tgt.shape[0] ### src/tgt batch_sizes must be equal
     #this is used on inference
     #z_src are the embeddings of the source words (encoder) [bs, sl, ed]
-    #tgt is the history (words already generated) for current step [bs, k]
+    #tgt is the history (words already generated) for current step [bs, lt]
     #initially tgt contains only <eos> 
     #logging.info('tgt = {}'.format(tgt.shape))
     tgt = self.add_pos_enc(self.tgt_emb(tgt)) #[bs,lt,ed]
@@ -221,12 +221,13 @@ class MultiHead_Attn(torch.nn.Module):
     self.WO = torch.nn.Linear(v_dim*n_heads, emb_dim)
     self.dropout = torch.nn.Dropout(dropout)
 
-  def forward(self, q, k, v, msk):
+  def forward(self, q, k, v, msk=None):
     #q is [bs, slq, ed]
     #k is [bs, slk, ed]
     #v is [bs, slv, ed]
     #msk is [bs, 1, ls] or [bs, lt, lt]
-    msk = msk.unsqueeze(1) #[bs, 1, 1, ls] or [bs, 1, lt, lt]
+    if msk is not None:
+      msk = msk.unsqueeze(1) #[bs, 1, 1, ls] or [bs, 1, lt, lt]
     bs = q.shape[0]
     slq = q.shape[1] 
     slk = k.shape[1]
@@ -240,7 +241,8 @@ class MultiHead_Attn(torch.nn.Module):
     V = self.WV(v).contiguous().view([bs,slv,self.nh,self.vd]).permute(0,2,1,3) #=> [bs,slv,nh*vd] => [bs,slv,nh,vd] => [bs,nh,slv,vd]
     #Scaled dot-product Attn from multiple Q, K, V vectors (bs*nh*sl vectors)
     s = torch.matmul(Q, K.transpose(2, 3)) / self.kd**0.5 #[bs,nh,slq,qd] x [bs,nh,kd,slk] = [bs,nh,slq,slk] # thanks to qd==kd #in decoder slq are target words and slk are source words
-    s = s.masked_fill(msk == 0, -1e9) #score=-1e9 to masked tokens
+    if msk is not None:
+      s = s.masked_fill(msk == 0, -1e9) #score=-1e9 to masked tokens
     w = torch.nn.functional.softmax(s, dim=-1) #[bs,nh,slq,slk] (these are the attention weights)
     z = torch.matmul(w,V) #[bs,nh,slq,slk] x [bs,nh,slv,vd] = [bs,nh,slq,vd] #thanks to slk==slv
     z = z.transpose(1, 2).contiguous().view([bs,slq,-1]) #=> [bs,slq,nh,vd] => [bs,slq,nh*vd]

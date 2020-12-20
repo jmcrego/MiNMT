@@ -59,8 +59,52 @@ def load_dataset(src_vocab, tgt_vocab, fset, fsrc, ftgt, shard_size, max_length,
             
 if __name__ == '__main__':
 
+#problems = [Problem(h_0, r, R, T, float(dt) for dt in sys.argv[1:])]
+#problems = [Problem(h_0, r, R, T, float(dt)) for dt in sys.argv[1:]]
 
+#  a = torch.IntTensor([1,0,3,1,2,0,1,2,3]).view(3,3)
+#  print('a',a)
 
+#  addcol = torch.zeros([a.shape[0],1], dtype=torch.int32)
+#  a = torch.cat((a,addcol), dim=-1)
+#  print('a_addcol',a)
+#  first_eos = torch.stack([(row==0).nonzero().min() for row in a], dim=-1)
+
+#  first_eos = first_eos.repeat_interleave(repeats=a.shape[1], dim=0).view(a.shape)
+#  print('first_eos',first_eos)
+
+#  x = torch.arange(a.shape[1]).view(1,a.shape[1])
+#  x = x.repeat_interleave(repeats=a.shape[0], dim=0)
+#  print('x',x)
+
+#  pad = x.le(first_eos)[:,:-1]
+#  print('pad',pad)
+
+#  sys.exit()
+
+#  add = torch.zeros([a.shape[0],1], dtype=torch.int32)
+#  print(add)
+#  a = torch.cat((a,add), dim=-1)
+#  print(a)
+
+#  mask = torch.zeros_like(a).masked_scatter_((a != 0), torch.ones_like(a))
+
+  #mask = (a==0)
+#  print(mask)
+
+#  sys.exit()
+#  x = torch.arange(a.shape[1]).view(1,a.shape[1])
+#  x = x.repeat_interleave(repeats=a.shape[0], dim=0)
+  #print(x)
+
+#  pad = (a==0)
+  #print(pad)
+
+#  pad_times_x = pad * x
+  #print(pad_times_x)
+
+#  b = torch.all(torch.any(a == 0, dim=1))
+#  print(b)
   #a = torch.IntTensor([1,2,1,2,1,2])
   #a = a.view([3,2])
   #print(a)
