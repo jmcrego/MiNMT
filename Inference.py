@@ -176,12 +176,13 @@ class BeamSearch():
       for h in range(len(kbest_hyps)):
         k = kbest_hyps[h]
         cost = sum(curr_logP[k])
-        sys.stdout.write('step:{} batch:{} hyp:{} cost:{:.5f} |||'.format(lt,b,h,cost))
+        sys.stdout.write('step:{} batch:{} hyp:{} logP:{:.5f} |||'.format(lt,b,h,cost))
         for i in range(len(curr_hyps[k])):
           idx = curr_hyps[k,i].item()
           wrd = self.tgt_vocab[idx]
           logP = curr_logP[k,i].item()
-          sys.stdout.write(' {}:{}:{:.5f}'.format(idx, wrd, logP))
+          sys.stdout.write(' {}:{:.5f}'.format(wrd, logP))
+          #sys.stdout.write(' {}:{}:{:.5f}'.format(idx, wrd, logP))
         print()
 
 
