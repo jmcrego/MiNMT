@@ -167,7 +167,7 @@ class BeamSearch():
     for b in range(bs):
       curr_hyps = beam_hyps[b] #[K,lt]
       curr_logP = beam_logP[b] #[K,lt]
-      assert curr_hyps.shape == torch.Size([K,lt])
+      print('curr_hyps = {} curr_logP'.format(curr_hyps.shape, curr_logP.shape))
       kbest_logP, kbest_hyps = torch.topk(torch.sum(curr_logP, dim=0), k=K, dim=0) #both are [bs, K]
       for h in range(len(kbest_hyps)):
         k = kbest_hyps[h]
