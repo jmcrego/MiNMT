@@ -107,45 +107,45 @@ class BeamSearch():
     eos = self.tgt_vocab.idx_eos
     hyps = hyps.view(-1,lt) #[bs*N,lt]
     nhyps = hyps.shape[0]
-    print('hyps',hyps)
+    #print('hyps',hyps)
     #[1,eos,3]
     #[1,2,eos]
     #[1,2,3]
     #build a new column for hyps filled with <eos>
     add = torch.ones([nhyps,1], dtype=torch.long) * eos
-    print('add',add)
+    #print('add',add)
     #[eos]
     #[eos]
     #[eos]
     #i make sure that each row has at least one <eos>
     hyps = torch.cat((hyps,add), dim=-1)
-    print('hyps',hyps)
+    #print('hyps',hyps)
     #[1,eos,3,eos]
     #[1,2,eos,eos]
     #[1,2,3,eos]
     #first_eos contains the index of the first <eos> on each row in hyps
     first_eos = torch.stack( [(row==eos).nonzero().min() for row in hyps], dim=-1 )
-    print('first_eos',first_eos)
+    #print('first_eos',first_eos)
     #[1]
     #[2]
     #[3]
     #first eos has the same shape than hyps (repeat columns)
     first_eos = first_eos.repeat_interleave(repeats=hyps.shape[1], dim=0).view(hyps.shape)
-    print('first_eos',first_eos)
+    #print('first_eos',first_eos)
     #[1,1,1,1]
     #[2,2,2,2]
     #[3,3,3,3]
     x = torch.arange(hyps.shape[1]).view(1,hyps.shape[1])
-    print('x',x)
+    #print('x',x)
     #[0,1,2,3]
     x = x.repeat_interleave(repeats=hyps.shape[0], dim=0)
-    print('x',x)
+    #print('x',x)
     #[0,1,2,3]
     #[0,1,2,3]
     #[0,1,2,3]
     #pad after the first <eos> of each row and discard last column
     pad = x.le(first_eos)[:,:-1]
-    print('pad',pad)
+    #print('pad',pad)
     #[T,T,F,F]
     #[T,T,T,F]
     #[T,T,T,T]
