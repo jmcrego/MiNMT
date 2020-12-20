@@ -167,7 +167,7 @@ class BeamSearch():
     lt = beam_hyps.shape[2]
     pad_eos = self.pad_eos(beam_hyps)
     beam_logP *= pad_eos
-    #print('beam_hyps = {}'.format(beam_hyps.shape))
+    print('steps = {}'.format(lt))
 
     for b in range(bs):
       curr_hyps = beam_hyps[b] #[K,lt]
