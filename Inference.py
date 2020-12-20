@@ -168,19 +168,19 @@ class BeamSearch():
       curr_hyps = beam_hyps[b] #[K,lt]
       curr_logP = beam_logP[b] #[K,lt]
       logging.info('curr_hyps = {} curr_logP = {}'.format(curr_hyps.shape, curr_logP.shape))
-      kbest_sum = torch.sum(curr_logP, dim=1)
-      logging.info('kbest_sum = {}'.format(kbest_sum.shape))
-      kbest_logP, kbest_hyps = torch.topk(kbest_sum, k=K, dim=0) #both are [bs, K]
+      kbest_logP, kbest_hyps = torch.topk(torch.sum(curr_logP, dim=1), k=K, dim=0) #both are [bs, K]
       logging.info('kbest_logP = {} kbest_hyps = {}'.format(kbest_logP.shape, kbest_hyps.shape))
       for h in range(len(kbest_hyps)):
         k = kbest_hyps[h]
-        cost = sum(curr_logP[k])
+        wrds = curr_hyps[k]
+        logP = curr_logP[k]
+        cost = sum(logP[k])
         sys.stdout.write('step:{} batch:{} hyp:{} cost:{:.5f} |||'.format(lt,b,h,cost))
-        for i in range(len(curr_hyps[k])):
-          idx = curr_hyps[k,i].item()
-          logP = curr_logP[k,i].item()
+        for i in range(len(wrds)):
+          idx = wrds[i].item()
+          cst = logP[i].item()
           wrd = self.tgt_vocab[idx]
-          sys.stdout.write(' {}:{}:{:.5f}'.format(idx, wrd, logP))
+          sys.stdout.write(' {}:{}:{:.5f}'.format(idx, wrd, cst))
         print()
 
 
