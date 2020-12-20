@@ -168,7 +168,10 @@ class BeamSearch():
       curr_hyps = beam_hyps[b] #[K,lt]
       curr_logP = beam_logP[b] #[K,lt]
       logging.info('curr_hyps = {} curr_logP = {}'.format(curr_hyps.shape, curr_logP.shape))
-      kbest_logP, kbest_hyps = torch.topk(torch.sum(curr_logP, dim=0), k=K, dim=0) #both are [bs, K]
+      kbest_sum = torch.sum(curr_logP, dim=1)
+      logging.info('kbest_sum = {}'.format(kbest_sum.shape))
+      kbest_logP, kbest_hyps = torch.topk(kbest_sum, k=K, dim=0) #both are [bs, K]
+      logging.info('kbest_logP = {} kbest_hyps = {}'.format(kbest_logP.shape, kbest_hyps.shape))
       for h in range(len(kbest_hyps)):
         k = kbest_hyps[h]
         cost = sum(curr_logP[k])
