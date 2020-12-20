@@ -35,19 +35,28 @@ class BeamSearch():
     #src is [bs,ls]
     #msk_src is [bs,ls]
     z_src = self.model.encode(src, msk_src) #[bs,ls,ed]
+
+    ### initialize stack with <bos> (logP=0.0)
+    beam_hyps = torch.ones([bs,1], dtype=int).to(self.device) * self.tgt_vocab['<bos>'] #[bs,lt=1]
+    beam_logP = torch.zeros([bs,1], dtype=torch.float32).to(self.device)                #[bs,lt=1]
+    ### produce first token after <bos>
+    y_next = self.model.decode(z_src, beam_hyps, msk_src, msk_tgt=None)[:,-1,:]         #[bs,lt,Vt] => [bs,Vt]
+    next_logP, next_hyps = torch.topk(y_next, k=K, dim=1) #both are [bs,K]
+    beam_hyps, beam_logP = self.expand_beam_with_next(beam_hyps.contiguous().view(bs,1,1), beam_logP.contiguous().view(bs,1,1), next_hyps.contiguous().view(bs,1,K), next_logP.contiguous().view(bs,1,K)) #both are [bs,K,lt]
+    #logging.info('beam_hyps = {} beam_logP = {}'.format(beam_hyps.shape, beam_logP.shape))
+
+    ### from now on, z_src contains K hyps per batch [bs*K,ls,ed]
     z_src = z_src.repeat_interleave(repeats=K, dim=0) #[bs*K,ls,ed] (repeats dimesion 0, K times)
     msk_src = msk_src.repeat_interleave(repeats=K, dim=0) #[bs*K,1,ls]
+    #logging.info('z_src = {}'.format(z_src.shape))
+    #logging.info('msk_src = {}'.format(msk_src.shape))
 
-    ### initialize beam stack (it will always contain bs:batch_size and K:beam_size sentences) [initially sentences have a single word '<bos>'] with logP=0.0
-    beam_hyps = torch.ones([bs*K,1], dtype=int).to(self.device) * self.tgt_vocab['<bos>'] #[bs*K,lt=1] (bs batches) (K beams) with one sentence each '<bos>' 
-    beam_logP = torch.zeros([bs*K,1], dtype=torch.float32).to(self.device)                #[bs*K,lt=1]
-
-    for lt in range(1,self.max_size+1):
+    for lt in range(2,self.max_size+1):
       ### produced K-best hypotheses for all histories in beam_hyps (keep only hypotheses following the last token)
-      y_next = self.model.decode(z_src, beam_hyps, msk_src, msk_tgt=None)[:,-1,:] #[bs*K,lt,Vt] => [bs*K,Vt]
+      y_next = self.model.decode(z_src, beam_hyps.contiguous().view(bs*K,lt), msk_src, msk_tgt=None)[:,-1,:] #[bs*K,lt,Vt] => [bs*K,Vt]
       next_logP, next_hyps = torch.topk(y_next, k=K, dim=1) #both are [bs*K,K]
-      beam_hyps, beam_logP = self.expand_beam_with_next(beam_hyps, beam_logP, next_hyps, next_logP) #both are [bs*K,lt]
-      self.print(beam_hyps, beam_logP, bs, K)
+      beam_hyps, beam_logP = self.expand_beam_with_next(beam_hyps, beam_logP, next_hyps.contiguous().view(bs,K,K), next_logP.contiguous().view(bs,K,K)) #both are [bs*K,lt]
+      self.print(beam_hyps, beam_logP)
       if torch.all(torch.any(beam_hyps == self.tgt_vocab.idx_eos, dim=1)): #all hypotheses have produced <eos>
         break
 
@@ -55,50 +64,49 @@ class BeamSearch():
 
 
   def expand_beam_with_next(self, beam_hyps, beam_logP, next_hyps, next_logP):
-    #beam_hyps is [bs*K,lt]
-    #beam_logP is [bs*K,lt]
-    #next_hyps is [bs*K,K]
-    #next_logP is [bs*K,K]
-    assert beam_hyps.shape[0] == beam_logP.shape[0] == next_hyps.shape[0] == next_logP.shape[0]
-    assert beam_hyps.shape[1] == beam_logP.shape[1]
-    assert next_hyps.shape[1] == next_logP.shape[1]
-    K = next_hyps.shape[1]
-    lt = beam_hyps.shape[1]
-    bs = beam_hyps.shape[0] // K
+    #beam_hyps is [bs,B,lt]
+    #beam_logP is [bs,B,lt]
+    #next_hyps is [bs,B,K]
+    #next_logP is [bs,B,K]
+    assert beam_hyps.shape[0] == beam_logP.shape[0] == next_hyps.shape[0] == next_logP.shape[0] #bs
+    assert beam_hyps.shape[1] == beam_logP.shape[1] == next_hyps.shape[1] == next_logP.shape[1] #B
+    assert next_hyps.shape[2] == next_logP.shape[2] #K
+    assert beam_hyps.shape[2] == beam_logP.shape[2] #lt
+    bs = beam_hyps.shape[0]
+    B = next_hyps.shape[1]
+    K = next_hyps.shape[2]
+    lt = beam_hyps.shape[2]
+    #print(bs,B,K,lt)
 
-    next_hyps = next_hyps.contiguous().view(bs*K*K) #[bs*K*K]
-    next_logP = next_logP.contiguous().view(bs*K*K) #[bs*K*K]
+    next_hyps = next_hyps.contiguous().view(bs*B*K,1) #[bs*B*K,1]
+    next_logP = next_logP.contiguous().view(bs*B*K,1) #[bs*B*K,1]
     #logging.info('next_hyps = {} next_logP = {}'.format(next_hyps.shape, next_logP.shape))
-    #print(next_hyps.view(bs,K*K))
-    #print(next_logP.view(bs,K*K))
-    #sys.exit()
 
-    #replicate each hyp in beam K times: [bs*K,lt] => [bs*K,K*lt]
-    beam_hyps = beam_hyps.repeat_interleave(repeats=K, dim=0).contiguous().view(bs*K*K,lt) #[bs*K,K*lt] => [bs*K*K,lt]
-    beam_logP = beam_logP.repeat_interleave(repeats=K, dim=0).contiguous().view(bs*K*K,lt) #[bs*K,K*lt] => [bs*K*K,lt]
+    #replicate each hyp in beam K times: [bs*B,lt] => [bs*B,K*lt]
+    beam_hyps = beam_hyps.contiguous().view(bs*B,lt).repeat_interleave(repeats=K, dim=0).contiguous().view(bs*B*K,lt) #[bs*B,K*lt] => [bs*B*K,lt]
+    beam_logP = beam_logP.contiguous().view(bs*B,lt).repeat_interleave(repeats=K, dim=0).contiguous().view(bs*B*K,lt) #[bs*B,K*lt] => [bs*B*K,lt]
     #logging.info('beam_hyps = {} beam_logP = {}'.format(beam_hyps.shape, beam_logP.shape))
 
     ### extend beam hyps with new word (next)
-    beam_hyps = torch.cat((beam_hyps, next_hyps.view(-1,1)), dim=-1) #[bs*K*K, lt+1]
-    beam_logP = torch.cat((beam_logP, next_logP.view(-1,1)), dim=-1) #[bs*K*K, lt+1]
+    beam_hyps = torch.cat((beam_hyps, next_hyps), dim=-1) #[bs*B*K, lt+1]
+    beam_logP = torch.cat((beam_logP, next_logP), dim=-1) #[bs*B*K, lt+1]
     #logging.info('(extend) beam_hyps = {} beam_logP = {}'.format(beam_hyps.shape, beam_logP.shape))
 
     lt = beam_hyps.shape[1]
-    beam_hyps = beam_hyps.contiguous().view(bs,K*K,lt) #[bs, K*K, lt]
-    beam_logP = beam_logP.contiguous().view(bs,K*K,lt) #[bs, K*K, lt]
+    beam_hyps = beam_hyps.contiguous().view(bs,B*K,lt) #[bs, B*K, lt]
+    beam_logP = beam_logP.contiguous().view(bs,B*K,lt) #[bs, B*K, lt]
     #logging.info('(reshape) beam_hyps = {} beam_logP = {}'.format(beam_hyps.shape, beam_logP.shape))
 
-    ### keep the K-best of each batch (reduce K*K hyps to the K-best)
-    beam_padded = self.pad_eos(beam_hyps)
-    #logging.info('(padding) beam_padded = {}'.format(beam_padded.shape))
-    kbest_logP, kbest_hyps = torch.topk(torch.sum(beam_logP*beam_padded,dim=2), k=K, dim=1) #both are [bs, K]
+    ### keep the K-best of each batch (reduce B*K hyps to the K-best)
+    beam_logP *= self.pad_eos(beam_hyps) #[bs, B*K, lt]
+    kbest_logP, kbest_hyps = torch.topk(torch.sum(beam_logP,dim=2), k=K, dim=1) #both are [bs, K] (finds the K-best of dimension 1 (B*K))
     #logging.info('(kbest) kbest_hyps = {} kbest_logP = {}'.format(kbest_hyps.shape, kbest_logP.shape))
 
-    new_beam_hyps = torch.stack([beam_hyps[t][inds] for t,inds in enumerate(kbest_hyps)], dim=0).contiguous().view(bs*K,lt)
-    new_beam_logP = torch.stack([beam_logP[t][inds] for t,inds in enumerate(kbest_hyps)], dim=0).contiguous().view(bs*K,lt)
+    beam_hyps = torch.stack([beam_hyps[b][inds] for b,inds in enumerate(kbest_hyps)], dim=0).contiguous().view(bs,K,lt)
+    beam_logP = torch.stack([beam_logP[b][inds] for b,inds in enumerate(kbest_hyps)], dim=0).contiguous().view(bs,K,lt)
     #logging.info('(stack) new_beam_hyps = {} new_beam_logP = {}'.format(new_beam_hyps.shape, new_beam_logP.shape))
 
-    return new_beam_hyps, new_beam_logP
+    return beam_hyps, beam_logP
 
 
   def pad_eos(self, hyps):
@@ -152,11 +160,11 @@ class BeamSearch():
     #back to the original size of hyps
     return pad.view(bs,N,lt)
 
-  def print(self, beam_hyps, beam_logP, bs, K):
-    #beam_hyps and beam_logP are [bs*K,lt]
-    lt = beam_hyps.shape[1]
-    beam_hyps = beam_hyps.view(bs,K,lt) #[bs,K,lt]
-    beam_logP = beam_logP.view(bs,K,lt) #[bs,K,lt]
+  def print(self, beam_hyps, beam_logP):
+    #beam_hyps and beam_logP are [bs,K,lt]
+    bs = beam_hyps.shape[0]
+    K = beam_hyps.shape[1]
+    lt = beam_hyps.shape[2]
     pad_eos = self.pad_eos(beam_hyps)
     beam_hyps *= pad_eos
     beam_logP *= pad_eos
