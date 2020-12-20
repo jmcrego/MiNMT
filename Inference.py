@@ -90,6 +90,7 @@ class BeamSearch():
 
     ### keep the K-best of each batch (reduce K*K hyps to the K-best)
     beam_padded = self.pad_eos(beam_hyps)
+    logging.info('(padding) beam_padded = {}'.format(beam_padded.shape))
     kbest_logP, kbest_hyps = torch.topk(torch.sum(beam_logP*beam_padded,dim=2), k=K, dim=1) #both are [bs, K]
     logging.info('(kbest) kbest_hyps = {} kbest_logP = {}'.format(kbest_hyps.shape, kbest_logP.shape))
 
