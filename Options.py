@@ -326,7 +326,7 @@ class inference_options():
    -inference_options YAML : yaml file with inference options
    -beam_size          INT : size of beam ({})
    -n_best             INT : return n-best translation hypotheses ({})
-   -max_size           INT : max hypothesis size ({})'''.format(self.beam, self.n_best, self.max_size)
+   -max_size           INT : max hypothesis size ({})'''.format(self.beam_size, self.n_best, self.max_size)
 
   def read_opt(self, key, value):
       if key=='-inference_options':
