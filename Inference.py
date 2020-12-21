@@ -91,14 +91,21 @@ class BeamSearch():
     beam_hyps = torch.cat((beam_hyps, next_hyps), dim=-1) #[bs*B*K, lt+1]
     beam_logP = torch.cat((beam_logP, next_logP), dim=-1) #[bs*B*K, lt+1]
     #logging.info('(extend) beam_hyps = {} beam_logP = {}'.format(beam_hyps.shape, beam_logP.shape))
-
     lt = beam_hyps.shape[1]
+
     beam_hyps = beam_hyps.contiguous().view(bs,B*K,lt) #[bs, B*K, lt]
     beam_logP = beam_logP.contiguous().view(bs,B*K,lt) #[bs, B*K, lt]
     #logging.info('(reshape) beam_hyps = {} beam_logP = {}'.format(beam_hyps.shape, beam_logP.shape))
 
     ### keep the K-best of each batch (reduce B*K hyps to the K-best)
-    beam_logP *= self.pad_eos(beam_hyps) #[bs, B*K, lt]
+    beam_pad = self.pad_eos(beam_hyps) #[bs, B*K, lt]
+    beam_logP = beam_logP * beam_pad   #[bs, B*K, lt]
+
+
+    ### copy final hypotheses (last token is <eos>) to final_hyps, final_logP
+    ### assign them a low logP in beam_logP to remove them from beam in next step
+    beam_logP.where(beam_hyps==self.tgt_vocab.idx_eos, torch.tensor(-999.0))
+
     kbest_logP, kbest_hyps = torch.topk(torch.sum(beam_logP,dim=2), k=K, dim=1) #both are [bs, K] (finds the K-best of dimension 1 (B*K))
     #logging.info('(kbest) kbest_hyps = {} kbest_logP = {}'.format(kbest_hyps.shape, kbest_logP.shape))
 
@@ -120,12 +127,12 @@ class BeamSearch():
     #[1,2,eos]
     #[1,2,3]
     #build a new column for hyps filled with <eos> to ensure all hyps (rows) have one <eos>
-    add = torch.ones([nhyps,1], dtype=torch.long) * eos
-    #print('add',add)
+    col = torch.ones([nhyps,1], dtype=torch.long) * eos
+    #print('col',col)
     #[eos]
     #[eos]
     #[eos]
-    hyps = torch.cat((hyps,add), dim=-1)
+    hyps = torch.cat((hyps,col), dim=-1)
     #print('hyps',hyps)
     #[1,eos,3,eos]
     #[1,2,eos,eos]
@@ -153,10 +160,10 @@ class BeamSearch():
     #pad after the first <eos> of each row and discard last column
     pad = x.le(first_eos)[:,:-1]
     #print('pad',pad)
-    #[T,T,F,F]
-    #[T,T,T,F]
-    #[T,T,T,T]
-    #back to the original size of hyps
+    #[T,T,F]
+    #[T,T,T]
+    #[T,T,T]
+    #back to the original shape of hyps
     return pad.view(bs,N,lt)
 
   def print(self, beam_hyps, beam_logP):
