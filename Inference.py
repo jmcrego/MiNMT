@@ -119,20 +119,19 @@ class BeamSearch():
     #[1,eos,3]
     #[1,2,eos]
     #[1,2,3]
-    #build a new column for hyps filled with <eos>
+    #build a new column for hyps filled with <eos> to ensure all hyps (rows) have one <eos>
     add = torch.ones([nhyps,1], dtype=torch.long) * eos
     #print('add',add)
     #[eos]
     #[eos]
     #[eos]
-    #i make sure that each row has at least one <eos>
     hyps = torch.cat((hyps,add), dim=-1)
     #print('hyps',hyps)
     #[1,eos,3,eos]
     #[1,2,eos,eos]
     #[1,2,3,eos]
     #first_eos contains the index of the first <eos> on each row in hyps
-    first_eos = torch.stack( [(row==eos).nonzero().min() for row in hyps], dim=-1 )
+    first_eos = torch.stack( [(row==eos).nonzero(as_tuple=False).min() for row in hyps], dim=-1 )
     #print('first_eos',first_eos)
     #[1]
     #[2]
