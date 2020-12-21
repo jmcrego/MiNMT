@@ -45,7 +45,6 @@ class BeamSearch():
     y_next = self.model.decode(z_src, beam_hyps, msk_src, msk_tgt=None)[:,-1,:]         #[bs,lt,Vt] => [bs,Vt]
     next_logP, next_hyps = torch.topk(y_next, k=K, dim=1) #both are [bs,K]
     beam_hyps, beam_logP = self.expand_beam_with_next(beam_hyps.contiguous().view(bs,1,1), beam_logP.contiguous().view(bs,1,1), next_hyps.contiguous().view(bs,1,K), next_logP.contiguous().view(bs,1,K)) #both are [bs,K,lt]
-    self.print(beam_hyps, beam_logP)
     #logging.info('beam_hyps = {} beam_logP = {}'.format(beam_hyps.shape, beam_logP.shape))
 
     ### from now on, z_src contains K hyps per batch [bs*K,ls,ed]
@@ -59,9 +58,8 @@ class BeamSearch():
       y_next = self.model.decode(z_src, beam_hyps.contiguous().view(bs*K,lt), msk_src, msk_tgt=None)[:,-1,:] #[bs*K,lt,Vt] => [bs*K,Vt]
       next_logP, next_hyps = torch.topk(y_next, k=K, dim=1) #both are [bs*K,K]
       beam_hyps, beam_logP = self.expand_beam_with_next(beam_hyps, beam_logP, next_hyps.contiguous().view(bs,K,K), next_logP.contiguous().view(bs,K,K)) #both are [bs*K,lt]
-      self.print(beam_hyps, beam_logP)
-      if torch.all(torch.any(beam_hyps == self.tgt_vocab.idx_eos, dim=2)): #all hypotheses have produced <eos>
-        break
+#      if torch.all(torch.any(beam_hyps == self.tgt_vocab.idx_eos, dim=2)): #all hypotheses have produced <eos>
+#        break
 
     sys.exit()
 
