@@ -25,7 +25,7 @@ class BeamSearch():
     self.max_size = max_size
     self.n_best = n_best
     self.device = device
-    self.final_hyps = [defaultdict(list)] * beam_size
+    self.final_hyps = [defaultdict()] * beam_size
 
   def traverse(self, batch_src):
     src, msk_src = prepare_input_src(batch_src, self.tgt_vocab.idx_pad, self.device)
@@ -126,7 +126,7 @@ class BeamSearch():
         if beam_hyps[b,n,-1]==self.tgt_vocab.idx_eos:
           l = beam_hyps[b,n].tolist()
           c = sum(beam_logP[b,n]).item()
-          self.final_hyps[b][l] = c
+          self.final_hyps[b][' '.join(l)] = c
           print(c,[self.tgt_vocab[t] for t in l])
 
   def pad_eos(self, hyps):
