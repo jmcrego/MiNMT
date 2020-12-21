@@ -98,9 +98,9 @@ class BeamSearch():
     beam_logP = beam_logP.contiguous().view(bs,B*K,lt) #[bs, B*K, lt]
     #logging.info('(reshape) beam_hyps = {} beam_logP = {}'.format(beam_hyps.shape, beam_logP.shape))
 
-    ### hyps that already produced <eos> are assigned a low logP to make them disappear in next beam step
+    ### hyps that already produced <eos> are assigned 0.0 logP
     beam_pad = self.pad_eos(beam_hyps) #[bs, B*K, lt]
-    beam_logP[beam_pad==True] = -float('Inf')
+    beam_logP[beam_pad==True] = 0.0 #-float('Inf')
 
     #keep the K-best of each batch (reduce B*K hyps to the K-best)
     kbest_logP, kbest_hyps = torch.topk(torch.sum(beam_logP,dim=2), k=K, dim=1) #both are [bs, K] (finds the K-best of dimension 1 (B*K))
