@@ -126,7 +126,7 @@ class BeamSearch():
         if beam_hyps[b,n,-1]==self.tgt_vocab.idx_eos:
           l = beam_hyps[b,n].tolist()
           c = sum(beam_logP[b,n]).item()
-          self.final_hyps[b][' '.join(l)] = c
+          self.final_hyps[b][join(map(str,l))] = c
           print(c,[self.tgt_vocab[t] for t in l])
 
   def pad_eos(self, hyps):
