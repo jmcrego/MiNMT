@@ -104,7 +104,8 @@ class BeamSearch():
 
     ### copy final hypotheses (last token is <eos>) to final_hyps, final_logP
     ### assign them a low logP in beam_logP to remove them from beam in next step
-    beam_logP.where(beam_hyps==self.tgt_vocab.idx_eos, torch.tensor(-999.0))
+    beam_logP[beam_hyps==self.tgt_vocab.idx_eos] = -999.9
+#    beam_logP.where(beam_hyps==self.tgt_vocab.idx_eos, torch.tensor(-999.0))
 
     kbest_logP, kbest_hyps = torch.topk(torch.sum(beam_logP,dim=2), k=K, dim=1) #both are [bs, K] (finds the K-best of dimension 1 (B*K))
     #logging.info('(kbest) kbest_hyps = {} kbest_logP = {}'.format(kbest_hyps.shape, kbest_logP.shape))
