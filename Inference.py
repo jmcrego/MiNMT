@@ -170,7 +170,7 @@ class BeamSearch():
     K = beam_hyps.shape[1]
     lt = beam_hyps.shape[2]
     beam_pad = self.pad_eos(beam_hyps)
-    beam_logP[beam_pad==True] = -999.9
+    beam_logP[beam_pad==True] = 0.0
     print('steps = {}'.format(lt))
 
     for b in range(bs):
