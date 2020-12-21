@@ -173,10 +173,11 @@ class BeamSearch():
       curr_hyps = beam_hyps[b] #[K,lt]
       curr_logP = beam_logP[b] #[K,lt]
       kbest_logP, kbest_hyps = torch.topk(torch.sum(curr_logP, dim=1), k=K, dim=0) #both are [bs, K]
-      for h in range(len(kbest_hyps)):
-        k = kbest_hyps[h]
+      curr_hyps = curr_hyps[kbest_hyps]
+      curr_logP = curr_logP[kbest_hyps]
+      for k in range(len(curr_hyps)):
         cost = sum(curr_logP[k])
-        sys.stdout.write('step:{} batch:{} hyp:{} logP:{:.5f} |||'.format(lt,b,h,cost))
+        sys.stdout.write('step:{} batch:{} hyp:{} logP:{:.5f} |||'.format(lt,b,k,cost))
         for i in range(len(curr_hyps[k])):
           idx = curr_hyps[k,i].item()
           wrd = self.tgt_vocab[idx]
