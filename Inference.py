@@ -24,6 +24,7 @@ class BeamSearch():
     self.max_size = max_size
     self.n_best = n_best
     self.device = device
+    self.final_hyps = [] * beam_size
 
   def traverse(self, batch_src):
     src, msk_src = prepare_input_src(batch_src, self.tgt_vocab.idx_pad, self.device)
@@ -97,9 +98,9 @@ class BeamSearch():
     beam_logP = beam_logP.contiguous().view(bs,B*K,lt) #[bs, B*K, lt]
     #logging.info('(reshape) beam_hyps = {} beam_logP = {}'.format(beam_hyps.shape, beam_logP.shape))
 
-    ### hyps that already produced <eos> are assigned a low logP
+    ### hyps that already produced <eos> are assigned a low logP to make them disappear in next beam step
     beam_pad = self.pad_eos(beam_hyps) #[bs, B*K, lt]
-    beam_logP[beam_pad==True] = -999.9
+    beam_logP[beam_pad==True] = -float('Inf')
 
     #keep the K-best of each batch (reduce B*K hyps to the K-best)
     kbest_logP, kbest_hyps = torch.topk(torch.sum(beam_logP,dim=2), k=K, dim=1) #both are [bs, K] (finds the K-best of dimension 1 (B*K))
@@ -128,39 +129,40 @@ class BeamSearch():
     #[eos]
     #[eos]
     #[eos]
-    hyps = torch.cat((hyps,col), dim=-1)
+    hyps = torch.cat((hyps,col), dim=-1) #[bs*N,lt+1]
     #print('hyps',hyps)
     #[1,eos,3,eos]
     #[1,2,eos,eos]
     #[1,2,3,eos]
     #first_eos contains the index of the first <eos> on each row in hyps
-    first_eos = torch.stack( [(row==eos).nonzero(as_tuple=False).min() for row in hyps], dim=-1 )
+    first_eos = torch.stack( [(row==eos).nonzero(as_tuple=False).min() for row in hyps], dim=-1 ) #[bs*N,1]
     #print('first_eos',first_eos)
     #[1]
     #[2]
     #[3]
     #first eos has the same shape than hyps (repeat columns)
-    first_eos = first_eos.repeat_interleave(repeats=hyps.shape[1], dim=0).view(hyps.shape)
+    first_eos = first_eos.repeat_interleave(repeats=hyps.shape[1], dim=0).view(hyps.shape) #[bs*N,lt+1]
     #print('first_eos',first_eos)
     #[1,1,1,1]
     #[2,2,2,2]
     #[3,3,3,3]
-    x = torch.arange(hyps.shape[1]).view(1,hyps.shape[1])
+    x = torch.arange(hyps.shape[1]).view(1,hyps.shape[1]) #[1,lt+1]
     #print('x',x)
     #[0,1,2,3]
-    x = x.repeat_interleave(repeats=hyps.shape[0], dim=0)
+    x = x.repeat_interleave(repeats=hyps.shape[0], dim=0) #[bs*N,lt+1]
     #print('x',x)
     #[0,1,2,3]
     #[0,1,2,3]
     #[0,1,2,3]
-    #pad after the first <eos> of each row and discard last column
-    pad = x.gt(first_eos)[:,:-1]
+    #pad after the first <eos> of each row
+    pad = x.gt(first_eos) #[bs*N,lt+1]
     #print('pad',pad)
-    #[F,F,T]
-    #[F,F,F]
-    #[F,F,F]
-    #back to the original shape of hyps
-    return pad.view(bs,N,lt)
+    #[F,F,T,T]
+    #[F,F,F,T]
+    #[F,F,F,F]
+    #back to the original shape of hyps and discard last column (lt+1)
+    pad = pad[:,:-1].view(bs,N,lt) #[bs,N,lt]
+    return pad
 
   def print(self, beam_hyps, beam_logP):
     #beam_hyps and beam_logP are [bs,K,lt]
