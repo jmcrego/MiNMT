@@ -4,6 +4,7 @@ import sys
 import os
 import logging
 import numpy as np
+from collections import defaultdict
 import torch
 
 def prepare_input_src(batch_src, idx_pad, device):
@@ -24,7 +25,7 @@ class BeamSearch():
     self.max_size = max_size
     self.n_best = n_best
     self.device = device
-    self.final_hyps = [] * beam_size
+    self.final_hyps = [defaultdict()] * beam_size
 
   def traverse(self, batch_src):
     src, msk_src = prepare_input_src(batch_src, self.tgt_vocab.idx_pad, self.device)
@@ -99,9 +100,12 @@ class BeamSearch():
     beam_logP = beam_logP.contiguous().view(bs,B*K,lt) #[bs, B*K, lt]
     #logging.info('(reshape) beam_hyps = {} beam_logP = {}'.format(beam_hyps.shape, beam_logP.shape))
 
-    ### hyps that already produced <eos> are assigned 0.0 logP
+    ### hyps that already produced <eos> are assigned logP=-Inf
     beam_pad = self.pad_eos(beam_hyps) #[bs, B*K, lt]
-    beam_logP[beam_pad==True] = 0.0 #-float('Inf')
+    beam_logP[beam_pad==True] = -float('Inf') #[bs, B*K, lt]
+    ### save thos hyps that just produced <eos>
+    self.save_hyps(beam_hyps, beam_logP, beam_pad)
+
 
     #keep the K-best of each batch (reduce B*K hyps to the K-best)
     kbest_logP, kbest_hyps = torch.topk(torch.sum(beam_logP,dim=2), k=K, dim=1) #both are [bs, K] (finds the K-best of dimension 1 (B*K))
@@ -113,6 +117,19 @@ class BeamSearch():
 
     return beam_hyps, beam_logP
 
+  def save_hyps(self, beam_hyps, beam_logP, beam_pad):
+    #beam_hyps, beam_logP, beam_pad are [bs,B*K,lt]
+    bs = beam_hyps.shape[0]
+    N = beam_hyps.shape[1]
+    lt = beam_hyps.shape[2]
+
+    for b in range(bs):
+      for n in range(N):
+        if beam_hyps[b,n,-1]==self.tgt_vocab.idx_eos:
+          l = beam_hyps[b,n].tolist()
+          c = sum(beam_logP[b,n]).item()
+          self.final_hyps[b][l] = c
+          print(c,[self.tgt_vocab[t] for t in l])
 
   def pad_eos(self, hyps):
     #hyps is [bs,N,lt]
@@ -190,7 +207,6 @@ class BeamSearch():
           sys.stdout.write(' {}:{:.5f}'.format(wrd, logP))
           #sys.stdout.write(' {}:{}:{:.5f}'.format(idx, wrd, logP))
         print()
-
 
 ##############################################################################################################
 ### Inference ################################################################################################
