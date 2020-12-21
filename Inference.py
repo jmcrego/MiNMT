@@ -97,16 +97,11 @@ class BeamSearch():
     beam_logP = beam_logP.contiguous().view(bs,B*K,lt) #[bs, B*K, lt]
     #logging.info('(reshape) beam_hyps = {} beam_logP = {}'.format(beam_hyps.shape, beam_logP.shape))
 
-    ### keep the K-best of each batch (reduce B*K hyps to the K-best)
+    ### hyps that already produced <eos> are assigned a low logP
     beam_pad = self.pad_eos(beam_hyps) #[bs, B*K, lt]
-    beam_logP = beam_logP * beam_pad   #[bs, B*K, lt]
+    beam_logP[beam_pad==True] = -999.9
 
-
-    ### copy final hypotheses (last token is <eos>) to final_hyps, final_logP
-    ### assign them a low logP in beam_logP to remove them from beam in next step
-    beam_logP[beam_hyps==self.tgt_vocab.idx_eos] = -999.9
-#    beam_logP.where(beam_hyps==self.tgt_vocab.idx_eos, torch.tensor(-999.0))
-
+    #keep the K-best of each batch (reduce B*K hyps to the K-best)
     kbest_logP, kbest_hyps = torch.topk(torch.sum(beam_logP,dim=2), k=K, dim=1) #both are [bs, K] (finds the K-best of dimension 1 (B*K))
     #logging.info('(kbest) kbest_hyps = {} kbest_logP = {}'.format(kbest_hyps.shape, kbest_logP.shape))
 
@@ -159,11 +154,11 @@ class BeamSearch():
     #[0,1,2,3]
     #[0,1,2,3]
     #pad after the first <eos> of each row and discard last column
-    pad = x.le(first_eos)[:,:-1]
+    pad = x.gt(first_eos)[:,:-1]
     #print('pad',pad)
-    #[T,T,F]
-    #[T,T,T]
-    #[T,T,T]
+    #[F,F,T]
+    #[F,F,F]
+    #[F,F,F]
     #back to the original shape of hyps
     return pad.view(bs,N,lt)
 
