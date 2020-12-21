@@ -25,7 +25,7 @@ class BeamSearch():
     self.max_size = max_size
     self.n_best = n_best
     self.device = device
-    self.final_hyps = [defaultdict()] * beam_size
+    self.final_hyps = [defaultdict(list)] * beam_size
 
   def traverse(self, batch_src):
     src, msk_src = prepare_input_src(batch_src, self.tgt_vocab.idx_pad, self.device)
@@ -98,11 +98,11 @@ class BeamSearch():
     beam_logP = beam_logP.contiguous().view(bs,B*K,lt) #[bs, B*K, lt]
     #logging.info('(reshape) beam_hyps = {} beam_logP = {}'.format(beam_hyps.shape, beam_logP.shape))
 
-    ### hyps that already produced <eos> are assigned logP=-Inf
+    ### hyps that already produced <eos> are assigned logP=-Inf to prevent continue on beam next step
     beam_pad = self.pad_eos(beam_hyps) #[bs, B*K, lt]
     beam_logP[beam_pad==True] = -float('Inf') #[bs, B*K, lt]
     ### save thos hyps that just produced <eos>
-    self.save_hyps(beam_hyps, beam_logP, beam_pad)
+    self.save_hyps(beam_hyps, beam_logP)
 
 
     #keep the K-best of each batch (reduce B*K hyps to the K-best)
@@ -115,7 +115,7 @@ class BeamSearch():
 
     return beam_hyps, beam_logP
 
-  def save_hyps(self, beam_hyps, beam_logP, beam_pad):
+  def save_hyps(self, beam_hyps, beam_logP):
     #beam_hyps, beam_logP, beam_pad are [bs,B*K,lt]
     bs = beam_hyps.shape[0]
     N = beam_hyps.shape[1]
