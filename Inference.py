@@ -54,10 +54,14 @@ class BeamSearch():
     #logging.info('msk_src = {}'.format(msk_src.shape))
 
     for lt in range(2,self.max_size+1):
+      print(lt)
       ### produced K-best hypotheses for all histories in beam_hyps (keep only hypotheses following the last token)
       y_next = self.model.decode(z_src, beam_hyps.contiguous().view(bs*K,lt), msk_src, msk_tgt=None)[:,-1,:] #[bs*K,lt,Vt] => [bs*K,Vt]
       next_logP, next_hyps = torch.topk(y_next, k=K, dim=1) #both are [bs*K,K]
-      beam_hyps, beam_logP = self.expand_beam_with_next(beam_hyps, beam_logP, next_hyps.contiguous().view(bs,K,K), next_logP.contiguous().view(bs,K,K)) #both are [bs*K,lt]
+      beam_hyps, beam_logP = self.expand_beam_with_next(beam_hyps, beam_logP, next_hyps.contiguous().view(bs,K,K), next_logP.contiguous().view(bs,K,K)) #both are [bs,K,lt]
+      if torch.all(torch.any(beam_logP == -float('Inf'), dim=2)): 
+        print(beam_logP)
+        break
 #      if torch.all(torch.any(beam_hyps == self.tgt_vocab.idx_eos, dim=2)): #all hypotheses have produced <eos>
 #        break
 
@@ -98,7 +102,7 @@ class BeamSearch():
     beam_logP = beam_logP.contiguous().view(bs,B*K,lt) #[bs, B*K, lt]
     #logging.info('(reshape) beam_hyps = {} beam_logP = {}'.format(beam_hyps.shape, beam_logP.shape))
 
-    ### hyps that already produced <eos> are assigned logP=-Inf to prevent continue on beam next step
+    ### hyps that already produced <eos> are assigned logP=-Inf to prevent force leave the beam next step
     beam_pad = self.pad_eos(beam_hyps) #[bs, B*K, lt]
     beam_logP[beam_pad==True] = -float('Inf') #[bs, B*K, lt]
     ### save thos hyps that just produced <eos>
