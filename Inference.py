@@ -7,6 +7,14 @@ import numpy as np
 from collections import defaultdict
 import torch
 
+def encode_src(batch_src, model, idx_pad, device):
+  src = [torch.tensor(seq) for seq in batch_src] #[bs, ls]
+  src = torch.nn.utils.rnn.pad_sequence(src, batch_first=True, padding_value=idx_pad).to(device) #src is [bs,ls]
+  msk_src = (src != idx_pad).unsqueeze(-2) #[bs,1,ls] (False where <pad> True otherwise)
+  z_src = model.encode(src, msk_src) #[bs,ls,ed]
+  return msk_src, z_src
+
+
 ##############################################################################################################
 ### Greedy ###################################################################################################
 ##############################################################################################################
@@ -25,11 +33,15 @@ class GreedySearch():
     ### encode the src sequence
     ###
 
-    src = [torch.tensor(seq) for seq in batch_src] #[bs, ls]
-    src = torch.nn.utils.rnn.pad_sequence(src, batch_first=True, padding_value=self.tgt_vocab.idx_pad).to(self.device) #src is [bs,ls]
-    msk_src = (src != self.tgt_vocab.idx_pad).unsqueeze(-2) #[bs,1,ls] (False where <pad> True otherwise)
-    z_src = self.model.encode(src, msk_src) #[bs,ls,ed]
-    bs = src.shape[0]  #batch_size
+    msk_src, z_src = encode_src(self.model, self.tgt_vocab.idx_pad, self.device)
+    #msk_src [bs,1,ls] (False where <pad> True otherwise)
+    #z_src [bs,ls,ed]
+    bs = z_src.shape[0]  #batch_size
+
+#    src = [torch.tensor(seq) for seq in batch_src] #[bs, ls]
+#    src = torch.nn.utils.rnn.pad_sequence(src, batch_first=True, padding_value=self.tgt_vocab.idx_pad).to(self.device) #src is [bs,ls]
+#    msk_src = (src != self.tgt_vocab.idx_pad).unsqueeze(-2) #[bs,1,ls] (False where <pad> True otherwise)
+#    z_src = self.model.encode(src, msk_src) #[bs,ls,ed]
 
     ###
     ### decode step-by-step (produce one tgt token at each time step)
@@ -46,10 +58,8 @@ class GreedySearch():
       ### extend beam hyps with next token
       beam_hyps = torch.cat((beam_hyps, next_hyps), dim=-1) #[bs, lt+1]
       beam_logP = torch.cat((beam_logP, next_logP), dim=-1) #[bs, lt+1]
-      finished = next_hyps==self.tgt_vocab.idx_eos
       beam_done = torch.logical_or(beam_done, next_hyps==self.tgt_vocab.idx_eos)
-      lt = beam_hyps.shape[1]
-      if lt >= self.max_size or torch.all(beam_done):
+      if beam_hyps.shape[1] >= self.max_size or torch.all(beam_done):
         break
 
     for hyp in beam_hyps:
@@ -82,11 +92,16 @@ class BeamSearch():
     ### encode the src sequence
     ###
 
-    src = [torch.tensor(seq) for seq in batch_src] #[bs, ls]
-    src = torch.nn.utils.rnn.pad_sequence(src, batch_first=True, padding_value=self.tgt_vocab.idx_pad).to(self.device) #src is [bs,ls]
-    msk_src = (src != self.tgt_vocab.idx_pad).unsqueeze(-2) #[bs,1,ls] (False where <pad> True otherwise)
-    z_src = self.model.encode(src, msk_src) #[bs,ls,ed]
-    bs = src.shape[0]  #batch_size
+    msk_src, z_src = encode_src(self.model, self.tgt_vocab.idx_pad, self.device)
+    #msk_src [bs,1,ls] (False where <pad> True otherwise)
+    #z_src [bs,ls,ed]
+    bs = z_src.shape[0]  #batch_size
+
+
+#    src = [torch.tensor(seq) for seq in batch_src] #[bs, ls]
+#    src = torch.nn.utils.rnn.pad_sequence(src, batch_first=True, padding_value=self.tgt_vocab.idx_pad).to(self.device) #src is [bs,ls]
+#    msk_src = (src != self.tgt_vocab.idx_pad).unsqueeze(-2) #[bs,1,ls] (False where <pad> True otherwise)
+#    z_src = self.model.encode(src, msk_src) #[bs,ls,ed]
 
     ###
     ### decode step-by-step (produce one tgt token at each time step)
