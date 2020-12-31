@@ -16,6 +16,38 @@ def encode_src(batch_src, model, idx_pad, device):
 
 
 ##############################################################################################################
+### Beam #####################################################################################################
+##############################################################################################################
+class Beam():
+  def __init__(self, K, bs, max_size, idx_bos, device):
+    self.K = K #beam size
+    self.bs = bs #batch size
+    self.max_size = max_size #max hyp length
+    self.idx_bos = idx_bos
+    self.device = device
+
+    ### initialize beam
+    self.beam_hyps = torch.ones([self.bs,1], dtype=int).to(self.device) * self.idx_bos #[bs,lt=1]
+    self.beam_logP = torch.zeros([self.bs,1], dtype=torch.float32).to(self.device)     #[bs,lt=1]
+    self.beam_done = torch.zeros([self.bs,1], dtype=torch.bool).to(self.device)        #[bs,1]
+
+  def __len__(self):
+    return beam_hyps.shape[1]
+
+  def done(self):
+    return beam_hyps.shape[1] >= self.max_size or torch.all(beam_done):
+
+  def expand(self,y_next):
+    #y_next is [bs,Vt]
+    next_logP, next_hyps = torch.topk(y_next, k=self.K, dim=1) #both are [bs,K=1]
+    beam_hyps = torch.cat((beam_hyps, next_hyps), dim=-1) #[bs, lt+1]
+    beam_logP = torch.cat((beam_logP, next_logP), dim=-1) #[bs, lt+1]
+    beam_done = torch.logical_or(beam_done, next_hyps==self.idx_eos)
+
+  def hyps(self):
+    return self.beam_hyps
+
+##############################################################################################################
 ### Greedy ###################################################################################################
 ##############################################################################################################
 class GreedySearch():
@@ -28,41 +60,24 @@ class GreedySearch():
 
   def traverse(self, batch_src):
     Vt, ed = self.model.tgt_emb.weight.shape
+    bs = len(batch_src) #batch_size
 
     ###
     ### encode the src sequence
     ###
-
     msk_src, z_src = encode_src(batch_src, self.model, self.tgt_vocab.idx_pad, self.device)
-    #msk_src [bs,1,ls] (False where <pad> True otherwise)
+    #msk_src [bs,1,ls]
     #z_src [bs,ls,ed]
-    bs = z_src.shape[0]  #batch_size
-
-#    src = [torch.tensor(seq) for seq in batch_src] #[bs, ls]
-#    src = torch.nn.utils.rnn.pad_sequence(src, batch_first=True, padding_value=self.tgt_vocab.idx_pad).to(self.device) #src is [bs,ls]
-#    msk_src = (src != self.tgt_vocab.idx_pad).unsqueeze(-2) #[bs,1,ls] (False where <pad> True otherwise)
-#    z_src = self.model.encode(src, msk_src) #[bs,ls,ed]
 
     ###
     ### decode step-by-step (produce one tgt token at each time step)
     ###
+    beam = Beam(1, bs, self.max_size, self.tgt_vocab.idx_bos, self.device)
+    while not beam.done():
+      y_next = self.model.decode(z_src, beam.hyps(), msk_src, msk_tgt=None)[:,-1,:] #[bs,lt,Vt] => [bs,Vt]
+      beam.expand(y_next)
 
-    ### initialize search with <bos> (logP=0.0)
-    beam_hyps = torch.ones([bs,1], dtype=int).to(self.device) * self.tgt_vocab.idx_bos #[bs,lt=1]
-    beam_logP = torch.zeros([bs,1], dtype=torch.float32).to(self.device)               #[bs,lt=1]
-    beam_done = torch.zeros([bs,1], dtype=torch.bool).to(self.device) #[bs,1]
-
-    while True:
-      y_next = self.model.decode(z_src, beam_hyps, msk_src, msk_tgt=None)[:,-1,:] #[bs,lt,Vt] => [bs,Vt]
-      next_logP, next_hyps = torch.topk(y_next, k=1, dim=1) #both are [bs,1]
-      ### extend beam hyps with next token
-      beam_hyps = torch.cat((beam_hyps, next_hyps), dim=-1) #[bs, lt+1]
-      beam_logP = torch.cat((beam_logP, next_logP), dim=-1) #[bs, lt+1]
-      beam_done = torch.logical_or(beam_done, next_hyps==self.tgt_vocab.idx_eos)
-      if beam_hyps.shape[1] >= self.max_size or torch.all(beam_done):
-        break
-
-    for hyp in beam_hyps:
+    for hyp in beam.hyps():
       toks = [self.tgt_vocab[idx.item()] for idx in hyp]
       print(' '.join(toks))
 
@@ -115,7 +130,6 @@ class BeamSearch():
     y_next = self.model.decode(z_src, beam_hyps, msk_src, msk_tgt=None)[:,-1,:]         #[bs,lt,Vt] => [bs,Vt]
     next_logP, next_hyps = torch.topk(y_next, k=K, dim=1) #both are [bs,K]
     beam_hyps, beam_logP = self.expand_beam(beam_hyps.contiguous().view(bs,1,1), beam_logP.contiguous().view(bs,1,1), next_hyps.contiguous().view(bs,1,K), next_logP.contiguous().view(bs,1,K)) #both are [bs,K,lt]
-    #logging.info('beam_hyps = {} beam_logP = {}'.format(beam_hyps.shape, beam_logP.shape))
 
     ### from now on, z_src contains K hyps per batch [bs*K,ls,ed]
     z_src = z_src.repeat_interleave(repeats=K, dim=0) #[bs*K,ls,ed] (repeats dimesion 0, K times)
