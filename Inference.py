@@ -35,7 +35,7 @@ class Beam():
     return self.beam_hyps.shape[1]
 
   def done(self):
-    return beam_hyps.shape[1] >= self.max_size or torch.all(beam_done):
+    return self.beam_hyps.shape[1] >= self.max_size or torch.all(self.beam_done):
 
   def expand(self,y_next):
     #y_next is [bs,Vt]
