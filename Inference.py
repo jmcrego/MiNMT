@@ -19,11 +19,12 @@ def encode_src(batch_src, model, idx_pad, device):
 ### Beam #####################################################################################################
 ##############################################################################################################
 class Beam():
-  def __init__(self, K, bs, max_size, idx_bos, device):
+  def __init__(self, K, bs, max_size, idx_bos, idx_eos, device):
     self.K = K #beam size
     self.bs = bs #batch size
     self.max_size = max_size #max hyp length
     self.idx_bos = idx_bos
+    self.idx_eos = idx_eos
     self.device = device
 
     ### initialize beam
@@ -72,7 +73,7 @@ class GreedySearch():
     ###
     ### decode step-by-step (produce one tgt token at each time step)
     ###
-    beam = Beam(1, bs, self.max_size, self.tgt_vocab.idx_bos, self.device)
+    beam = Beam(1, bs, self.max_size, self.tgt_vocab.idx_bos, self.tgt_vocab.idx_eos, self.device)
     while not beam.done():
       y_next = self.model.decode(z_src, beam.hyps(), msk_src, msk_tgt=None)[:,-1,:] #[bs,lt,Vt] => [bs,Vt]
       beam.expand(y_next)
