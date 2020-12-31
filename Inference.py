@@ -32,7 +32,7 @@ class Beam():
     self.beam_done = torch.zeros([self.bs,1], dtype=torch.bool).to(self.device)        #[bs,1]
 
   def __len__(self):
-    return beam_hyps.shape[1]
+    return self.beam_hyps.shape[1]
 
   def done(self):
     return beam_hyps.shape[1] >= self.max_size or torch.all(beam_done):
