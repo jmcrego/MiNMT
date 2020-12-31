@@ -7,11 +7,57 @@ import numpy as np
 from collections import defaultdict
 import torch
 
-def prepare_input_src(batch_src, idx_pad, device):
-  src = [torch.tensor(seq)      for seq in batch_src] 
-  src = torch.nn.utils.rnn.pad_sequence(src, batch_first=True, padding_value=idx_pad).to(device)
-  msk_src = (src != idx_pad).unsqueeze(-2) #[bs,1,ls] (False where <pad> True otherwise)
-  return src, msk_src #, msk_tgt
+##############################################################################################################
+### Greedy ###################################################################################################
+##############################################################################################################
+class GreedySearch():
+  def __init__(self, model, tgt_vocab, max_size, device):
+    assert tgt_vocab.idx_pad == model.idx_pad
+    self.model = model
+    self.tgt_vocab = tgt_vocab
+    self.max_size = max_size
+    self.device = device
+
+  def traverse(self, batch_src):
+    Vt, ed = self.model.tgt_emb.weight.shape
+
+    ###
+    ### encode the src sequence
+    ###
+
+    src = [torch.tensor(seq) for seq in batch_src] #[bs, ls]
+    src = torch.nn.utils.rnn.pad_sequence(src, batch_first=True, padding_value=self.tgt_vocab.idx_pad).to(self.device) #src is [bs,ls]
+    msk_src = (src != self.tgt_vocab.idx_pad).unsqueeze(-2) #[bs,1,ls] (False where <pad> True otherwise)
+    z_src = self.model.encode(src, msk_src) #[bs,ls,ed]
+    bs = src.shape[0]  #batch_size
+
+    ###
+    ### decode step-by-step (produce one tgt token at each time step)
+    ###
+
+    ### initialize search with <bos> (logP=0.0)
+    beam_hyps = torch.ones([bs,1], dtype=int).to(self.device) * self.tgt_vocab.idx_bos #[bs,lt=1]
+    beam_logP = torch.zeros([bs,1], dtype=torch.float32).to(self.device)               #[bs,lt=1]
+    beam_done = torch.zeros([bs,1], dtype=torch.bool).to(self.device) #[bs,1]
+
+    while True:
+      y_next = self.model.decode(z_src, beam_hyps, msk_src, msk_tgt=None)[:,-1,:] #[bs,lt,Vt] => [bs,Vt]
+      next_logP, next_hyps = torch.topk(y_next, k=1, dim=1) #both are [bs,1]
+      ### extend beam hyps with next token
+      beam_hyps = torch.cat((beam_hyps, next_hyps), dim=-1) #[bs, lt+1]
+      beam_logP = torch.cat((beam_logP, next_logP), dim=-1) #[bs, lt+1]
+      finished = next_hyps==self.tgt_vocab.idx_eos
+      beam_done = torch.logical_or(beam_done, next_hyps==self.tgt_vocab.idx_eos)
+      lt = beam_hyps.shape[1]
+      if lt >= self.max_size or torch.all(beam_done):
+        break
+
+    hyps = beam_hyps.numpy()
+    for hyp in hyps:
+      toks = [self.tgt_vocab[idx] for idx in hyp]
+      print(' '.join(hyp))
+
+
 
 ##############################################################################################################
 ### Beam #####################################################################################################
@@ -21,30 +67,40 @@ class BeamSearch():
     assert tgt_vocab.idx_pad == model.idx_pad
     self.model = model
     self.tgt_vocab = tgt_vocab
-    self.beam_size = beam_size
+    #self.beam_size = beam_size
     self.max_size = max_size
     self.n_best = n_best
     self.device = device
-    self.final_hyps = [defaultdict()] * beam_size
 
   def traverse(self, batch_src):
-    src, msk_src = prepare_input_src(batch_src, self.tgt_vocab.idx_pad, self.device)
-    K = self.beam_size #beam_size
+    K = len(batch_src) #self.beam_size #beam_size
     N = self.n_best    #nbest_size
-    bs = src.shape[0]  #batch_size
-    ls = src.shape[1]  #input sequence length
     Vt, ed = self.model.tgt_emb.weight.shape
-    #src is [bs,ls]
-    #msk_src is [bs,ls]
+
+    self.final_hyps = [defaultdict()] * beam_size
+
+    ###
+    ### encode the src sequence
+    ###
+
+    src = [torch.tensor(seq) for seq in batch_src] #[bs, ls]
+    src = torch.nn.utils.rnn.pad_sequence(src, batch_first=True, padding_value=self.tgt_vocab.idx_pad).to(self.device) #src is [bs,ls]
+    msk_src = (src != self.tgt_vocab.idx_pad).unsqueeze(-2) #[bs,1,ls] (False where <pad> True otherwise)
     z_src = self.model.encode(src, msk_src) #[bs,ls,ed]
+    bs = src.shape[0]  #batch_size
+
+    ###
+    ### decode step-by-step (produce one tgt token at each time step)
+    ###
 
     ### initialize stack with <bos> (logP=0.0)
     beam_hyps = torch.ones([bs,1], dtype=int).to(self.device) * self.tgt_vocab['<bos>'] #[bs,lt=1]
     beam_logP = torch.zeros([bs,1], dtype=torch.float32).to(self.device)                #[bs,lt=1]
+
     ### produce first token after <bos>
     y_next = self.model.decode(z_src, beam_hyps, msk_src, msk_tgt=None)[:,-1,:]         #[bs,lt,Vt] => [bs,Vt]
     next_logP, next_hyps = torch.topk(y_next, k=K, dim=1) #both are [bs,K]
-    beam_hyps, beam_logP = self.expand_beam_with_next(beam_hyps.contiguous().view(bs,1,1), beam_logP.contiguous().view(bs,1,1), next_hyps.contiguous().view(bs,1,K), next_logP.contiguous().view(bs,1,K)) #both are [bs,K,lt]
+    beam_hyps, beam_logP = self.expand_beam(beam_hyps.contiguous().view(bs,1,1), beam_logP.contiguous().view(bs,1,1), next_hyps.contiguous().view(bs,1,K), next_logP.contiguous().view(bs,1,K)) #both are [bs,K,lt]
     #logging.info('beam_hyps = {} beam_logP = {}'.format(beam_hyps.shape, beam_logP.shape))
 
     ### from now on, z_src contains K hyps per batch [bs*K,ls,ed]
@@ -54,13 +110,11 @@ class BeamSearch():
     #logging.info('msk_src = {}'.format(msk_src.shape))
 
     for lt in range(2,self.max_size+1):
-      ### produced K-best hypotheses for all histories in beam_hyps (keep only hypotheses following the last token)
       y_next = self.model.decode(z_src, beam_hyps.contiguous().view(bs*K,lt), msk_src, msk_tgt=None)[:,-1,:] #[bs*K,lt,Vt] => [bs*K,Vt]
       next_logP, next_hyps = torch.topk(y_next, k=K, dim=1) #both are [bs*K,K]
-      beam_hyps, beam_logP = self.expand_beam_with_next(beam_hyps, beam_logP, next_hyps.contiguous().view(bs,K,K), next_logP.contiguous().view(bs,K,K)) #both are [bs,K,lt]
+      beam_hyps, beam_logP = self.expand_beam(beam_hyps, beam_logP, next_hyps.contiguous().view(bs,K,K), next_logP.contiguous().view(bs,K,K)) #both are [bs,K,lt]
 
-      #if torch.all(torch.any(beam_logP == -float('Inf'), dim=2)): 
-      if torch.any(beam_logP == -float('Inf'), dim=2): 
+      if torch.all(torch.any(beam_logP == -float('Inf'), dim=2)): 
         print(beam_logP)
         break
 #      if torch.all(torch.any(beam_hyps == self.tgt_vocab.idx_eos, dim=2)): #all hypotheses have produced <eos>
@@ -69,7 +123,7 @@ class BeamSearch():
     sys.exit()
 
 
-  def expand_beam_with_next(self, beam_hyps, beam_logP, next_hyps, next_logP):
+  def expand_beam(self, beam_hyps, beam_logP, next_hyps, next_logP):
     #beam_hyps is [bs,B,lt]
     #beam_logP is [bs,B,lt]
     #next_hyps is [bs,B,K]
@@ -228,10 +282,12 @@ class Inference():
 
     with torch.no_grad():
       self.model.eval()
-      b = BeamSearch(self.model, self.tgt_vocab, self.beam_size, self.max_size, self.n_best, device)
+      #b = BeamSearch(self.model, self.tgt_vocab, self.beam_size, self.max_size, self.n_best, device)
+      g = GreedySearch(self.model, self.tgt_vocab, self.max_size, device)
       for i_batch, (batch_src, _) in enumerate(testset):
         logging.debug('Translate #batch:{}'.format(i_batch))
-        b.traverse(batch_src)
+        #b.traverse(batch_src)
+        g.traverse(batch_src)
 
  
 
