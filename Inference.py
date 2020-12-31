@@ -40,9 +40,9 @@ class Beam():
   def expand(self,y_next):
     #y_next is [bs,Vt]
     next_logP, next_hyps = torch.topk(y_next, k=self.K, dim=1) #both are [bs,K=1]
-    beam_hyps = torch.cat((beam_hyps, next_hyps), dim=-1) #[bs, lt+1]
-    beam_logP = torch.cat((beam_logP, next_logP), dim=-1) #[bs, lt+1]
-    beam_done = torch.logical_or(beam_done, next_hyps==self.idx_eos)
+    self.beam_hyps = torch.cat((self.beam_hyps, next_hyps), dim=-1) #[bs, lt+1]
+    self.beam_logP = torch.cat((self.beam_logP, next_logP), dim=-1) #[bs, lt+1]
+    self.beam_done = torch.logical_or(self.beam_done, next_hyps==self.idx_eos)
 
   def hyps(self):
     return self.beam_hyps
