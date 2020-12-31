@@ -33,7 +33,7 @@ class GreedySearch():
     ### encode the src sequence
     ###
 
-    msk_src, z_src = encode_src(self.model, self.tgt_vocab.idx_pad, self.device)
+    msk_src, z_src = encode_src(batch_src, self.model, self.tgt_vocab.idx_pad, self.device)
     #msk_src [bs,1,ls] (False where <pad> True otherwise)
     #z_src [bs,ls,ed]
     bs = z_src.shape[0]  #batch_size
@@ -92,7 +92,7 @@ class BeamSearch():
     ### encode the src sequence
     ###
 
-    msk_src, z_src = encode_src(self.model, self.tgt_vocab.idx_pad, self.device)
+    msk_src, z_src = encode_src(batch_src, self.model, self.tgt_vocab.idx_pad, self.device)
     #msk_src [bs,1,ls] (False where <pad> True otherwise)
     #z_src [bs,ls,ed]
     bs = z_src.shape[0]  #batch_size
