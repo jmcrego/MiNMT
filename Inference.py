@@ -52,9 +52,8 @@ class GreedySearch():
       if lt >= self.max_size or torch.all(beam_done):
         break
 
-    hyps = beam_hyps.numpy()
-    for hyp in hyps:
-      toks = [self.tgt_vocab[idx] for idx in hyp]
+    for hyp in beam_hyps:
+      toks = [self.tgt_vocab[idx.item()] for idx in hyp]
       print(' '.join(toks))
 
 
