@@ -55,7 +55,7 @@ class GreedySearch():
     hyps = beam_hyps.numpy()
     for hyp in hyps:
       toks = [self.tgt_vocab[idx] for idx in hyp]
-      print(' '.join(hyp))
+      print(' '.join(toks))
 
 
 
