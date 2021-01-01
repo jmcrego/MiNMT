@@ -65,10 +65,9 @@ class Beam():
     self.beam_logP = torch.cat((self.beam_logP, next_logP), dim=-1) #[B*self.K, lt+1]
     logging.info('[cat] beam_hyps = {} beam_logP = {}'.format(lt, self.beam_hyps.shape, self.beam_logP.shape))
 
-    if self.beam_hyps.shape[0] > self.bs*self.K:
+    if self.K > 1 and self.beam_hyps.shape[0] == self.bs*self.K*self.K:
       #in the initial expansion we keep all generated hypotheses (bs*K) no need to do this
-      #otherwise we must keep the K-best hyps of each batch among the bs*K*K available
-      #keep the K-best of each batch (reduce K*K hyps to the K-best)
+      #otherwise we must keep the K-best hyps among the bs*(K*K) available: reduce K*K into K
       self.beam_hyps = self.beam_hyps.contiguous().view(self.bs,self.K*self.K,lt+1)
       self.beam_logP = self.beam_logP.contiguous().view(self.bs,self.K*self.K,lt+1)
       kbest_logP, kbest_hyps = torch.topk(torch.sum(self.beam_logP,dim=2), k=self.K, dim=1) #both are [bs, K] (finds the K-best of dimension 1 (B*K))
@@ -111,10 +110,8 @@ class BeamSearch():
     beam = Beam(bs, self.beam_size, self.max_size, self.tgt_vocab.idx_bos, self.tgt_vocab.idx_eos, self.device)
     while not beam.done():
       y_next = self.model.decode(z_src, beam.hyps(), msk_src, msk_tgt=None)[:,-1,:] #[bs*K,lt,Vt] => [bs*K,Vt]
-      #logging.info('y_next = {}'.format(y_next.shape))
       beam.expand(y_next)
-
-      ### from now on i decode bs*K hyps (i need z_src/msk_src to be this shape)
+      ### from now on i decode bs*K hyps (i need z_src/msk_src to be the same shape)
       if self.beam_size > 1 and msk_src.shape[0] == bs:
         logging.info('replicate src')
         msk_src = msk_src.repeat_interleave(repeats=K, dim=0) #[bs*K,1,ls] 
