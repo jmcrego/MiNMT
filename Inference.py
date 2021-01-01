@@ -18,8 +18,8 @@ def encode_src(batch_src, model, idx_pad, device):
 ##############################################################################################################
 ### Beam #####################################################################################################
 ##############################################################################################################
-class Beam_greedy():
-  def __init__(self, K, bs, max_size, idx_bos, idx_eos, device):
+class Beam():
+  def __init__(self, bs, K, max_size, idx_bos, idx_eos, device):
     self.K = K #beam size
     self.bs = bs #batch size
     self.max_size = max_size #max hyp length
@@ -30,92 +30,106 @@ class Beam_greedy():
     ### initialize beam
     self.beam_hyps = torch.ones([self.bs,1], dtype=int).to(self.device) * self.idx_bos #[bs,lt=1]
     self.beam_logP = torch.zeros([self.bs,1], dtype=torch.float32).to(self.device)     #[bs,lt=1]
-    self.beam_done = torch.zeros([self.bs,1], dtype=torch.bool).to(self.device)        #[bs,1]
+    #self.beam_done = torch.zeros([self.bs,1], dtype=torch.bool).to(self.device)        #[bs,1]
 
   def done(self):
-    return self.beam_hyps.shape[1] >= self.max_size or torch.all(self.beam_done)
-    #return torch.all(torch.any(beam_hyps==self.idx_eos, dim=1), dim=0) 
+    if self.beam_hyps.shape[-1] >= self.max_size or torch.all(torch.any(self.beam_hyps==self.idx_eos, dim=1)):
+      return True
+    return False
 
   def expand(self,y_next):
-    #y_next is [bs,Vt]
-    next_logP, next_hyps = torch.topk(y_next, k=self.K, dim=1) #both are [bs,K=1]
-    self.beam_hyps = torch.cat((self.beam_hyps, next_hyps), dim=-1) #[bs, lt+1]
-    self.beam_logP = torch.cat((self.beam_logP, next_logP), dim=-1) #[bs, lt+1]
-    self.beam_done = torch.logical_or(self.beam_done, next_hyps==self.idx_eos)
+    #y_next is [B,lt=1] B is the number of hypotheses in y_next to expand (either bs*1 or bs*K)
+
+    #
+    # keep the K-best options in y_next of each of the B hypothesis 
+    #
+    next_logP, next_hyps = torch.topk(y_next, k=self.K, dim=1) #both are [B,self.K]
+    next_hyps = next_hyps.contiguous().view(-1,1) #[B*self.K,1]
+    next_logP = next_logP.contiguous().view(-1,1) #[B*self.K,1]
+    logging.info('next_hyps = {} next_logP = {}'.format(next_hyps.shape, next_logP.shape))
+
+    lt = self.beam_hyps.shape[-1] #number of tgt tokens already generated in hypotheses (initially only <bos>)
+    logging.info('[expand] lt={}'.format(lt))
+
+    #
+    # expand beam_hyps/beam_logP with next_hyps/next_logP
+    #
+    ### first expansion (beam_hyps/beam_logP are [self.bs,lt=1]) and next_hyps/next_logP are [self.bs*self.K,1]
+    ### ulterior expansions (beam_hyps/beam_logP are [self.bs*self.K,lt>1]) and next_hyps/next_logP are [self.bs*self.K*self.K,1]
+    #replicate each hyp in beam K times
+    self.beam_hyps = self.beam_hyps.repeat_interleave(repeats=self.K, dim=0).contiguous().view(-1,lt) #[B,self.K*lt] => [B*self.K,lt=1]
+    self.beam_logP = self.beam_logP.repeat_interleave(repeats=self.K, dim=0).contiguous().view(-1,lt) #[B,self.K*lt] => [B*self.K,lt=1]
+    logging.info('[replicate] beam_hyps = {} beam_logP = {}'.format(lt, self.beam_hyps.shape, self.beam_logP.shape))
+    ### extend beam hyps with new word (next)
+    self.beam_hyps = torch.cat((self.beam_hyps, next_hyps), dim=-1) #[B*self.K, lt+1]
+    self.beam_logP = torch.cat((self.beam_logP, next_logP), dim=-1) #[B*self.K, lt+1]
+    logging.info('[cat] beam_hyps = {} beam_logP = {}'.format(lt, self.beam_hyps.shape, self.beam_logP.shape))
+
+    if self.beam_hyps.shape[0] > self.bs*self.K:
+      #in the initial expansion we keep all generated hypotheses (bs*K) no need to do this
+      #otherwise we must keep the K-best hyps of each batch among the bs*K*K available
+      #keep the K-best of each batch (reduce K*K hyps to the K-best)
+      self.beam_hyps = self.beam_hyps.contiguous().view(self.bs,self.K*self.K,lt+1)
+      self.beam_logP = self.beam_logP.contiguous().view(self.bs,self.K*self.K,lt+1)
+      kbest_logP, kbest_hyps = torch.topk(torch.sum(self.beam_logP,dim=2), k=self.K, dim=1) #both are [bs, K] (finds the K-best of dimension 1 (B*K))
+      logging.info('kbest_hyps = {} kbest_logP = {}'.format(kbest_hyps.shape, kbest_logP.shape))
+      self.beam_hyps = torch.stack([self.beam_hyps[b][inds] for b,inds in enumerate(kbest_hyps)], dim=0).contiguous().view(self.bs*self.K,lt+1)
+      self.beam_logP = torch.stack([self.beam_logP[b][inds] for b,inds in enumerate(kbest_hyps)], dim=0).contiguous().view(self.bs*self.K,lt+1)
+      logging.info('[reduce] beam_hyps = {} beam_logP = {}'.format(lt, self.beam_hyps.shape, self.beam_logP.shape))
 
   def hyps(self):
-    return self.beam_hyps
-
-
-
-class Beam():
-  def __init__(self, K, bs, max_size, idx_bos, idx_eos, device):
-    self.K = K #beam size
-    self.bs = bs #batch size
-    self.max_size = max_size #max hyp length
-    self.idx_bos = idx_bos
-    self.idx_eos = idx_eos
-    self.device = device
-
-    ### initialize beam
-    self.beam_hyps = torch.ones([self.bs,self.K,1], dtype=int).to(self.device) * self.idx_bos #[bs,K,lt=1]
-    self.beam_logP = torch.zeros([self.bs,self.K,1], dtype=torch.float32).to(self.device)     #[bs,K,lt=1]
-    #self.beam_done = torch.zeros([self.bs,self.K,1], dtype=torch.bool).to(self.device)        #[bs,K,1]
-
-  def done(self):
-    #return self.beam_hyps.shape[2] >= self.max_size or torch.all(self.beam_done)
-    return torch.all(torch.any(beam_hyps==self.idx_eos, dim=2), dim=1) 
-
-  def expand(self,y_next):
-    #y_next is [bs,Vt]
-    next_logP, next_hyps = torch.topk(y_next, k=self.K, dim=1) #both are [bs,K=1]
-    self.beam_hyps = torch.cat((self.beam_hyps, next_hyps), dim=-1) #[bs, lt+1]
-    self.beam_logP = torch.cat((self.beam_logP, next_logP), dim=-1) #[bs, lt+1]
-    #self.beam_done = torch.logical_or(self.beam_done, next_hyps==self.idx_eos)
-
-  def hyps(self):
-    return self.beam_hyps
+    return self.beam_hyps 
 
 ##############################################################################################################
-### Greedy ###################################################################################################
+### BeamSearch ###############################################################################################
 ##############################################################################################################
-class GreedySearch():
-  def __init__(self, model, tgt_vocab, max_size, device):
+class BeamSearch():
+  def __init__(self, model, tgt_vocab, beam_size, max_size, device):
     assert tgt_vocab.idx_pad == model.idx_pad
     self.model = model
     self.tgt_vocab = tgt_vocab
     self.max_size = max_size
     self.device = device
+    self.beam_size = beam_size
+    logging.info('Beam Search [init]: beam_size={}'.format(self.beam_size))
 
   def traverse(self, batch_src):
     Vt, ed = self.model.tgt_emb.weight.shape
     bs = len(batch_src) #batch_size
-
+    K = self.beam_size
+    #logging.info('Beam Search [traverse]: batch_size={}'.format(bs))
+    #print(batch_src)
     ###
     ### encode the src sequence
     ###
     msk_src, z_src = encode_src(batch_src, self.model, self.tgt_vocab.idx_pad, self.device)
     #msk_src [bs,1,ls]
     #z_src [bs,ls,ed]
-
     ###
     ### decode step-by-step (produce one tgt token at each time step)
     ###
-    beam = Beam(1, bs, self.max_size, self.tgt_vocab.idx_bos, self.tgt_vocab.idx_eos, self.device)
+    beam = Beam(bs, self.beam_size, self.max_size, self.tgt_vocab.idx_bos, self.tgt_vocab.idx_eos, self.device)
     while not beam.done():
-      y_next = self.model.decode(z_src, beam.hyps(), msk_src, msk_tgt=None)[:,-1,:] #[bs,lt,Vt] => [bs,Vt]
+      y_next = self.model.decode(z_src, beam.hyps(), msk_src, msk_tgt=None)[:,-1,:] #[bs*K,lt,Vt] => [bs*K,Vt]
+      #logging.info('y_next = {}'.format(y_next.shape))
       beam.expand(y_next)
 
+      ### from now on i decode bs*K hyps (i need z_src/msk_src to be this shape)
+      if self.beam_size > 1 and msk_src.shape[0] == bs:
+        logging.info('replicate src')
+        msk_src = msk_src.repeat_interleave(repeats=K, dim=0) #[bs*K,1,ls] 
+        z_src = z_src.repeat_interleave(repeats=K, dim=0) #[bs*K,ls,ed] 
+    ###
+    ### outut hyps
+    ###
     for hyp in beam.hyps():
       toks = [self.tgt_vocab[idx.item()] for idx in hyp]
       print(' '.join(toks))
 
-
-
 ##############################################################################################################
-### Beam #####################################################################################################
+### BeamSearch2 ###############################################################################################
 ##############################################################################################################
-class BeamSearch():
+class BeamSearch2():
   def __init__(self, model, tgt_vocab, beam_size, max_size, n_best, device):
     assert tgt_vocab.idx_pad == model.idx_pad
     self.model = model
@@ -125,7 +139,7 @@ class BeamSearch():
     self.device = device
 
   def traverse(self, batch_src):
-    K = len(batch_src) #self.beam_size #beam_size
+    K = len(batch_src) #beam_size
     N = self.n_best    #nbest_size
     Vt, ed = self.model.tgt_emb.weight.shape
     bs = len(batch_src) #batch_size
@@ -139,6 +153,8 @@ class BeamSearch():
     msk_src, z_src = encode_src(batch_src, self.model, self.tgt_vocab.idx_pad, self.device)
     #msk_src [bs,1,ls] (False where <pad> True otherwise)
     #z_src [bs,ls,ed]
+    msk_src = msk_src.repeat_interleave(repeats=K, dim=0) #[bs*K,1,ls] 
+    z_src = z_src.repeat_interleave(repeats=K, dim=0) #[bs*K,ls,ed] 
 
     ###
     ### decode step-by-step (produce one tgt token at each time step)
@@ -333,7 +349,7 @@ class Inference():
     with torch.no_grad():
       self.model.eval()
       #b = BeamSearch(self.model, self.tgt_vocab, self.beam_size, self.max_size, self.n_best, device)
-      g = GreedySearch(self.model, self.tgt_vocab, self.max_size, device)
+      g = BeamSearch(self.model, self.tgt_vocab, self.beam_size, self.max_size, device)
       for i_batch, (batch_src, _) in enumerate(testset):
         logging.debug('Translate #batch:{}'.format(i_batch))
         #b.traverse(batch_src)
