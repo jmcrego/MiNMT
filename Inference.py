@@ -18,7 +18,7 @@ def encode_src(batch_src, model, idx_pad, device):
 ##############################################################################################################
 ### Beam #####################################################################################################
 ##############################################################################################################
-class Beam():
+class Beam_greedy():
   def __init__(self, K, bs, max_size, idx_bos, idx_eos, device):
     self.K = K #beam size
     self.bs = bs #batch size
@@ -32,11 +32,9 @@ class Beam():
     self.beam_logP = torch.zeros([self.bs,1], dtype=torch.float32).to(self.device)     #[bs,lt=1]
     self.beam_done = torch.zeros([self.bs,1], dtype=torch.bool).to(self.device)        #[bs,1]
 
-  def __len__(self):
-    return self.beam_hyps.shape[1]
-
   def done(self):
     return self.beam_hyps.shape[1] >= self.max_size or torch.all(self.beam_done)
+    #return torch.all(torch.any(beam_hyps==self.idx_eos, dim=1), dim=0) 
 
   def expand(self,y_next):
     #y_next is [bs,Vt]
@@ -44,6 +42,36 @@ class Beam():
     self.beam_hyps = torch.cat((self.beam_hyps, next_hyps), dim=-1) #[bs, lt+1]
     self.beam_logP = torch.cat((self.beam_logP, next_logP), dim=-1) #[bs, lt+1]
     self.beam_done = torch.logical_or(self.beam_done, next_hyps==self.idx_eos)
+
+  def hyps(self):
+    return self.beam_hyps
+
+
+
+class Beam():
+  def __init__(self, K, bs, max_size, idx_bos, idx_eos, device):
+    self.K = K #beam size
+    self.bs = bs #batch size
+    self.max_size = max_size #max hyp length
+    self.idx_bos = idx_bos
+    self.idx_eos = idx_eos
+    self.device = device
+
+    ### initialize beam
+    self.beam_hyps = torch.ones([self.bs,self.K,1], dtype=int).to(self.device) * self.idx_bos #[bs,K,lt=1]
+    self.beam_logP = torch.zeros([self.bs,self.K,1], dtype=torch.float32).to(self.device)     #[bs,K,lt=1]
+    #self.beam_done = torch.zeros([self.bs,self.K,1], dtype=torch.bool).to(self.device)        #[bs,K,1]
+
+  def done(self):
+    #return self.beam_hyps.shape[2] >= self.max_size or torch.all(self.beam_done)
+    return torch.all(torch.any(beam_hyps==self.idx_eos, dim=2), dim=1) 
+
+  def expand(self,y_next):
+    #y_next is [bs,Vt]
+    next_logP, next_hyps = torch.topk(y_next, k=self.K, dim=1) #both are [bs,K=1]
+    self.beam_hyps = torch.cat((self.beam_hyps, next_hyps), dim=-1) #[bs, lt+1]
+    self.beam_logP = torch.cat((self.beam_logP, next_logP), dim=-1) #[bs, lt+1]
+    #self.beam_done = torch.logical_or(self.beam_done, next_hyps==self.idx_eos)
 
   def hyps(self):
     return self.beam_hyps
@@ -92,7 +120,6 @@ class BeamSearch():
     assert tgt_vocab.idx_pad == model.idx_pad
     self.model = model
     self.tgt_vocab = tgt_vocab
-    #self.beam_size = beam_size
     self.max_size = max_size
     self.n_best = n_best
     self.device = device
@@ -101,6 +128,7 @@ class BeamSearch():
     K = len(batch_src) #self.beam_size #beam_size
     N = self.n_best    #nbest_size
     Vt, ed = self.model.tgt_emb.weight.shape
+    bs = len(batch_src) #batch_size
 
     self.final_hyps = [defaultdict()] * beam_size
 
@@ -111,13 +139,6 @@ class BeamSearch():
     msk_src, z_src = encode_src(batch_src, self.model, self.tgt_vocab.idx_pad, self.device)
     #msk_src [bs,1,ls] (False where <pad> True otherwise)
     #z_src [bs,ls,ed]
-    bs = z_src.shape[0]  #batch_size
-
-
-#    src = [torch.tensor(seq) for seq in batch_src] #[bs, ls]
-#    src = torch.nn.utils.rnn.pad_sequence(src, batch_first=True, padding_value=self.tgt_vocab.idx_pad).to(self.device) #src is [bs,ls]
-#    msk_src = (src != self.tgt_vocab.idx_pad).unsqueeze(-2) #[bs,1,ls] (False where <pad> True otherwise)
-#    z_src = self.model.encode(src, msk_src) #[bs,ls,ed]
 
     ###
     ### decode step-by-step (produce one tgt token at each time step)
