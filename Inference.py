@@ -95,7 +95,7 @@ class Beam():
   def print(self, tgt_vocab):
     for b in range(self.bs):
       n = 0
-      for hyp, cst in sorted(self.hyps[b].items(), key=lambda item: item[1]):
+      for hyp, cst in sorted(self.final[b].items(), key=lambda item: item[1]):
         toks = [tgt_vocab[int(idx)] for idx in hyp.split(' ')]
         print('{:.5f}\t{}'.format(cst, ' '.join(toks)))
         n += 1
