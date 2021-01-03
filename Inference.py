@@ -38,7 +38,7 @@ class Beam():
       logging.info('reached max_size={}'.format(self.max_size))
       return True
     for dhyps in self.final:
-      if len(dhyps) < self.K:
+      if len(dhyps) < self.N:
         return False ### not enough final hyps for this beam
     return True
 
@@ -83,21 +83,23 @@ class Beam():
       #logging.info('[reduce] beam_hyps = {} beam_logP = {}'.format(lt, self.beam_hyps.shape, self.beam_logP.shape))
 
     ### find ending hypotheses in beam_hyps
-    index_of_finals = (self.beam_hyps[:,-1]==self.idx_eos).nonzero(as_tuple=False) #[n,1] n being the number of final hyps found
+    index_of_finals = (self.beam_hyps[:,-1]==self.idx_eos).nonzero(as_tuple=False).squeeze(-1) #[n] n being the number of final hyps found
     ### assign ending hypotheses -Inf logP and save them in self.final_hyps
-    for i in index_of_finals:
+    for i in index_of_finals.tolist():
       b = i//self.K #the beam it belongs
       h = self.beam_hyps[i].tolist() #[lt] hypothesis
       c = sum(self.beam_logP[i]) / norm_length(len(h),0.6) ### final cost of hypothesis normalized by length
+      #print('i={} b={} c={:.5f} h: {}'.format(i,b,c,h))
       self.addfinal(b,h,c)
       self.beam_logP[i,-1] = -float('Inf') # this hyp wont be considered in next step
 
   def print(self, tgt_vocab):
     for b in range(self.bs):
       n = 0
-      for hyp, cst in sorted(self.final[b].items(), key=lambda item: item[1]):
+      dicthyps = self.final[b]
+      for hyp, cst in sorted(dicthyps.items(), key=lambda kv: kv[1], reverse=True):
         toks = [tgt_vocab[int(idx)] for idx in hyp.split(' ')]
-        print('{:.5f}\t{}'.format(cst, ' '.join(toks)))
+        print('b={} {:.5f}\t{}'.format(b, cst, ' '.join(toks)))
         n += 1
         if n >= self.N:
           break
