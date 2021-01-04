@@ -32,14 +32,16 @@ class Beam():
     self.beam_hyps = torch.ones([self.bs,1], dtype=int).to(self.device) * self.idx_bos #[bs,lt=1]
     self.beam_logP = torch.zeros([self.bs,1], dtype=torch.float32).to(self.device)     #[bs,lt=1]
     self.final = [defaultdict() for i in range(self.bs)]
+    logging.info('built beam')
 
   def done(self):
     if self.beam_hyps.shape[-1] >= self.max_size:
-      logging.info('reached max_size={}'.format(self.max_size))
+      #logging.info('reached max_size={}'.format(self.max_size))
       return True
     for dhyps in self.final:
       if len(dhyps) < self.N:
         return False ### not enough final hyps for this beam
+    #logging.info('reached N={} hyps'.format(self.N))
     return True
 
   def addfinal(self, b, h, c):
@@ -49,7 +51,8 @@ class Beam():
     #y_next is [B,lt=1] B is the number of hypotheses in y_next (either bs*1 or bs*K)
 
     #
-    # keep the K-best options in y_next of each B
+    # y_next contains hypotheses expanding beam_hyps
+    # we keep the K-best choices for each hypothesis B
     #
     next_logP, next_hyps = torch.topk(y_next, k=self.K, dim=1) #both are [B,self.K]
     next_hyps = next_hyps.contiguous().view(-1,1) #[B*self.K,1]
@@ -62,8 +65,8 @@ class Beam():
     ### ulterior expansions (beam_hyps/beam_logP are [self.bs*self.K,lt>1]) and next_hyps/next_logP are [self.bs*self.K*self.K,1]
     #replicate each hyp in beam K times
     lt = self.beam_hyps.shape[1] #length of tgt hypotheses
-    self.beam_hyps = self.beam_hyps.repeat_interleave(repeats=self.K, dim=0).contiguous().view(-1,lt) #[B,self.K*lt] => [B*self.K,lt=1]
-    self.beam_logP = self.beam_logP.repeat_interleave(repeats=self.K, dim=0).contiguous().view(-1,lt) #[B,self.K*lt] => [B*self.K,lt=1]
+    self.beam_hyps = self.beam_hyps.repeat_interleave(repeats=self.K, dim=0) #[B,lt] => [B*self.K,lt=1]
+    self.beam_logP = self.beam_logP.repeat_interleave(repeats=self.K, dim=0) #[B,lt] => [B*self.K,lt=1]
     #logging.info('[replicate] beam_hyps = {} beam_logP = {}'.format(lt, self.beam_hyps.shape, self.beam_logP.shape))
     ### extend beam hyps with new word (next)
     self.beam_hyps = torch.cat((self.beam_hyps, next_hyps), dim=-1) #[B*self.K, lt+1]
@@ -74,12 +77,14 @@ class Beam():
     if self.K > 1 and self.beam_hyps.shape[0] == self.bs*self.K*self.K:
       #in the initial expansion we keep all generated hypotheses (bs*K) no need to do this
       #otherwise we must keep the K-best hyps among the bs*(K*K) available: reduce K*K into K
-      self.beam_hyps = self.beam_hyps.contiguous().view(self.bs,self.K*self.K,lt)
-      self.beam_logP = self.beam_logP.contiguous().view(self.bs,self.K*self.K,lt)
+      self.beam_hyps = self.beam_hyps.contiguous().view(self.bs,self.K*self.K,lt) #[bs,K*K,lt]
+      self.beam_logP = self.beam_logP.contiguous().view(self.bs,self.K*self.K,lt) #[bs,K*K,lt]
       kbest_logP, kbest_hyps = torch.topk(torch.sum(self.beam_logP,dim=2), k=self.K, dim=1) #both are [bs, K] (finds the K-best of dimension 1 (B*K)) no need to norm-length since all have same length
       #logging.info('kbest_hyps = {} kbest_logP = {}'.format(kbest_hyps.shape, kbest_logP.shape))
-      self.beam_hyps = torch.stack([self.beam_hyps[b][inds] for b,inds in enumerate(kbest_hyps)], dim=0).contiguous().view(self.bs*self.K,lt)
-      self.beam_logP = torch.stack([self.beam_logP[b][inds] for b,inds in enumerate(kbest_hyps)], dim=0).contiguous().view(self.bs*self.K,lt)
+      self.beam_hyps = torch.stack([self.beam_hyps[b][inds] for b,inds in enumerate(kbest_hyps)], dim=0) #[bs,K,lt]
+      self.beam_logP = torch.stack([self.beam_logP[b][inds] for b,inds in enumerate(kbest_hyps)], dim=0) #[bs,K,lt]
+      self.beam_hyps = self.beam_hyps.contiguous().view(self.bs*self.K,lt) #[bs*K,lt]
+      self.beam_logP = self.beam_logP.contiguous().view(self.bs*self.K,lt) #[bs*K,lt]
       #logging.info('[reduce] beam_hyps = {} beam_logP = {}'.format(lt, self.beam_hyps.shape, self.beam_logP.shape))
 
     ### find ending hypotheses in beam_hyps
@@ -91,18 +96,26 @@ class Beam():
       c = sum(self.beam_logP[i]) / norm_length(len(h),0.6) ### final cost of hypothesis normalized by length
       #print('i={} b={} c={:.5f} h: {}'.format(i,b,c,h))
       self.addfinal(b,h,c)
-      self.beam_logP[i,-1] = -float('Inf') # this hyp wont be considered in next step
+#      self.beam_logP[i,-1] = -float('Inf') # this hyp wont be considered in next step
 
-  def print(self, tgt_vocab):
+  def printhyps(self, pos, tgt_vocab):
     for b in range(self.bs):
       n = 0
       dicthyps = self.final[b]
       for hyp, cst in sorted(dicthyps.items(), key=lambda kv: kv[1], reverse=True):
         toks = [tgt_vocab[int(idx)] for idx in hyp.split(' ')]
-        print('b={} {:.5f}\t{}'.format(b, cst, ' '.join(toks)))
+        print('b={} p={} {:.5f}\t{}'.format(b, pos[b], cst, ' '.join(toks)))
         n += 1
         if n >= self.N:
           break
+
+  def printbeam(self, tgt_vocab):
+    lt = self.beam_hyps.shape[1]
+    print('lt={}'.format(lt))
+    for b in range(self.beam_hyps.shape[0]):
+      cst = sum(self.beam_logP[b]) / norm_length(lt,0.6)
+      toks = ["{}:{}".format(idx.item(),tgt_vocab[idx.item()]) for idx in self.beam_hyps[b]]
+      print('b={}\t{:.5f}\t{}'.format(b,cst,' '.join(toks)))
 
   def hyps(self):
     return self.beam_hyps 
@@ -140,6 +153,7 @@ class BeamSearch():
     while not beam.done():
       y_next = self.model.decode(z_src, beam.hyps(), msk_src, msk_tgt=None)[:,-1,:] #[bs*K,lt,Vt] => [bs*K,Vt]
       beam.expand(y_next)
+      beam.printbeam(self.tgt_vocab)
       ### from now on i decode bs*K hyps (i need z_src/msk_src to be the same shape)
       if self.beam_size > 1 and msk_src.shape[0] == bs:
         msk_src = msk_src.repeat_interleave(repeats=K, dim=0) #[bs*K,1,ls] 
@@ -166,10 +180,9 @@ class Inference():
     with torch.no_grad():
       self.model.eval()
       beamsearch = BeamSearch(self.model, self.tgt_vocab, self.beam_size, self.n_best, self.max_size, device)
-      for i_batch, (batch_src, _) in enumerate(testset):
-        logging.debug('Translate #batch:{}'.format(i_batch))
+      for pos, batch_src, _ in testset:
         beam = beamsearch.traverse(batch_src)
-        beam.print(self.tgt_vocab) 
+        beam.printhyps(pos, self.tgt_vocab) 
 
 
 

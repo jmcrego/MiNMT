@@ -59,6 +59,12 @@ def load_dataset(src_vocab, tgt_vocab, fset, fsrc, ftgt, shard_size, max_length,
             
 if __name__ == '__main__':
 
+#  X = torch.tensor([[1.0,2.0,3.0],[11.0,12.0,13.0]])
+#  X = X.repeat_interleave(repeats=3, dim=0)
+#  print(X)
+
+#  sys.exit()
+
 #problems = [Problem(h_0, r, R, T, float(dt) for dt in sys.argv[1:])]
 #problems = [Problem(h_0, r, R, T, float(dt)) for dt in sys.argv[1:]]
 
@@ -70,7 +76,6 @@ if __name__ == '__main__':
 #  print('a_addcol',a)
 #  first_eos = torch.stack([(row==0).nonzero().min() for row in a], dim=-1)
 
-#  first_eos = first_eos.repeat_interleave(repeats=a.shape[1], dim=0).view(a.shape)
 #  print('first_eos',first_eos)
 
 #  x = torch.arange(a.shape[1]).view(1,a.shape[1])
@@ -172,8 +177,8 @@ if __name__ == '__main__':
     #plotPoints2d( [i for i in range(1,20000)],  [optScheduler.lrate(i) for i in range(1,20000)], '#Iter', 'LRate', ["dim={} scale={:.2f} warmup={}".format(on.emb_dim,oo.noam_scale,oo.noam_warmup)], 'kk.png')
     criter = LabelSmoothing(len(tgt_vocab), src_vocab.idx_pad, oo.label_smoothing).to(device)
     learning = Learning(model, optScheduler, criter, opts.suffix, src_vocab.idx_pad, ol)
-    valid = load_dataset(src_vocab, tgt_vocab, od.valid_set, od.src_valid, od.tgt_valid, od.shard_size, ol.max_length, ol.batch_size, ol.batch_type)
-    train = load_dataset(src_vocab, tgt_vocab, od.train_set, od.src_train, od.tgt_train, od.shard_size, ol.max_length, ol.batch_size, ol.batch_type)
+    valid = load_dataset(src_vocab, tgt_vocab, od.valid_set, od.src_valid, od.tgt_valid, od.shard_size, od.max_length, od.batch_size, od.batch_type)
+    train = load_dataset(src_vocab, tgt_vocab, od.train_set, od.src_train, od.tgt_train, od.shard_size, od.max_length, od.batch_size, od.batch_type)
     learning.learn(train, valid, device)
 
   #################
@@ -181,7 +186,7 @@ if __name__ == '__main__':
   #################
   if od.test_set or od.src_test:
     model = load_checkpoint(opts.suffix, model, device)
-    test = load_dataset(src_vocab, None, od.test_set, od.src_test, None, od.shard_size, ol.max_length, ol.batch_size, ol.batch_type)
+    test = load_dataset(src_vocab, None, od.test_set, od.src_test, None, od.shard_size, od.max_length, od.batch_size, od.batch_type)
     inference = Inference(model, tgt_vocab, oi)
     inference.translate(test, device)
 

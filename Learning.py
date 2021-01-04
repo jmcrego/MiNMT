@@ -104,7 +104,7 @@ class Learning():
       trainset.shuffle()
       n_batch = 0
       s = Score()
-      for batch_src, batch_tgt in trainset:
+      for _, batch_src, batch_tgt in trainset:
         n_batch += 1
         self.model.train()
         ### predict (forward)
@@ -154,7 +154,7 @@ class Learning():
       self.model.eval()
       valid_loss = 0.
       n_batch = 0
-      for batch_src, batch_tgt in validset:
+      for _, batch_src, batch_tgt in validset:
         n_batch += 1
         src, tgt, ref, msk_src, msk_tgt = prepare_input(batch_src, batch_tgt, self.idx_pad, device)
         pred = self.model.forward(src, tgt, msk_src, msk_tgt)

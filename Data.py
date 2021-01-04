@@ -49,12 +49,13 @@ class Batch():
     super(Batch, self).__init__()
     self.batch_size = batch_size
     self.batch_type = batch_type
+    self.pos = []
     self.idxs_src = []
     self.idxs_tgt = []
     self.max_len_src = 0
     self.max_len_tgt = 0
 
-  def add(self, idx_src, idx_tgt):
+  def add(self, pos, idx_src, idx_tgt):
     if self.batch_type == 'tokens':
       if max(len(idx_src),self.max_len_src) * (len(self.idxs_src)+1) > self.batch_size:
         return False
@@ -67,6 +68,7 @@ class Batch():
       logging.error('Bad -batch_type option')
       sys.exit()
 
+    self.pos.append(pos)
     self.idxs_src.append(idx_src)
     self.max_len_src = max(len(idx_src),self.max_len_src)
     self.idxs_tgt.append(idx_tgt)
@@ -87,7 +89,7 @@ class Batch():
 #      print(l,'tlen={}'.format(len(l)))
 #    print('END Batch')
 
-    return self.idxs_src, self.idxs_tgt
+    return self.pos, self.idxs_src, self.idxs_tgt
 
   def max_lsrc(self):
     return self.max_len_src
@@ -181,13 +183,14 @@ class Dataset():
           n_filtered += 1
           continue
         n_examples += 1
-        if not b.add(idx_src, idx_tgt): #cannot continue adding in current batch b
-          padded_src, padded_tgt = b.pad_batch(self.vocab_src.idx_pad)
-          self.batches.append([padded_src, padded_tgt])
+        if not b.add(pos, idx_src, idx_tgt): #cannot continue adding in current batch b
+          posses, padded_src, padded_tgt = b.pad_batch(self.vocab_src.idx_pad)
+          self.batches.append([posses, padded_src, padded_tgt])
           b = Batch(batch_size, batch_type) #new empty batch
+          b.add(pos, idx_src, idx_tgt)
       if len(b):
-        padded_src, padded_tgt = b.pad_batch(self.vocab_src.idx_pad)
-        self.batches.append([padded_src, padded_tgt]) #last batch
+        posses, padded_src, padded_tgt = b.pad_batch(self.vocab_src.idx_pad)
+        self.batches.append([posses, padded_src, padded_tgt]) #last batch
 
     self.batches = np.asarray(self.batches)
     logging.info('Built {} batches [size={},type={}] with {} examples over {} shards, {} examples filtered by [length > {}]'.format(self.batches.shape, batch_size, batch_type, n_examples, len(self.shards), n_filtered, max_length))

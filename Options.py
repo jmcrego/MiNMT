@@ -172,6 +172,9 @@ class data_options():
     self.valid_set = None
     self.test_set = None
     self.shard_size = 100000
+    self.max_length = 0
+    self.batch_size = 4096
+    self.batch_type = 'tokens'    
 
   def usage(self):
     return '''
@@ -190,7 +193,10 @@ class data_options():
    -train_set    FILE : training dataset is read/written from/into FILE.bin
    -valid_set    FILE : validation dataset is read/written from/into FILE.bin
    -test_set     FILE : test dataset is read/written from/into FILE.bin
-   -shard_size    INT : maximum shard size ({}) use 0 to consider all data in a single shard'''.format(self.shard_size)
+   -shard_size    INT : maximum shard size ({}) use 0 to consider all data in a single shard
+   -max_length        INT : max number of tokens for src/tgt sentences ({})
+   -batch_size        INT : maximum batch size ({})
+   -batch_type     STRING : sentences or tokens ({})'''.format(self.shard_size, self.max_length, self.batch_size, self.batch_type)
 
   def read_opt(self, key, value):
       if key=='-data_options':
@@ -238,6 +244,15 @@ class data_options():
       elif key=='-shard_size':
         self.shard_size = int(value)
         return True
+      elif key=='-max_length':
+        self.max_length = int(value)
+        return True
+      elif key=='-batch_size':
+        self.batch_size = int(value)
+        return True
+      elif key=='-batch_type':
+        self.batch_type = value
+        return True
 
       return False
 
@@ -254,9 +269,6 @@ class learning_options():
     self.report_every = 200
     self.keep_last_n = 10
     self.clip_grad_norm = 0.5
-    self.max_length = 100
-    self.batch_size = 4096
-    self.batch_type = 'tokens'    
 
   def usage(self):
     return '''
@@ -268,10 +280,7 @@ class learning_options():
    -save_every        INT : save model every INT model updates ({})
    -report_every      INT : report every INT model updates ({})
    -keep_last_n       INT : save last INT checkpoints ({})
-   -clip_grad_norm  FLOAT : clip gradients ({})   
-   -max_length        INT : max number of tokens for src/tgt sentences ({})
-   -batch_size        INT : maximum batch size ({})
-   -batch_type     STRING : sentences or tokens ({})'''.format(self.max_steps, self.max_epochs, self.validate_every, self.save_every, self.report_every, self.keep_last_n, self.clip_grad_norm, self.max_length, self.batch_size, self.batch_type)
+   -clip_grad_norm  FLOAT : clip gradients ({})'''.format(self.max_steps, self.max_epochs, self.validate_every, self.save_every, self.report_every, self.keep_last_n, self.clip_grad_norm)
 
   def read_opt(self, key, value):
       if key=='-learning_options':
@@ -297,15 +306,6 @@ class learning_options():
         return True
       elif key=='-clip_grad_norm':
         self.clip_grad_norm = float(value)
-        return True
-      elif key=='-max_length':
-        self.max_length = int(value)
-        return True
-      elif key=='-batch_size':
-        self.batch_size = int(value)
-        return True
-      elif key=='-batch_type':
-        self.batch_type = value
         return True
 
       return False
