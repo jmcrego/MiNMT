@@ -32,7 +32,6 @@ class Beam():
     self.beam_hyps = torch.ones([self.bs,1], dtype=int).to(self.device) * self.idx_bos #[bs,lt=1]
     self.beam_logP = torch.zeros([self.bs,1], dtype=torch.float32).to(self.device)     #[bs,lt=1]
     self.final = [defaultdict() for i in range(self.bs)]
-    logging.info('built beam')
 
   def done(self):
     if self.beam_hyps.shape[-1] >= self.max_size:
@@ -94,9 +93,9 @@ class Beam():
       b = i//self.K #the beam it belongs
       h = self.beam_hyps[i].tolist() #[lt] hypothesis
       c = sum(self.beam_logP[i]) / norm_length(len(h),0.6) ### final cost of hypothesis normalized by length
-      #print('i={} b={} c={:.5f} h: {}'.format(i,b,c,h))
       self.addfinal(b,h,c)
-#      self.beam_logP[i,-1] = -float('Inf') # this hyp wont be considered in next step
+#      print('final b={} c={:.5f} {}'.format(b,c,' '.join(map(str,h))))
+      self.beam_logP[i,-1] = -float('Inf') # this hyp wont remain in beam after next time step
 
   def printhyps(self, pos, tgt_vocab):
     for b in range(self.bs):
@@ -112,10 +111,10 @@ class Beam():
   def printbeam(self, tgt_vocab):
     lt = self.beam_hyps.shape[1]
     print('lt={}'.format(lt))
-    for b in range(self.beam_hyps.shape[0]):
-      cst = sum(self.beam_logP[b]) / norm_length(lt,0.6)
-      toks = ["{}:{}".format(idx.item(),tgt_vocab[idx.item()]) for idx in self.beam_hyps[b]]
-      print('b={}\t{:.5f}\t{}'.format(b,cst,' '.join(toks)))
+    for i in range(self.beam_hyps.shape[0]):
+      cst = sum(self.beam_logP[i]) / norm_length(lt,0.6)
+      toks = ["{}:{}".format(idx.item(),tgt_vocab[idx.item()]) for idx in self.beam_hyps[i]]
+      print('i={}\t{:.5f}\t{}'.format(i,cst,' '.join(toks)))
 
   def hyps(self):
     return self.beam_hyps 
@@ -135,6 +134,8 @@ class BeamSearch():
     logging.info('Beam Search [init]: beam_size={} n_best={}'.format(self.beam_size,self.n_best))
 
   def traverse(self, batch_src):
+    for l in batch_src:
+      print(l)
     #Vt, ed = self.model.tgt_emb.weight.shape
     bs = len(batch_src) #batch_size
     K = self.beam_size
