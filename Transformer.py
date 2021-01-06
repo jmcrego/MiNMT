@@ -7,14 +7,14 @@ import pickle
 import logging
 import torch
 import math
-from Options import Options
-from Data import Dataset
-from Vocab import Vocab
-from ONMTTokenizer import ONMTTokenizer
-from Model import Encoder_Decoder, load_checkpoint_or_initialise, save_checkpoint, load_checkpoint, numparameters
-from Optimizer import OptScheduler, LabelSmoothing
-from Learning import Learning
-from Inference import Inference
+from transformer.Options import Options
+from transformer.Data import Dataset
+from transformer.Vocab import Vocab
+from transformer.ONMTTokenizer import ONMTTokenizer
+from transformer.Model import Encoder_Decoder, load_checkpoint_or_initialise, save_checkpoint, load_checkpoint, numparameters
+from transformer.Optimizer import OptScheduler, LabelSmoothing
+from transformer.Learning import Learning
+from transformer.Inference import Inference
 import numpy as np
 #import matplotlib.pyplot as plt
 
