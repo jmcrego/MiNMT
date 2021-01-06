@@ -3,8 +3,8 @@
 import sys
 import time
 import logging
-from Vocab import Vocab
-from ONMTTokenizer import ONMTTokenizer
+from transformer.Vocab import Vocab
+from transformer.ONMTTokenizer import ONMTTokenizer
 
 def create_logger(logfile, loglevel):
     numeric_level = getattr(logging, loglevel.upper(), None)

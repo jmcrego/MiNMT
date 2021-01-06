@@ -5,10 +5,10 @@ import os
 import time
 import pickle
 import logging
-from Data import Dataset
-from Vocab import Vocab
-from ONMTTokenizer import ONMTTokenizer
 import numpy as np
+from transformer.Data import Dataset
+from transformer.Vocab import Vocab
+from transformer.ONMTTokenizer import ONMTTokenizer
 #import matplotlib.pyplot as plt
 
 def create_logger(logfile, loglevel):
