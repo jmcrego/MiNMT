@@ -10,7 +10,7 @@ data(){
 }
 
 preprocess(){
-    echo -e 'mode: aggressive\njoiner_annotate: True\nsegment_numbers: True\nbpe_model_path: $fbpe' > $ftok
+    echo -e "mode: aggressive\njoiner_annotate: True\nsegment_numbers: True\nbpe_model_path: $fbpe" > $ftok
     cat $dir/train.{en,fr} | python3 ./learnBPE_cli.py $fbpe #joint bpe
     cat $dir/train.en | python3 buildvoc_cli.py -tokenizer_config $ftok -max_size 32768 > $voc_ss
     cat $dir/train.fr | python3 buildvoc_cli.py -tokenizer_config $ftok -max_size 32768 > $voc_tt
