@@ -20,11 +20,11 @@ preprocess(){
 }
 
 train(){
-    python3 ./Transformer.py -suffix $suffix -src_vocab $voc_ss -tgt_vocab $voc_tt -train_set $train -valid_set $valid -batch_size 16 -batch_type sentences -report_every 5 -save_every 100
+    CUDA_VISIBLE_DEVICES=0 python3 ./Transformer.py -suffix $suffix -src_vocab $voc_ss -tgt_vocab $voc_tt -train_set $train -valid_set $valid -batch_size 64 -batch_type sentences -report_every 100 -save_every 1000 -cuda -log_file $suffix.trn.log &
 }
 
 inference(){
-    python3 ./Transformer.py -suffix $suffix -src_vocab $voc_ss -tgt_vocab $voc_tt -test_set $test -batch_size 3 -batch_type sentences -beam_size 4 -n_best 2 -max_size 15
+    python3 ./Transformer.py -suffix $suffix -src_vocab $voc_ss -tgt_vocab $voc_tt -test_set $test -batch_size 3 -batch_type sentences -beam_size 4 -n_best 2 -max_size 15 
 }
 
 dir=$PWD/files
@@ -40,5 +40,6 @@ test=$dir/bin/test-en.bin
 
 #data
 #preprocess
-#train
+#
+train
 #inference
