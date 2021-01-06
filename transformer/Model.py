@@ -7,7 +7,7 @@ import torch
 import math
 import numpy as np
 import glob
-from Vocab import Vocab
+from transformer.Vocab import Vocab
 
 def numparameters(model):
   npars = 0 #pars
