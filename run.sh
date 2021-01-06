@@ -14,9 +14,9 @@ preprocess(){
     cat $dir/train.{en,fr} | python3 ./learnBPE_cli.py $fbpe #joint bpe
     cat $dir/train.en | python3 buildvoc_cli.py -tokenizer_config $ftok -max_size 32768 > $voc_ss
     cat $dir/train.fr | python3 buildvoc_cli.py -tokenizer_config $ftok -max_size 32768 > $voc_tt
-    python3 ./word2idx_cli.py -src $dir/valid.en -tgt $dir/valid.fr -voc_src $voc_ss -voc_tgt $voc_tt -tok_src $ftok -tok_tgt $ftok -set $valid
-    python3 ./word2idx_cli.py -src $dir/train.en -tgt $dir/train.fr -voc_src $voc_ss -voc_tgt $voc_tt -tok_src $ftok -tok_tgt $ftok -set $train
-    python3 ./word2idx_cli.py -src $dir/test.en -voc_src $voc_ss -tok_src $ftok -set $test
+    python3 ./word2idx_cli.py -src $dir/valid.en -tgt $dir/valid.fr -src_vocab $voc_ss -tgt_vocab $voc_tt -src_token $ftok -tgt_token $ftok -set $valid
+    python3 ./word2idx_cli.py -src $dir/train.en -tgt $dir/train.fr -src_vocab $voc_ss -tgt_vocab $voc_tt -src_token $ftok -tgt_token $ftok -set $train
+    python3 ./word2idx_cli.py -src $dir/test.en -src_vocab $voc_ss -src_token $ftok -set $test
 }
 
 train(){
@@ -40,6 +40,5 @@ test=$dir/bin/test-en.bin
 
 #data
 #preprocess
-#
-train
+#train
 #inference

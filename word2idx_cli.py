@@ -29,10 +29,10 @@ class Options():
     self.fsrc = None
     self.ftgt = None
     self.fset = None
-    self.fvoc_src = None
-    self.fvoc_tgt = None
-    self.ftok_src = None
-    self.ftok_tgt = None
+    self.src_vocab = None
+    self.tgt_vocab = None
+    self.src_token = None
+    self.tgt_token = None
     self.shard_size = 100000
 
     self.prog = argv.pop(0)
@@ -51,15 +51,15 @@ class Options():
       elif tok=="-set" and len(argv):
         self.fset = argv.pop(0)
 
-      elif tok=="-voc_src" and len(argv):
-        self.fvoc_src = argv.pop(0)
-      elif tok=="-voc_tgt" and len(argv):
-        self.fvoc_tgt = argv.pop(0)
+      elif tok=="-src_vocab" and len(argv):
+        self.src_vocab = argv.pop(0)
+      elif tok=="-tgt_vocab" and len(argv):
+        self.tgt_vocab = argv.pop(0)
 
-      elif tok=="-tok_src" and len(argv):
-        self.ftok_src = argv.pop(0)
-      elif tok=="-tok_tgt" and len(argv):
-        self.ftok_tgt = argv.pop(0)
+      elif tok=="-src_token" and len(argv):
+        self.src_token = argv.pop(0)
+      elif tok=="-tgt_token" and len(argv):
+        self.tgt_token = argv.pop(0)
 
       elif tok=="-shard_size" and len(argv):
         self.shard_size = int(argv.pop(0))
@@ -80,28 +80,17 @@ class Options():
       self.usage()
 
 
-    if self.fvoc_src is None:
-      logging.error("Missing -voc_src option")
+    if self.src_vocab is None:
+      logging.error("Missing -src_vocab option")
       self.usage()
 
-    if self.ftok_src is None:
-      logging.error("Missing -tok_src option")
+    if self.src_token is None:
+      logging.error("Missing -src_token option")
       self.usage()
 
-#    if self.ftgt is None:
-#      logging.error("Missing -tgt option")
-#      self.usage()
-
-#    if self.fvoc_tgt is None:
-#      logging.error("Missing -voc_tgt option")
-#      self.usage()
-
-#    if self.ftok_tgt is None:
-#      logging.error("Missing -tok_tgt option")
-#      self.usage()
 
   def usage(self):
-    sys.stderr.write('''usage: {} -src FILE -tgt FILE -set FILE -voc_src FILE -voc_tgt FILE -tok_src FILE -tok_tgt FILE [-h] [-log_level LEVEL] [-log_file FILE]
+    sys.stderr.write('''usage: {} -src FILE -tgt FILE -set FILE -src_vocab FILE -tgt_vocab FILE -src_token FILE -tgt_token FILE [-h] [-log_level LEVEL] [-log_file FILE]
    -shard_size   INT : size of shards (100000)
    -log_file    FILE : log file  (stderr)
    -log_level STRING : log level [debug, info, warning, critical, error] (info)
@@ -125,9 +114,9 @@ if __name__ == '__main__':
 
   tic = time.time()
   o = Options(sys.argv)
-  src_vocab = Vocab(ONMTTokenizer(fyaml=o.ftok_src), file=o.fvoc_src)
+  src_vocab = Vocab(ONMTTokenizer(fyaml=o.src_token), file=o.src_vocab)
   if o.fvoc_tgt:
-    tgt_vocab = Vocab(ONMTTokenizer(fyaml=o.ftok_tgt), file=o.fvoc_tgt)
+    tgt_vocab = Vocab(ONMTTokenizer(fyaml=o.tgt_token), file=o.tgt_vocab)
     assert src_vocab.idx_pad == tgt_vocab.idx_pad
   else:
     tgt_vocab = None
