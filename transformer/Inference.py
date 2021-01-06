@@ -32,7 +32,7 @@ class Beam():
     self.device = device
     self.beam_hyps = torch.ones([self.bs,1], dtype=int).to(self.device) * self.idx_bos #[bs,lt=1]
     self.beam_logP = torch.zeros([self.bs,1], dtype=torch.float32).to(self.device)     #[bs,lt=1]
-    self.final = [defaultdict() for i in range(self.bs)]
+    self.final = [defaultdict() for i in range(self.bs)] #list with hyps reaching <eos> and overall score
 
   def done(self):
     if self.beam_hyps.shape[-1] >= self.max_size: ### stop if already prduced max_size tokens in hyps
