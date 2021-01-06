@@ -20,7 +20,7 @@ preprocess(){
 }
 
 train(){
-    CUDA_VISIBLE_DEVICES=0 python3 ./Transformer.py -suffix $suffix -src_vocab $voc_ss -tgt_vocab $voc_tt -train_set $train -valid_set $valid -batch_size 64 -batch_type sentences -report_every 100 -save_every 1000 -cuda -log_file $suffix.trn.log &
+    CUDA_VISIBLE_DEVICES=0 python3 ./Transformer.py -suffix $suffix -src_vocab $voc_ss -tgt_vocab $voc_tt -train_set $train -valid_set $valid -batch_size 32 -batch_type sentences -max_length 100 -report_every 100 -save_every 5000 -cuda -log_file $suffix.trn.log &
 }
 
 inference(){
