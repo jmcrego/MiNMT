@@ -6,7 +6,7 @@ import logging
 import numpy as np
 import torch
 import time
-from Model import save_checkpoint
+from transformer.Model import save_checkpoint
 #from Optimizer import LabelSmoothing
 
 def prepare_input(batch_src, batch_tgt, idx_pad, device):
