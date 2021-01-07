@@ -49,7 +49,7 @@ class network_options():
     self.emb_dim = 512
     self.qk_dim = 64
     self.v_dim = 64
-    self.ff_dim = 1024
+    self.ff_dim = 2048
     self.n_heads = 8
     self.n_layers = 6
     self.dropout = 0.1
