@@ -262,7 +262,7 @@ class data_options():
 class learning_options():
 
   def __init__(self):
-    self.max_steps = 5000000
+    self.max_steps = 0
     self.max_epochs = 0
     self.validate_every = 5000
     self.save_every =10000
