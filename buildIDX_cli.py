@@ -115,7 +115,7 @@ if __name__ == '__main__':
   tic = time.time()
   o = Options(sys.argv)
   src_vocab = Vocab(ONMTTokenizer(fyaml=o.src_token), file=o.src_vocab)
-  if o.fvoc_tgt:
+  if o.tgt_vocab:
     tgt_vocab = Vocab(ONMTTokenizer(fyaml=o.tgt_token), file=o.tgt_vocab)
     assert src_vocab.idx_pad == tgt_vocab.idx_pad
   else:
