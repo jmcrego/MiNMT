@@ -23,8 +23,8 @@ def norm_length(l, alpha):
 class Beam():
   def __init__(self, bs, K, N, max_size, idx_bos, idx_eos, device):
     self.bs = bs #batch size
-    self.K = K #beam size
     self.N = N #n-best
+    self.K = K #beam size
     self.alpha = 0.7
     self.max_size = max_size #max hyp length
     self.idx_bos = idx_bos
@@ -35,11 +35,16 @@ class Beam():
     self.final = [defaultdict() for i in range(self.bs)] #list with hyps reaching <eos> and overall score
 
   def done(self):
-    if self.beam_hyps.shape[-1] >= self.max_size: ### stop if already prduced max_size tokens in hyps
+    ### stop if already prduced max_size tokens in hyps
+    if self.beam_hyps.shape[-1] >= self.max_size: 
       return True
-    for dhyps in self.final: ### stop if all beams already produced K (beam_size) final hypotheses
+    ### stop if all beams already produced K (beam_size) final hypotheses
+    for dhyps in self.final: 
       if len(dhyps) < self.K:
         return False 
+    ### stop if lowest scored hyp is lower than corresponding best hyp-threshold 
+
+    ### do not stop
     return True
 
   def addfinal(self, b, h, c):
@@ -58,6 +63,10 @@ class Beam():
     next_logP, next_hyps = torch.topk(y_next, k=self.K, dim=1) #both are [B,self.K]
     next_hyps = next_hyps.contiguous().view(-1,1) #[B*self.K,1]
     next_logP = next_logP.contiguous().view(-1,1) #[B*self.K,1]
+
+    #Following https://arxiv.org/abs/1609.08144:
+    #at each step, we only keep the best scored hypotheses in each beam (K: beam size) 
+    #at each step, we only consider tokens that have local scores that are not more than beamsize below the best token for this step (T: beam threshold) [not implemented]
 
     #
     # expand beam_hyps/beam_logP with next_hyps/next_logP
