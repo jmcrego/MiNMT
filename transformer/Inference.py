@@ -21,14 +21,16 @@ def norm_length(l, alpha):
 ### Beam #####################################################################################################
 ##############################################################################################################
 class Beam():
-  def __init__(self, bs, K, N, max_size, idx_bos, idx_eos, device):
+  #def __init__(self, bs, K, N, max_size, idx_bos, idx_eos, device):
+  def __init__(self, bs, K, N, max_size, tgt_vocab, device):
     self.bs = bs #batch size
     self.N = N #n-best
     self.K = K #beam size
     self.alpha = 0.7
     self.max_size = max_size #max hyp length
-    self.idx_bos = idx_bos
-    self.idx_eos = idx_eos
+    self.idx_bos = tgt_vocab.idx_bos
+    self.idx_eos = tgt_vocab.idx_eos
+    self.tgt_vocab = tgt_vocab
     self.device = device
     ### next are hypotheses and their corresponding cost (logP) maintained in beam
     self.hyps = torch.ones([self.bs,1], dtype=int).to(self.device) * self.idx_bos #[bs,lt=1]
@@ -50,8 +52,7 @@ class Beam():
     return True
 
   def expand(self,y_next):
-    print('expand hyps.size={}'.format(self.hyps.shape[1]))
-    print('[orig] hyps\n{}'.format(self.hyps.tolist()))
+    self.print_beam()
     #y_next is [B,Vt] B is the number of hypotheses in y_next (either bs*1 or bs*K)
     assert y_next.shape[0] == self.bs or y_next.shape[0] == self.bs*self.K
     B = y_next.shape[0]
@@ -83,7 +84,7 @@ class Beam():
     self.hyps = torch.cat((self.hyps, next_hyps), dim=-1) #[B*self.K,lt+1]
     self.logP = torch.cat((self.logP, next_logP), dim=-1) #[B*self.K,lt+1]
     #logging.info('[cat] hyps = {} logP = {}'.format(lt, self.hyps.shape, self.logP.shape))
-    print('[expand] hyps\n{}'.format(self.hyps.tolist()))
+    self.print_beam()
 
     lt = self.hyps.shape[1]
     if self.K > 1 and self.hyps.shape[0] == self.bs*self.K*self.K: 
@@ -98,7 +99,7 @@ class Beam():
       self.hyps = self.hyps.contiguous().view(self.bs*self.K,lt) #[bs*K,lt]
       self.logP = self.logP.contiguous().view(self.bs*self.K,lt) #[bs*K,lt]
       #logging.info('[reduce] hyps = {} logP = {}'.format(lt, self.hyps.shape, self.logP.shape))
-      print('[reduce] hyps\n{}'.format(self.hyps.tolist()))
+      self.print_beam()
 
     ###
     ### check ending hypotheses
@@ -112,22 +113,23 @@ class Beam():
       self.final[b][' '.join(map(str,h))] = c
       self.logP[i,-1] = -float('Inf') # this hyp wont remain in beam  the next time step
 
-  def print_nbest(self, pos, tgt_vocab):
+  def print_nbest(self, pos):
     for b in range(self.bs):
       n = 0
       dicthyps = self.final[b]
       for hyp, cst in sorted(dicthyps.items(), key=lambda kv: kv[1], reverse=True):
-        toks = [tgt_vocab[int(idx)] for idx in hyp.split(' ')]
+        toks = [self.tgt_vocab[int(idx)] for idx in hyp.split(' ')]
         print('{} {} {:.5f}\t{}'.format(pos[b], n+1, cst, ' '.join(toks)))
         n += 1
         if n >= self.N:
           break
 
-  def print_beam(self, tgt_vocab):
+  def print_beam(self):
     lt = self.hyps.shape[1]
+    print('[beam] hyps.size={}'.format(self.hyps.shape[1]))    
     for i in range(self.hyps.shape[0]):
       cst = sum(self.logP[i]) / norm_length(lt,self.alpha)
-      toks = ["{}:{}".format(idx.item(),tgt_vocab[idx.item()]) for idx in self.hyps[i]]
+      toks = ["{}:{}".format(idx.item(),self.tgt_vocab[idx.item()]) for idx in self.hyps[i]]
       print('i={}\t{:.5f}\t{}'.format(i,cst,' '.join(toks)))
 
 
@@ -158,7 +160,7 @@ class BeamSearch():
     ###
     ### decode step-by-step (produce one tgt token at each time step)
     ###
-    beam = Beam(bs, self.beam_size, self.n_best, self.max_size, self.tgt_vocab.idx_bos, self.tgt_vocab.idx_eos, self.device)
+    beam = Beam(bs, self.beam_size, self.n_best, self.max_size, self.tgt_vocab, self.device)
     while not beam.done():
       y_next = self.model.decode(z_src, beam.hyps, msk_src, msk_tgt=None)[:,-1,:] #[bs*K,lt,Vt] => [bs*K,Vt]
       beam.expand(y_next)
@@ -191,7 +193,7 @@ class Inference():
       beamsearch = BeamSearch(self.model, self.tgt_vocab, self.beam_size, self.n_best, self.max_size, device)
       for pos, batch_src, _ in testset:
         beam = beamsearch.traverse(batch_src)
-        beam.print_nbest(pos, self.tgt_vocab) 
+        beam.print_nbest(pos) 
 
 
 
