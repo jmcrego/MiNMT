@@ -94,7 +94,11 @@ class Beam():
       #we must keep the K-best hyps among the bs*(K*K) available: reduce last K into 1
       self.hyps = self.hyps.contiguous().view(self.bs*self.K,self.K,lt) #[bs*K,K,lt]
       self.logP = self.logP.contiguous().view(self.bs*self.K,self.K,lt) #[bs*K,K,lt]
-      kbest_logP, kbest_hyps = torch.topk(torch.sum(self.logP,dim=2), k=1, dim=1) #both are [bs, K] (finds the 1-best of dimension 1) no need to norm-length since all have same length
+      kbest_logP, kbest_hyps = torch.topk(torch.sum(self.logP,dim=2), k=1, dim=1) #both are [bs*K,1] (finds the 1-best of dimension 1) no need to norm-length since all have same length
+      kbest_hyps = kbest_hyps.contiguous().view(self.bs,self.K) #[bs,K]
+      kbest_logP = kbest_logP.contiguous().view(self.bs,self.K) #[bs,K]
+
+
       logging.info('kbest hyps = {} logP = {}'.format(kbest_hyps.shape, kbest_logP.shape))
       sys.exit()
       self.hyps = torch.stack([self.hyps[b][inds] for b,inds in enumerate(kbest_hyps)], dim=0) #[bs,K,lt]
