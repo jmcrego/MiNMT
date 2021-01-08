@@ -53,7 +53,6 @@ class Beam():
     return True
 
   def expand(self,y_next):
-    print('---------------- EXPAND ---------------')
     #y_next is [B,Vt] B is the number of hypotheses in y_next (either bs*1 or bs*K)
     assert y_next.shape[0] == self.bs or y_next.shape[0] == self.bs*self.K
     B = y_next.shape[0]
@@ -66,7 +65,7 @@ class Beam():
     next_logP, next_hyps = torch.topk(y_next, k=self.K, dim=1) #both are [B,self.K]
     next_hyps = next_hyps.contiguous().view(-1,1) #[B*self.K,1]
     next_logP = next_logP.contiguous().view(-1,1) #[B*self.K,1]
-    print('next_hyps: {}'.format([self.tgt_vocab[int(idx)] for idx in next_hyps.tolist()]))
+    print('------ [EXPAND] next_hyps: {}'.format([self.tgt_vocab[int(idx)] for idx in next_hyps.tolist()]))
 
     #Following https://arxiv.org/abs/1609.08144:
     #at each step, we only keep the best scored hypotheses in each beam (K: beam size) 
