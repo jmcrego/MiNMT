@@ -65,7 +65,7 @@ class Beam():
     next_logP, next_hyps = torch.topk(y_next, k=self.K, dim=1) #both are [B,self.K]
     next_hyps = next_hyps.contiguous().view(-1,1) #[B*self.K,1]
     next_logP = next_logP.contiguous().view(-1,1) #[B*self.K,1]
-    print('------ [EXPAND] next_hyps: {}'.format([self.tgt_vocab[idx] for idx in next_hyps.view(-1).tolist()]))
+    print('---------- next_hyps: {}'.format([self.tgt_vocab[idx] for idx in next_hyps.view(-1).tolist()]))
 
     #Following https://arxiv.org/abs/1609.08144:
     #at each step, we only keep the best scored hypotheses in each beam (K: beam size) 
@@ -84,6 +84,7 @@ class Beam():
     self.hyps = torch.cat((self.hyps, next_hyps), dim=-1) #[B*self.K,lt+1]
     self.logP = torch.cat((self.logP, next_logP), dim=-1) #[B*self.K,lt+1]
     #logging.info('[cat] hyps = {} logP = {}'.format(lt, self.hyps.shape, self.logP.shape))
+    print('[EXPAND]')
     self.print_beam()
 
     lt = self.hyps.shape[1]
@@ -99,6 +100,7 @@ class Beam():
       self.hyps = self.hyps.contiguous().view(self.bs*self.K,lt) #[bs*K,lt]
       self.logP = self.logP.contiguous().view(self.bs*self.K,lt) #[bs*K,lt]
       #logging.info('[reduce] hyps = {} logP = {}'.format(lt, self.hyps.shape, self.logP.shape))
+      print('[REDUCE]')
       self.print_beam()
 
     ###
