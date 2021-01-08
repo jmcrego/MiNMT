@@ -37,7 +37,6 @@ class Beam():
     self.logP = torch.zeros([self.bs,1], dtype=torch.float32).to(self.device)     #[bs,lt=1]
     ### next are hyps reaching <eos>
     self.final = [defaultdict() for i in range(self.bs)] #list with hyps reaching <eos> and overall score
-    self.print_beam()
 
   def done(self):
     ### stop if already prduced max_size tokens in hyps
@@ -53,7 +52,7 @@ class Beam():
     return True
 
   def expand(self,y_next):
-    print('### EXPAND ###')
+    print('---------------- EXPAND ---------------')
     self.print_beam()
     #y_next is [B,Vt] B is the number of hypotheses in y_next (either bs*1 or bs*K)
     assert y_next.shape[0] == self.bs or y_next.shape[0] == self.bs*self.K
