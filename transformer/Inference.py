@@ -50,8 +50,8 @@ class Beam():
     return True
 
   def expand(self,y_next):
-    logging.debug('expand hyps.size={}'.format(self.hyps.shape[1]))
-    logging.debug('[orig] hyps\n{}'.format(self.hyps))
+    print('expand hyps.size={}'.format(self.hyps.shape[1]))
+    print('[orig] hyps\n{}'.format(self.hyps))
     #y_next is [B,Vt] B is the number of hypotheses in y_next (either bs*1 or bs*K)
     assert y_next.shape[0] == self.bs or y_next.shape[0] == self.bs*self.K
     B = y_next.shape[0]
@@ -64,7 +64,7 @@ class Beam():
     next_logP, next_hyps = torch.topk(y_next, k=self.K, dim=1) #both are [B,self.K]
     next_hyps = next_hyps.contiguous().view(-1,1) #[B*self.K,1]
     next_logP = next_logP.contiguous().view(-1,1) #[B*self.K,1]
-    logging.debug('next_hyps\n{}'.format(next_hyps))
+    print('next_hyps\n{}'.format(next_hyps))
 
     #Following https://arxiv.org/abs/1609.08144:
     #at each step, we only keep the best scored hypotheses in each beam (K: beam size) 
@@ -83,7 +83,7 @@ class Beam():
     self.hyps = torch.cat((self.hyps, next_hyps), dim=-1) #[B*self.K,lt+1]
     self.logP = torch.cat((self.logP, next_logP), dim=-1) #[B*self.K,lt+1]
     #logging.info('[cat] hyps = {} logP = {}'.format(lt, self.hyps.shape, self.logP.shape))
-    logging.debug('[expand] hyps\n{}'.format(self.hyps))
+    print('[expand] hyps\n{}'.format(self.hyps))
 
     lt = self.hyps.shape[1]
     if self.K > 1 and self.hyps.shape[0] == self.bs*self.K*self.K: 
@@ -98,7 +98,7 @@ class Beam():
       self.hyps = self.hyps.contiguous().view(self.bs*self.K,lt) #[bs*K,lt]
       self.logP = self.logP.contiguous().view(self.bs*self.K,lt) #[bs*K,lt]
       #logging.info('[reduce] hyps = {} logP = {}'.format(lt, self.hyps.shape, self.logP.shape))
-      logging.debug('[reduce] hyps\n{}'.format(self.hyps))
+      print('[reduce] hyps\n{}'.format(self.hyps))
 
     ###
     ### check ending hypotheses
