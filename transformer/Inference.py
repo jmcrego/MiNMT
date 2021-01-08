@@ -66,7 +66,7 @@ class Beam():
     next_logP, next_hyps = torch.topk(y_next, k=self.K, dim=1) #both are [B,self.K]
     next_hyps = next_hyps.contiguous().view(-1,1) #[B*self.K,1]
     next_logP = next_logP.contiguous().view(-1,1) #[B*self.K,1]
-    print('next_hyps\n{}'.format(next_hyps.tolist()))
+    print('next_hyps\n{}'.format([self.tgt_vocab[int(idx)] for idx in next_hyps.tolist()]))
 
     #Following https://arxiv.org/abs/1609.08144:
     #at each step, we only keep the best scored hypotheses in each beam (K: beam size) 
