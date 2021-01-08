@@ -142,11 +142,9 @@ class BeamSearch():
     self.device = device
     self.beam_size = beam_size
     self.n_best = n_best
-    logging.info('Beam Search [init]: beam_size={} n_best={}'.format(self.beam_size,self.n_best))
+    #logging.info('Beam Search [init]: beam_size={} n_best={}'.format(self.beam_size,self.n_best))
 
   def traverse(self, batch_src):
-    for l in batch_src:
-      print(l)
     #Vt, ed = self.model.tgt_emb.weight.shape
     bs = len(batch_src) #batch_size
     K = self.beam_size
