@@ -83,20 +83,31 @@ class Beam():
     ### extend beam hyps with new word (next)
     self.hyps = torch.cat((self.hyps, next_hyps), dim=-1) #[B*self.K,lt+1]
     self.logP = torch.cat((self.logP, next_logP), dim=-1) #[B*self.K,lt+1]
-    #logging.info('[cat] hyps = {} logP = {}'.format(lt, self.hyps.shape, self.logP.shape))
+    #logging.info('[cat] hyps = {} logP = {}'.format(self.hyps.shape, self.logP.shape))
     print('[EXPAND]')
     self.print_beam()
 
     lt = self.hyps.shape[1]
+    #in the initial expansion we keep all generated hypotheses (bs*K) no need to the next block
     if self.K > 1 and self.hyps.shape[0] == self.bs*self.K*self.K: 
-      #in the initial expansion we keep all generated hypotheses (bs*K) no need to do this
-      #otherwise we must keep the K-best hyps among the bs*(K*K) available: reduce K*K into K
-      self.hyps = self.hyps.contiguous().view(self.bs,self.K*self.K,lt) #[bs,K*K,lt]
-      self.logP = self.logP.contiguous().view(self.bs,self.K*self.K,lt) #[bs,K*K,lt]
-      kbest_logP, kbest_hyps = torch.topk(torch.sum(self.logP,dim=2), k=self.K, dim=1) #both are [bs, K] (finds the K-best of dimension 1 (B*K)) no need to norm-length since all have same length
-      #logging.info('kbest_hyps = {} kbest_logP = {}'.format(kbest_hyps.shape, kbest_logP.shape))
+
+      #we must keep the K-best hyps among the bs*(K*K) available: reduce last K into 1
+      self.hyps = self.hyps.contiguous().view(self.bs*self.K,self.K,lt) #[bs*K,K,lt]
+      self.logP = self.logP.contiguous().view(self.bs*self.K,self.K,lt) #[bs*K,K,lt]
+      kbest_logP, kbest_hyps = torch.topk(torch.sum(self.logP,dim=2), k=1, dim=1) #both are [bs, K] (finds the 1-best of dimension 1) no need to norm-length since all have same length
+      logging.info('kbest hyps = {} logP = {}'.format(kbest_hyps.shape, kbest_logP.shape))
+      sys.exit()
       self.hyps = torch.stack([self.hyps[b][inds] for b,inds in enumerate(kbest_hyps)], dim=0) #[bs,K,lt]
       self.logP = torch.stack([self.logP[b][inds] for b,inds in enumerate(kbest_hyps)], dim=0) #[bs,K,lt]
+
+      #we must keep the K-best hyps among the bs*(K*K) available: reduce K*K into K (or reduce last K into 1 ????)
+#      self.hyps = self.hyps.contiguous().view(self.bs,self.K*self.K,lt) #[bs,K*K,lt]
+#      self.logP = self.logP.contiguous().view(self.bs,self.K*self.K,lt) #[bs,K*K,lt]
+#      kbest_logP, kbest_hyps = torch.topk(torch.sum(self.logP,dim=2), k=self.K, dim=1) #both are [bs, K] (finds the K-best of dimension 1 (B*K)) no need to norm-length since all have same length
+#      self.hyps = torch.stack([self.hyps[b][inds] for b,inds in enumerate(kbest_hyps)], dim=0) #[bs,K,lt]
+#      self.logP = torch.stack([self.logP[b][inds] for b,inds in enumerate(kbest_hyps)], dim=0) #[bs,K,lt]
+
+      ### reduce back
       self.hyps = self.hyps.contiguous().view(self.bs*self.K,lt) #[bs*K,lt]
       self.logP = self.logP.contiguous().view(self.bs*self.K,lt) #[bs*K,lt]
       #logging.info('[reduce] hyps = {} logP = {}'.format(lt, self.hyps.shape, self.logP.shape))
