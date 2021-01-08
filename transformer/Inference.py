@@ -165,7 +165,7 @@ class BeamSearch():
     while not beam.done():
       y_next = self.model.decode(z_src, beam.hyps, msk_src, msk_tgt=None)[:,-1,:] #[bs*K,lt,Vt] => [bs*K,Vt]
       beam.expand(y_next)
-      beam.print_beam(self.tgt_vocab)
+      #beam.print_beam(self.tgt_vocab)
       ### from now on i decode bs*K hyps (i need z_src/msk_src to be the same shape)
       if self.beam_size > 1 and msk_src.shape[0] == bs:
         msk_src = msk_src.repeat_interleave(repeats=K, dim=0) #[bs*K,1,ls] 
