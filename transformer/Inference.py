@@ -52,7 +52,7 @@ class Beam():
     return True
 
   def expand(self,y_next):
-    print('### START expand ###')
+    print('### EXPAND ###')
     self.print_beam()
     #y_next is [B,Vt] B is the number of hypotheses in y_next (either bs*1 or bs*K)
     assert y_next.shape[0] == self.bs or y_next.shape[0] == self.bs*self.K
