@@ -170,6 +170,7 @@ class BeamSearch():
     ### encode the src sequence
     ###
     msk_src, z_src = encode_src(batch_src, self.model, self.tgt_vocab.idx_pad, self.device)
+    print("msk_src", msk_src)
     #msk_src [bs,1,ls]
     #z_src [bs,ls,ed]
     ###
