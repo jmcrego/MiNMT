@@ -70,10 +70,6 @@ class Beam():
     next_logP = next_logP.contiguous().view(-1,1) #[I*self.K,1]
     print('----------> {}-best next_hyps: {} next_logP: {}'.format(self.K, [self.tgt_vocab[idx] for idx in next_hyps.view(-1).tolist()], ['{:.5f}'.format(c) for c in next_logP.view(-1).tolist()]))
 
-    #Following https://arxiv.org/abs/1609.08144:
-    #at each step, we only keep the best scored hypotheses in each beam (K: beam size) 
-    #at each step, we only consider tokens that have local scores that are not more than beamsize below the best token for this step (T: beam threshold) [not implemented]
-
     #
     # expand hyps/logP with next_hyps/next_logP
     #
@@ -81,22 +77,22 @@ class Beam():
     ### ulterior expansions (hyps/logP are [self.bs*self.K,lt>1]) and next_hyps/next_logP are [self.bs*self.K*self.K,1]
     #replicate each hyp in beam K times
     lt = self.hyps.shape[1] #length of tgt hypotheses
-    self.hyps = self.hyps.repeat_interleave(repeats=self.K, dim=0) #[B,lt] => [B*self.K,lt]
-    self.logP = self.logP.repeat_interleave(repeats=self.K, dim=0) #[B,lt] => [B*self.K,lt]
+    self.hyps = self.hyps.repeat_interleave(repeats=self.K, dim=0) #[I,lt] => [I*self.K,lt]
+    self.logP = self.logP.repeat_interleave(repeats=self.K, dim=0) #[I,lt] => [I*self.K,lt]
     ### extend beam hyps with new word (next)
-    self.hyps = torch.cat((self.hyps, next_hyps), dim=-1) #[B*self.K,lt+1]
-    self.logP = torch.cat((self.logP, next_logP), dim=-1) #[B*self.K,lt+1]
+    self.hyps = torch.cat((self.hyps, next_hyps), dim=-1) #[I*self.K,lt+1]
+    self.logP = torch.cat((self.logP, next_logP), dim=-1) #[I*self.K,lt+1]
     #logging.info('[cat] hyps = {} logP = {}'.format(self.hyps.shape, self.logP.shape))
     self.print_beam('EXPAND K={}'.format(self.K))
 
     lt = self.hyps.shape[1]
     #In the next block we keep the K-best hyps for each batch. 
-    #We REDUCE bs*(K*K) into bs*K (or reduce bs*K*(K)into bs*K*(1) ???)
+    #We REDUCE bs*(K*K) into bs*K
     #no need to do it if this is the initial expansion (self.hyps is already [bs*1*K,lt]) or if beam_size (K) is 1
-    if self.K > 1 and self.hyps.shape[0] == self.bs*self.K*self.K: 
+    if self.hyps.shape[0] > self.bs*self.K: 
       self.hyps = self.hyps.contiguous().view(self.bs,self.K*self.K,lt) #[bs,K*K,lt]
       self.logP = self.logP.contiguous().view(self.bs,self.K*self.K,lt) #[bs,K*K,lt]
-      kbest_logP, kbest_hyps = torch.topk(torch.sum(self.logP,dim=2), k=self.K, dim=1) #both are [bs, K] (finds the K-best of dimension 1 (B*K)) no need to norm-length since all have same length
+      kbest_logP, kbest_hyps = torch.topk(torch.sum(self.logP,dim=2), k=self.K, dim=1) #both are [bs, K] (finds the K-best of dimension 1 (I*K)) no need to norm-length since all have same length
       self.hyps = torch.stack([self.hyps[b][inds] for b,inds in enumerate(kbest_hyps)], dim=0) #[bs,K,lt]
       self.logP = torch.stack([self.logP[b][inds] for b,inds in enumerate(kbest_hyps)], dim=0) #[bs,K,lt]
       self.hyps = self.hyps.contiguous().view(self.bs*self.K,lt) #[bs*K,lt]
