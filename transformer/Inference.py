@@ -110,7 +110,7 @@ class Beam():
       dicthyps = self.final[b]
       for hyp, cst in sorted(dicthyps.items(), key=lambda kv: kv[1], reverse=True):
         toks = [self.tgt_vocab[int(idx)] for idx in hyp.split(' ')]
-        print('{} {} {:.5f}\t{}'.format(pos[b], n+1, cst, ' '.join(toks)))
+        print('{}{:.5f}\t{}'.format(pos[b]+1, cst, ' '.join(toks)))
         n += 1
         if n >= self.N:
           break
