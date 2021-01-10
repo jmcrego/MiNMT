@@ -111,7 +111,8 @@ class Beam():
       c = sum(self.logP[i]) / norm_length(len(h),self.alpha) ### final cost of hypothesis normalized by length
       self.final[b][' '.join(map(str,h))] = c
       self.logP[i,-1] = -float('Inf') # this hyp wont remain in beam  the next time step
-      print('[final hyp]')
+      toks = [self.tgt_vocab[int(idx)] for idx in h]
+      print('[final hyp] b={} {:.5f} {}'.format(b,c, ' '.join(toks)))
 
   def print_nbest(self, pos):
     for b in range(self.bs):
