@@ -108,9 +108,9 @@ class Beam():
     for b in range(self.bs):
       n = 0
       dicthyps = self.final[b]
-      for hyp, cst in sorted(dicthyps.items(), key=lambda kv: kv[1], reverse=True):
+      for hyp, sum_logP_norm in sorted(dicthyps.items(), key=lambda kv: kv[1], reverse=True):
         toks = [self.tgt_vocab[int(idx)] for idx in hyp.split(' ')]
-        print('{}\t{:.5f}\t{}'.format(pos[b]+1, cst, ' '.join(toks)))
+        print('{}\t{:.5f}\t{}'.format(pos[b]+1, sum_logP_norm, ' '.join(toks)))
         n += 1
         if n >= self.N:
           break
@@ -120,8 +120,8 @@ class Beam():
     print('[{}] hyps.size={}'.format(tag, self.hyps.shape[1]))    
     for i in range(self.hyps.shape[0]):
       toks = ["{:.4f}:{}".format(self.logP[i,j].item(),self.tgt_vocab[self.hyps[i,j].item()]) for j in range(len(self.hyps[i]))]
-      sum_logP = sum(self.logP[i]) / norm_length(lt,self.alpha)
-      print('i={}\t{:.5f}\t{}'.format(i,sum_logP,' '.join(toks)))
+      sum_logP_norm = sum(self.logP[i]) / norm_length(lt,self.alpha)
+      print('i={}\t{:.5f}\t{}'.format(i,sum_logP_norm,' '.join(toks)))
 
 
 ##############################################################################################################
