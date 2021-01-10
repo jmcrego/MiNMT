@@ -37,7 +37,7 @@ class Beam():
     self.logP = torch.zeros([self.bs,1], dtype=torch.float32).to(self.device)     #[bs,lt=1]
     ### next are hyps reaching <eos>
     self.final = [defaultdict() for i in range(self.bs)] #list with hyps reaching <eos> and overall score
-    self.print_beam()
+    self.print_beam('INITIAL')
 
   def done(self):
     ### stop if already prduced max_size tokens in hyps
@@ -87,7 +87,7 @@ class Beam():
     self.hyps = torch.cat((self.hyps, next_hyps), dim=-1) #[B*self.K,lt+1]
     self.logP = torch.cat((self.logP, next_logP), dim=-1) #[B*self.K,lt+1]
     #logging.info('[cat] hyps = {} logP = {}'.format(self.hyps.shape, self.logP.shape))
-    self.print_beam('[EXPAND]')
+    self.print_beam('EXPAND')
 
     lt = self.hyps.shape[1]
     #In the next block we keep the K-best hyps for each batch. 
@@ -102,7 +102,7 @@ class Beam():
       self.hyps = self.hyps.contiguous().view(self.bs*self.K,lt) #[bs*K,lt]
       self.logP = self.logP.contiguous().view(self.bs*self.K,lt) #[bs*K,lt]
       #logging.info('[reduce] hyps = {} logP = {}'.format(lt, self.hyps.shape, self.logP.shape))
-      self.print_beam('[REDUCE]')
+      self.print_beam('REDUCE')
 
     ###
     ### check ending hypotheses
