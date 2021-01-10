@@ -63,6 +63,7 @@ class Beam():
     #The output of this function is always batch_size * beam_size (bs*K)
     I = y_next.shape[0] ### number of input hyps (input to expand)
     O = self.bs*self.K  ### number of output hyps (output to expand)
+    lt = self.hyps.shape[1] #length of tgt hypotheses
 
     # we keep the K-best choices for each hypothesis in y_next
     next_logP, next_hyps = torch.topk(y_next, k=self.K, dim=1) #both are [I,self.K]
@@ -76,39 +77,28 @@ class Beam():
     ### first expand (hyps/logP are [self.bs,lt=1]) and next_hyps/next_logP are [self.bs*self.K,1]
     ### ulterior expansions (hyps/logP are [self.bs*self.K,lt>1]) and next_hyps/next_logP are [self.bs*self.K*self.K,1]
     #replicate each hyp in beam K times
-    lt = self.hyps.shape[1] #length of tgt hypotheses
     self.hyps = self.hyps.repeat_interleave(repeats=self.K, dim=0) #[I,lt] => [I*self.K,lt]
     self.logP = self.logP.repeat_interleave(repeats=self.K, dim=0) #[I,lt] => [I*self.K,lt]
     ### extend beam hyps with new word (next)
     self.hyps = torch.cat((self.hyps, next_hyps), dim=-1) #[I*self.K,lt+1]
     self.logP = torch.cat((self.logP, next_logP), dim=-1) #[I*self.K,lt+1]
+    lt = self.hyps.shape[1]
     #logging.info('[cat] hyps = {} logP = {}'.format(self.hyps.shape, self.logP.shape))
     self.print_beam('EXPAND K={}'.format(self.K))
 
-    lt = self.hyps.shape[1]
-    #In the next block we keep the K-best hyps for each batch. 
-    #We REDUCE bs*(K*K) into bs*K
+    ###
+    #We REDUCE bs*(K*K) into bs*K (keep the K-best hyps of each batch)
     #no need to do it if this is the initial expansion (self.hyps is already [bs*1*K,lt]) or if beam_size (K) is 1
-#    if self.hyps.shape[0] > self.bs*self.K: 
-#      self.hyps = self.hyps.contiguous().view(self.bs,self.K*self.K,lt) #[bs,K*K,lt]
-#      self.logP = self.logP.contiguous().view(self.bs,self.K*self.K,lt) #[bs,K*K,lt]
-#      kbest_logP, kbest_hyps = torch.topk(torch.sum(self.logP,dim=2), k=self.K, dim=1) #both are [bs, K] (finds the K-best of dimension 1 (I*K)) no need to norm-length since all have same length
-#      self.hyps = torch.stack([self.hyps[b][inds] for b,inds in enumerate(kbest_hyps)], dim=0) #[bs,K,lt]
-#      self.logP = torch.stack([self.logP[b][inds] for b,inds in enumerate(kbest_hyps)], dim=0) #[bs,K,lt]
-#      self.hyps = self.hyps.contiguous().view(self.bs*self.K,lt) #[bs*K,lt]
-#      self.logP = self.logP.contiguous().view(self.bs*self.K,lt) #[bs*K,lt]
-#      #logging.info('[reduce] hyps = {} logP = {}'.format(lt, self.hyps.shape, self.logP.shape))
-#      self.print_beam('REDUCE K={}'.format(self.K))
-
-
-    self.hyps = self.hyps.contiguous().view(self.bs,-1,lt) #[bs,K*K,lt] or [bs,1*K,lt]
-    self.logP = self.logP.contiguous().view(self.bs,-1,lt) #[bs,K*K,lt] or [bs,1*K,lt]
-    kbest_logP, kbest_hyps = torch.topk(torch.sum(self.logP,dim=2), k=self.K, dim=1) #both are [bs, K] (finds the K-best of dimension 1 (I*K)) no need to norm-length since all have same length
-    self.hyps = torch.stack([self.hyps[b][inds] for b,inds in enumerate(kbest_hyps)], dim=0) #[bs,K,lt]
-    self.logP = torch.stack([self.logP[b][inds] for b,inds in enumerate(kbest_hyps)], dim=0) #[bs,K,lt]
-    self.hyps = self.hyps.contiguous().view(self.bs*self.K,lt) #[bs*K,lt]
-    self.logP = self.logP.contiguous().view(self.bs*self.K,lt) #[bs*K,lt]
-    self.print_beam('REDUCE K={}'.format(self.K))
+    ###
+    if self.K > 1:
+      self.hyps = self.hyps.contiguous().view(self.bs,-1,lt) #[bs,K*K,lt] or [bs,1*K,lt] (first expand)
+      self.logP = self.logP.contiguous().view(self.bs,-1,lt) #[bs,K*K,lt] or [bs,1*K,lt] (first expand)
+      kbest_logP, kbest_hyps = torch.topk(torch.sum(self.logP,dim=2), k=self.K, dim=1) #both are [bs, K] (finds the K-best of dimension 1 (I*K)) no need to norm-length since all have same length
+      self.hyps = torch.stack([self.hyps[b][inds] for b,inds in enumerate(kbest_hyps)], dim=0) #[bs,K,lt]
+      self.logP = torch.stack([self.logP[b][inds] for b,inds in enumerate(kbest_hyps)], dim=0) #[bs,K,lt]
+      self.hyps = self.hyps.contiguous().view(self.bs*self.K,lt) #[bs*K,lt]
+      self.logP = self.logP.contiguous().view(self.bs*self.K,lt) #[bs*K,lt]
+      self.print_beam('REDUCE K={}'.format(self.K))
 
     ###
     ### check ending hypotheses
@@ -121,8 +111,7 @@ class Beam():
       c = sum(self.logP[i]) / norm_length(len(h),self.alpha) ### final cost of hypothesis normalized by length
       self.final[b][' '.join(map(str,h))] = c
       self.logP[i,-1] = -float('Inf') # this hyp wont remain in beam  the next time step
-      toks = [self.tgt_vocab[int(idx)] for idx in h]
-      print('[final hyp] b={} {:.5f}\t{}'.format(b,c, ' '.join(toks)))
+      print('[final hyp i={}]'.format(i))
 
   def print_nbest(self, pos):
     for b in range(self.bs):
