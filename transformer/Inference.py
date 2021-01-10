@@ -128,9 +128,9 @@ class Beam():
         if n >= self.N:
           break
 
-  def print_beam(self, str):
+  def print_beam(self, name):
     lt = self.hyps.shape[1]
-    print('[{}] hyps.size={}'.format(str, self.hyps.shape[1]))    
+    print('[{}] hyps.size={}'.format(name, self.hyps.shape[1]))    
     for i in range(self.hyps.shape[0]):
       cst = sum(self.logP[i]) / norm_length(lt,self.alpha)
       csts = ["{:.4f}".format(idx.item()) for idx in self.logP[i]]
