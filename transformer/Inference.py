@@ -37,7 +37,7 @@ class Beam():
     self.logP = torch.zeros([self.bs,1], dtype=torch.float32).to(self.device)     #[bs,lt=1]
     ### next are hyps reaching <eos>
     self.final = [defaultdict() for i in range(self.bs)] #list with hyps reaching <eos> and overall score
-    self.print_beam('INITIAL')
+#    self.print_beam('INITIAL')
 
   def done(self):
     if self.hyps.shape[-1] >= self.max_size: ### stop if already prduced max_size tokens in hyps
@@ -61,24 +61,24 @@ class Beam():
     #This function extends hypotheses in self.hyps with one word keeping the k-best [bs*K,lt+1]
 
     # we keep the K-best choices for each hypothesis in y_next
-    next_logP, next_hyps = torch.topk(y_next, k=self.K, dim=1) #both are [I,self.K]
-    next_hyps = next_hyps.contiguous().view(-1,1) #[I*self.K,1]
+    next_logP, next_wrds = torch.topk(y_next, k=self.K, dim=1) #both are [I,self.K]
+    next_wrds = next_wrds.contiguous().view(-1,1) #[I*self.K,1]
     next_logP = next_logP.contiguous().view(-1,1) #[I*self.K,1]
-    print('***** EXTEND with {}-best next_hyps: {}'.format(self.K, [self.tgt_vocab[idx] for idx in next_hyps.view(-1).tolist()]))
+#    print('***** EXTEND with {}-best next_wrds: {}'.format(self.K, [self.tgt_vocab[idx] for idx in next_wrds.view(-1).tolist()]))
 
     ###
-    ### EXPAND hyps/logP with next_hyps/next_logP
+    ### EXPAND hyps/logP with next_wrds/next_logP
     ###
-    ### first expand (hyps/logP are [self.bs,lt=1]) and next_hyps/next_logP are [self.bs*self.K,1]
-    ### ulterior expansions (hyps/logP are [self.bs*self.K,lt>1]) and next_hyps/next_logP are [self.bs*self.K*self.K,1]
+    ### first expand (hyps/logP are [self.bs,lt=1]) and next_wrds/next_logP are [self.bs*self.K,1]
+    ### ulterior expansions (hyps/logP are [self.bs*self.K,lt>1]) and next_wrds/next_logP are [self.bs*self.K*self.K,1]
     #replicate each hyp in beam K times
     self.hyps = self.hyps.repeat_interleave(repeats=self.K, dim=0) #[I,lt] => [I*self.K,lt]
     self.logP = self.logP.repeat_interleave(repeats=self.K, dim=0) #[I,lt] => [I*self.K,lt]
     ### extend beam hyps with new word (next)
-    self.hyps = torch.cat((self.hyps, next_hyps), dim=-1) #[I*self.K,lt+1]
+    self.hyps = torch.cat((self.hyps, next_wrds), dim=-1) #[I*self.K,lt+1]
     self.logP = torch.cat((self.logP, next_logP), dim=-1) #[I*self.K,lt+1]
     lt = self.hyps.shape[1]
-    self.print_beam('EXPAND K={}'.format(self.K))
+#    self.print_beam('EXPAND K={}'.format(self.K))
     #logging.info('hyps = {} logP = {}'.format(self.hyps.shape, self.logP.shape))
 
     ###
@@ -90,7 +90,7 @@ class Beam():
       kbest_logP, kbest_hyps = torch.topk(torch.sum(self.logP,dim=2), k=self.K, dim=1) #both are [bs, K] (finds the K-best of dimension 1 (I*K)) no need to norm-length since all have same length
       self.hyps = torch.stack([self.hyps[b][inds] for b,inds in enumerate(kbest_hyps)], dim=0).contiguous().view(self.bs*self.K,lt) #[bs,K,lt] => [bs*K,lt]
       self.logP = torch.stack([self.logP[b][inds] for b,inds in enumerate(kbest_hyps)], dim=0).contiguous().view(self.bs*self.K,lt) #[bs,K,lt] => [bs*K,lt]
-      self.print_beam('REDUCE K={}'.format(self.K))
+#      self.print_beam('REDUCE K={}'.format(self.K))
 
     ###
     ### Final hypotheses
@@ -102,7 +102,7 @@ class Beam():
       c = sum(self.logP[i]) / norm_length(len(h),self.alpha) ### final cost of hypothesis normalized by length
       self.final[b][' '.join(map(str,h))] = c ### save ending hyp into self.final
       self.logP[i,-1] = -float('Inf') # assign ending hypotheses -Inf so wont remain in beam the next time step
-      print('[final hyp i={}]'.format(i))
+#      print('[final hyp i={}]'.format(i))
 
   def print_nbest(self, pos):
     for b in range(self.bs):
