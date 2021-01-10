@@ -132,10 +132,12 @@ class Beam():
     lt = self.hyps.shape[1]
     print('[{}] hyps.size={}'.format(name, self.hyps.shape[1]))    
     for i in range(self.hyps.shape[0]):
-      cst = sum(self.logP[i]) / norm_length(lt,self.alpha)
-      csts = ["{:.4f}".format(idx.item()) for idx in self.logP[i]]
-      toks = ["{}:{}".format(idx.item(),self.tgt_vocab[idx.item()]) for idx in self.hyps[i]]
-      print('i={}\t{:.5f}\t{}\t{}'.format(i,cst,' '.join(toks), ' '.join(csts)))
+      toks = ["{:.4f}:{}".format(self.logP[j],idx.item(),self.tgt_vocab[idx.item()]) for j,idx in enumerate(self.hyps[i])]
+      sum_logP = sum(self.logP[i]) / norm_length(lt,self.alpha)
+      print('i={}\t{:.5f}\t{}'.format(i,sum_logP,' '.join(toks)))
+#      csts = ["{:.4f}".format(idx.item()) for idx in self.logP[i]]
+#      toks = ["{}:{}".format(idx.item(),self.tgt_vocab[idx.item()]) for idx in self.hyps[i]]
+#      print('i={}\t{:.5f}\t{}\t{}'.format(i,cst,' '.join(toks), ' '.join(csts)))
 
 
 ##############################################################################################################
