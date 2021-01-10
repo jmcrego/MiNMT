@@ -59,7 +59,7 @@ class Beam():
     # y_next contains Vt probs for each hypothesis in hyps
     assert y_next.shape[0] == self.bs or y_next.shape[0] == self.bs*self.K
     assert y_next.shape[0] == self.hyps.shape[0]
-    assert y_next.shape[1] == self.hyps.shape[1] * len(self.tgt_vocab)
+    assert y_next.shape[1] == len(self.tgt_vocab)
     #The output of this function is always batch_size * beam_size (bs*K)
     I = y_next.shape[0] ### number of input hyps (input to expand)
     O = self.bs*self.K  ### number of output hyps (output to expand)
