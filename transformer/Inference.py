@@ -71,9 +71,9 @@ class Beam():
     next_logP = next_logP.contiguous().view(-1,1) #[I*self.K,1]
     print('----------> {}-best next_hyps: {}'.format(self.K, [self.tgt_vocab[idx] for idx in next_hyps.view(-1).tolist()]))
 
-    #
-    # expand hyps/logP with next_hyps/next_logP
-    #
+    ###
+    ### EXPAND hyps/logP with next_hyps/next_logP
+    ###
     ### first expand (hyps/logP are [self.bs,lt=1]) and next_hyps/next_logP are [self.bs*self.K,1]
     ### ulterior expansions (hyps/logP are [self.bs*self.K,lt>1]) and next_hyps/next_logP are [self.bs*self.K*self.K,1]
     #replicate each hyp in beam K times
@@ -83,14 +83,13 @@ class Beam():
     self.hyps = torch.cat((self.hyps, next_hyps), dim=-1) #[I*self.K,lt+1]
     self.logP = torch.cat((self.logP, next_logP), dim=-1) #[I*self.K,lt+1]
     lt = self.hyps.shape[1]
-    #logging.info('[cat] hyps = {} logP = {}'.format(self.hyps.shape, self.logP.shape))
     self.print_beam('EXPAND K={}'.format(self.K))
+    #logging.info('hyps = {} logP = {}'.format(self.hyps.shape, self.logP.shape))
 
     ###
-    #We REDUCE bs*(K*K) into bs*K (keep the K-best hyps of each batch)
-    #no need to do it if this is the initial expansion (self.hyps is already [bs*1*K,lt]) or if beam_size (K) is 1
+    ### REDUCE bs*(K*K) into bs*K to keep the K-best hyps of each example in batch (not done in initial expansion since only bs*1*K hyps nor when K=1)
     ###
-    if self.K > 1:
+    if self.hyps.shape[0] > self.bs*self.K:
       self.hyps = self.hyps.contiguous().view(self.bs,-1,lt) #[bs,K*K,lt] or [bs,1*K,lt] (first expand)
       self.logP = self.logP.contiguous().view(self.bs,-1,lt) #[bs,K*K,lt] or [bs,1*K,lt] (first expand)
       kbest_logP, kbest_hyps = torch.topk(torch.sum(self.logP,dim=2), k=self.K, dim=1) #both are [bs, K] (finds the K-best of dimension 1 (I*K)) no need to norm-length since all have same length
@@ -104,13 +103,12 @@ class Beam():
     ### check ending hypotheses
     ###
     index_of_finals = (self.hyps[:,-1]==self.idx_eos).nonzero(as_tuple=False).squeeze(-1) #[n] n being the number of final hyps found
-    ### assign ending hypotheses -Inf logP and save them in self.final_hyps
     for i in index_of_finals.tolist():
-      b = i//self.K #the beam it belongs
+      b = i//self.K #the batch example where it belongs
       h = self.hyps[i].tolist() #[lt] hypothesis
       c = sum(self.logP[i]) / norm_length(len(h),self.alpha) ### final cost of hypothesis normalized by length
-      self.final[b][' '.join(map(str,h))] = c
-      self.logP[i,-1] = -float('Inf') # this hyp wont remain in beam  the next time step
+      self.final[b][' '.join(map(str,h))] = c ### save ending hyp into self.final
+      self.logP[i,-1] = -float('Inf') # assign ending hypotheses -Inf so wont remain in beam the next time step
       print('[final hyp i={}]'.format(i))
 
   def print_nbest(self, pos):
@@ -124,16 +122,13 @@ class Beam():
         if n >= self.N:
           break
 
-  def print_beam(self, name):
+  def print_beam(self, tag):
     lt = self.hyps.shape[1]
-    print('[{}] hyps.size={}'.format(name, self.hyps.shape[1]))    
+    print('[{}] hyps.size={}'.format(tag, self.hyps.shape[1]))    
     for i in range(self.hyps.shape[0]):
       toks = ["{:.4f}:{}".format(self.logP[i,j].item(),self.tgt_vocab[self.hyps[i,j].item()]) for j in range(len(self.hyps[i]))]
       sum_logP = sum(self.logP[i]) / norm_length(lt,self.alpha)
       print('i={}\t{:.5f}\t{}'.format(i,sum_logP,' '.join(toks)))
-#      csts = ["{:.4f}".format(idx.item()) for idx in self.logP[i]]
-#      toks = ["{}:{}".format(idx.item(),self.tgt_vocab[idx.item()]) for idx in self.hyps[i]]
-#      print('i={}\t{:.5f}\t{}\t{}'.format(i,cst,' '.join(toks), ' '.join(csts)))
 
 
 ##############################################################################################################
