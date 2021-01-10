@@ -160,7 +160,6 @@ class BeamSearch():
     ### encode the src sequence
     ###
     msk_src, z_src = encode_src(batch_src, self.model, self.tgt_vocab.idx_pad, self.device)
-    print("msk_src", msk_src)
     #msk_src [bs,1,ls]
     #z_src [bs,ls,ed]
     ###
@@ -175,7 +174,6 @@ class BeamSearch():
       if self.beam_size > 1 and msk_src.shape[0] == bs:
         msk_src = msk_src.repeat_interleave(repeats=K, dim=0) #[bs*K,1,ls] 
         z_src = z_src.repeat_interleave(repeats=K, dim=0) #[bs*K,ls,ed] 
-        print("msk_src", msk_src)
 
     return beam
 
