@@ -37,7 +37,7 @@ class Beam():
     self.logP = torch.zeros([self.bs,1], dtype=torch.float32).to(self.device)     #[bs,lt=1]
     ### next are hyps reaching <eos>
     self.final = [defaultdict() for i in range(self.bs)] #list with hyps reaching <eos> and overall score
-#    self.print_beam('INITIAL')
+    self.print_beam('INITIAL')
 
   def done(self):
     if self.hyps.shape[-1] >= self.max_size: ### stop if already prduced max_size tokens in hyps
@@ -64,7 +64,7 @@ class Beam():
     next_logP, next_wrds = torch.topk(y_next, k=self.K, dim=1) #both are [I,self.K]
     next_wrds = next_wrds.contiguous().view(-1,1) #[I*self.K,1]
     next_logP = next_logP.contiguous().view(-1,1) #[I*self.K,1]
-#    print('***** EXTEND with {}-best next_wrds: {}'.format(self.K, [self.tgt_vocab[idx] for idx in next_wrds.view(-1).tolist()]))
+    print('***** EXTEND with {}-best next_wrds: {}'.format(self.K, [self.tgt_vocab[idx] for idx in next_wrds.view(-1).tolist()]))
 
     ###
     ### EXPAND hyps/logP with next_wrds/next_logP
@@ -78,8 +78,7 @@ class Beam():
     self.hyps = torch.cat((self.hyps, next_wrds), dim=-1) #[I*self.K,lt+1]
     self.logP = torch.cat((self.logP, next_logP), dim=-1) #[I*self.K,lt+1]
     lt = self.hyps.shape[1]
-#    self.print_beam('EXPAND K={}'.format(self.K))
-    #logging.info('hyps = {} logP = {}'.format(self.hyps.shape, self.logP.shape))
+    self.print_beam('EXPAND K={}'.format(self.K))
 
     ###
     ### REDUCE bs*(K*K) into bs*K to keep the K-best hyps of each example in batch (not done in initial expansion since only bs*1*K hyps nor when K=1)
@@ -90,7 +89,7 @@ class Beam():
       kbest_logP, kbest_hyps = torch.topk(torch.sum(self.logP,dim=2), k=self.K, dim=1) #both are [bs, K] (finds the K-best of dimension 1 (I*K)) no need to norm-length since all have same length
       self.hyps = torch.stack([self.hyps[b][inds] for b,inds in enumerate(kbest_hyps)], dim=0).contiguous().view(self.bs*self.K,lt) #[bs,K,lt] => [bs*K,lt]
       self.logP = torch.stack([self.logP[b][inds] for b,inds in enumerate(kbest_hyps)], dim=0).contiguous().view(self.bs*self.K,lt) #[bs,K,lt] => [bs*K,lt]
-#      self.print_beam('REDUCE K={}'.format(self.K))
+      self.print_beam('REDUCE K={}'.format(self.K))
 
     ###
     ### Final hypotheses
@@ -102,7 +101,7 @@ class Beam():
       c = sum(self.logP[i]) / norm_length(len(h),self.alpha) ### final cost of hypothesis normalized by length
       self.final[b][' '.join(map(str,h))] = c ### save ending hyp into self.final
       self.logP[i,-1] = -float('Inf') # assign ending hypotheses -Inf so wont remain in beam the next time step
-#      print('[final hyp i={}]'.format(i))
+      print('[final i={}]'.format(i))
 
   def print_nbest(self, pos):
     for b in range(self.bs):
