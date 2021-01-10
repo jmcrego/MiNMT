@@ -53,19 +53,22 @@ class Beam():
     return True
 
   def expand(self,y_next):
-    #y_next is [B,Vt] B is the number of hypotheses in y_next (either bs*1 or bs*K)
+    #y_next is [B,Vt] B is the number of hypotheses in y_next. Either:
+    # bs*1 (beam just created containing <eos> of each batch_size hypothesis)
+    # bs*K (batch_size * beam_size)
+    # y_next contains Vt probs for each hypothesis in hyps
     assert y_next.shape[0] == self.bs or y_next.shape[0] == self.bs*self.K
-    B = y_next.shape[0]
-    Vt = y_next.shape[1]
+    assert y_next.shape[0] == self.hyps.shape[0]
+    assert y_next.shape[1] == self.hyps.shape[1] * len(self.tgt_vocab)
+    #The output of this function is always batch_size * beam_size (bs*K)
+    I = y_next.shape[0] ### number of input hyps (input to expand)
+    O = self.bs*self.K  ### number of output hyps (output to expand)
 
-    #
-    # y_next contains hypotheses expanding beam_hyps
-    # we keep the K-best choices for each hypothesis
-    #
-    next_logP, next_hyps = torch.topk(y_next, k=self.K, dim=1) #both are [B,self.K]
-    next_hyps = next_hyps.contiguous().view(-1,1) #[B*self.K,1]
-    next_logP = next_logP.contiguous().view(-1,1) #[B*self.K,1]
-    print('---------- next_hyps: {}'.format([self.tgt_vocab[idx] for idx in next_hyps.view(-1).tolist()]))
+    # we keep the K-best choices for each hypothesis in y_next
+    next_logP, next_hyps = torch.topk(y_next, k=self.K, dim=1) #both are [I,self.K]
+    next_hyps = next_hyps.contiguous().view(-1,1) #[I*self.K,1]
+    next_logP = next_logP.contiguous().view(-1,1) #[I*self.K,1]
+    print('---------- next_hyps: {} next_logP: {}'.format([self.tgt_vocab[idx] for idx in next_hyps.view(-1).tolist()], [':.5f'.format(c) for c in next_logP.view(-1).tolist()]))
 
     #Following https://arxiv.org/abs/1609.08144:
     #at each step, we only keep the best scored hypotheses in each beam (K: beam size) 
@@ -174,7 +177,7 @@ class BeamSearch():
     #msk_src [bs,1,ls]
     #z_src [bs,ls,ed]
     ###
-    ### decode step-by-step (produce one tgt token at each time step)
+    ### decode step-by-step (produce one tgt token at each time step for each hyp in beam)
     ###
     beam = Beam(bs, self.beam_size, self.n_best, self.max_size, self.tgt_vocab, self.device)
     while not beam.done():
@@ -185,7 +188,7 @@ class BeamSearch():
       if self.beam_size > 1 and msk_src.shape[0] == bs:
         msk_src = msk_src.repeat_interleave(repeats=K, dim=0) #[bs*K,1,ls] 
         z_src = z_src.repeat_interleave(repeats=K, dim=0) #[bs*K,ls,ed] 
-        print("msk_src2", msk_src)
+        print("msk_src", msk_src)
 
     return beam
 
