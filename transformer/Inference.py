@@ -40,36 +40,31 @@ class Beam():
     self.print_beam('INITIAL')
 
   def done(self):
-    ### stop if already prduced max_size tokens in hyps
-    if self.hyps.shape[-1] >= self.max_size: 
-      return True
-    ### stop if all beams already produced K (beam_size) final hypotheses
-    for dhyps in self.final: 
+    if self.hyps.shape[-1] >= self.max_size: ### stop if already prduced max_size tokens in hyps
+      return True    
+    for dhyps in self.final: ### stop if all beams already produced K (beam_size) final hypotheses
       if len(dhyps) < self.K:
         return False 
-    ### stop if lowest scored hyp is lower than corresponding best hyp-threshold 
+    return True ### do not stop
 
-    ### do not stop
-    return True
-
-  def expand_breath(self,y_next):
-    #y_next is [B,Vt] B is the number of hypotheses in y_next. Either:
-    # bs*1 (beam just created containing <eos> of each batch_size hypothesis)
-    # bs*K (batch_size * beam_size)
-    # y_next contains Vt probs for each hypothesis in hyps
-    assert y_next.shape[0] == self.bs or y_next.shape[0] == self.bs*self.K
+  def extend_breath(self,y_next):
+    I = self.hyps.shape[0] ### number of input hyps (to expand)
     assert y_next.shape[0] == self.hyps.shape[0]
+    # I is either:
+    # bs*1 (beam just created containing <eos> of each example in batch)
+    # bs*K (batch_size * beam_size)
+    lt = self.hyps.shape[1] #current length of tgt hypotheses
+    # self.hyps is [I,lt]
+    # y_next is [I,Vt] contains the proba ef expanding I hyps with each word in vocab
+    assert y_next.shape[0] == self.bs or y_next.shape[0] == self.bs*self.K
     assert y_next.shape[1] == len(self.tgt_vocab)
-    #The output of this function is always batch_size * beam_size (bs*K)
-    I = y_next.shape[0] ### number of input hyps (input to expand)
-    O = self.bs*self.K  ### number of output hyps (output to expand)
-    lt = self.hyps.shape[1] #length of tgt hypotheses
+    #This function extends hypotheses in self.hyps with one word keeping the k-best [bs*K,lt+1]
 
     # we keep the K-best choices for each hypothesis in y_next
     next_logP, next_hyps = torch.topk(y_next, k=self.K, dim=1) #both are [I,self.K]
     next_hyps = next_hyps.contiguous().view(-1,1) #[I*self.K,1]
     next_logP = next_logP.contiguous().view(-1,1) #[I*self.K,1]
-    print('----------> {}-best next_hyps: {}'.format(self.K, [self.tgt_vocab[idx] for idx in next_hyps.view(-1).tolist()]))
+    print('******* extend with {}-best next_hyps: {}'.format(self.K, [self.tgt_vocab[idx] for idx in next_hyps.view(-1).tolist()]))
 
     ###
     ### EXPAND hyps/logP with next_hyps/next_logP
@@ -93,14 +88,12 @@ class Beam():
       self.hyps = self.hyps.contiguous().view(self.bs,-1,lt) #[bs,K*K,lt] or [bs,1*K,lt] (first expand)
       self.logP = self.logP.contiguous().view(self.bs,-1,lt) #[bs,K*K,lt] or [bs,1*K,lt] (first expand)
       kbest_logP, kbest_hyps = torch.topk(torch.sum(self.logP,dim=2), k=self.K, dim=1) #both are [bs, K] (finds the K-best of dimension 1 (I*K)) no need to norm-length since all have same length
-      self.hyps = torch.stack([self.hyps[b][inds] for b,inds in enumerate(kbest_hyps)], dim=0) #[bs,K,lt]
-      self.logP = torch.stack([self.logP[b][inds] for b,inds in enumerate(kbest_hyps)], dim=0) #[bs,K,lt]
-      self.hyps = self.hyps.contiguous().view(self.bs*self.K,lt) #[bs*K,lt]
-      self.logP = self.logP.contiguous().view(self.bs*self.K,lt) #[bs*K,lt]
+      self.hyps = torch.stack([self.hyps[b][inds] for b,inds in enumerate(kbest_hyps)], dim=0).contiguous().view(self.bs*self.K,lt) #[bs,K,lt] => [bs*K,lt]
+      self.logP = torch.stack([self.logP[b][inds] for b,inds in enumerate(kbest_hyps)], dim=0).contiguous().view(self.bs*self.K,lt) #[bs,K,lt] => [bs*K,lt]
       self.print_beam('REDUCE K={}'.format(self.K))
 
     ###
-    ### check ending hypotheses
+    ### Final hypotheses
     ###
     index_of_finals = (self.hyps[:,-1]==self.idx_eos).nonzero(as_tuple=False).squeeze(-1) #[n] n being the number of final hyps found
     for i in index_of_finals.tolist():
@@ -161,7 +154,7 @@ class BeamSearch():
     beam = Beam(bs, self.beam_size, self.n_best, self.max_size, self.tgt_vocab, self.device)
     while not beam.done():
       y_next = self.model.decode(z_src, beam.hyps, msk_src, msk_tgt=None)[:,-1,:] #[bs*K,lt,Vt] => [bs*K,Vt]
-      beam.expand_breath(y_next)
+      beam.extend_breath(y_next)
       #beam.print_beam(self.tgt_vocab)
       ### from now on i decode bs*K hyps (i need z_src/msk_src to be the same shape)
       if self.beam_size > 1 and msk_src.shape[0] == bs:
