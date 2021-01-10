@@ -69,7 +69,7 @@ class Beam():
     next_logP, next_hyps = torch.topk(y_next, k=self.K, dim=1) #both are [I,self.K]
     next_hyps = next_hyps.contiguous().view(-1,1) #[I*self.K,1]
     next_logP = next_logP.contiguous().view(-1,1) #[I*self.K,1]
-    print('----------> {}-best next_hyps: {}\t{}'.format(self.K, [self.tgt_vocab[idx] for idx in next_hyps.view(-1).tolist()], ['{:.5f}'.format(c) for c in next_logP.view(-1).tolist()]))
+    print('----------> {}-best next_hyps: {}'.format(self.K, [self.tgt_vocab[idx] for idx in next_hyps.view(-1).tolist()]))
 
     #
     # expand hyps/logP with next_hyps/next_logP
