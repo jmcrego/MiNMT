@@ -89,7 +89,7 @@ class Beam():
       kbest_logP, kbest_hyps = torch.topk(torch.sum(self.logP,dim=2), k=self.K, dim=1) #both are [bs, K] (finds the K-best of dimension 1 (I*K)) no need to norm-length since all have same length
       self.hyps = torch.stack([self.hyps[b][inds] for b,inds in enumerate(kbest_hyps)], dim=0).contiguous().view(self.bs*self.K,lt) #[bs,K,lt] => [bs*K,lt]
       self.logP = torch.stack([self.logP[b][inds] for b,inds in enumerate(kbest_hyps)], dim=0).contiguous().view(self.bs*self.K,lt) #[bs,K,lt] => [bs*K,lt]
-      self.print_beam('REDUCE K={}'.format(self.K))
+      #self.print_beam('REDUCE K={}'.format(self.K))
 
     ###
     ### Final hypotheses
@@ -120,16 +120,16 @@ class Beam():
     b=0
     for i in range(self.hyps.shape[0]):
       sum_logP_norm = sum(self.logP[i]) / norm_length(lt,self.alpha)
-      #
-      #toks = ["{:.4f}:{}".format(self.logP[i,j].item(),self.tgt_vocab[self.hyps[i,j].item()]) for j in range(len(self.hyps[i]))]
-      #print('i={}\t{:.5f}\t{}'.format(i,sum_logP_norm,' '.join(toks)))
-      #
-      toks1 = ["{}".format(self.tgt_vocab[self.hyps[i,j].item()]) for j in range(len(self.hyps[i]))]
-      toks2 = ["{:.4f}".format(self.logP[i,j].item()) for j in range(len(self.hyps[i]))]
-      print('i={} b={}\t{:.5f}\t{}\t{}'.format(i,b,sum_logP_norm,' '.join(toks1),' '.join(toks2)))
-      if i%self.K == 0:
-        b+=1
-
+      if False:
+        toks = ["{:.4f}:{}".format(self.logP[i,j].item(),self.tgt_vocab[self.hyps[i,j].item()]) for j in range(len(self.hyps[i]))]
+        print('i={}\t{:.5f}\t{}'.format(i,sum_logP_norm,' '.join(toks)))
+      else:
+        toks1 = ["{}".format(self.tgt_vocab[self.hyps[i,j].item()]) for j in range(len(self.hyps[i]))]
+        toks2 = ["{:.4f}".format(self.logP[i,j].item()) for j in range(len(self.hyps[i]))]
+        if i%self.K == 0:
+          b+=1
+        print('i={} b={}\t{:.5f}\t{}\t{}'.format(i,b,sum_logP_norm,' '.join(toks1),' '.join(toks2)))
+    
 
 
 ##############################################################################################################
