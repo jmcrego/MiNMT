@@ -128,7 +128,7 @@ class Beam():
       toks2 = ["{:.4f}".format(self.logP[i,j].item()) for j in range(len(self.hyps[i]))]
       print('i={} b={}\t{:.5f}\t{}\t{}'.format(i,b,sum_logP_norm,' '.join(toks1),' '.join(toks2)))
       if i%self.K == 0:
-        b=+1
+        b+=1
 
 
 
