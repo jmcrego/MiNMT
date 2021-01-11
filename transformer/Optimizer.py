@@ -55,7 +55,7 @@ class LabelSmoothing(torch.nn.Module):
 
 
 class NLLLoss(torch.nn.Module):
-  def __init__(self, nclasses, padding_idx, smoothing=0.0):
+  def __init__(self, nclasses, padding_idx):
     super(NLLLoss, self).__init__()
     self.criterion = torch.nn.NLLLoss(ignore_index=padding_idx, reduction='sum')
     self.padding_idx = padding_idx
