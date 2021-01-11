@@ -279,7 +279,7 @@ class AddPositionalEncoding(torch.nn.Module):
     div_term = torch.exp(torch.arange(0, emb_dim, 2).float() * (-math.log(10000.0) / emb_dim)) #[ed/2]
     pe[:, 0::2] = torch.sin(position * div_term)
     pe[:, 1::2] = torch.cos(position * div_term)
-    pe = pe.unsqueeze(0) #.transpose(0, 1) #[1,max_len,ed]
+    pe = pe.unsqueeze(0) #[1,max_len,ed]
     self.register_buffer('pe', pe) #register_buffer are for params saved&restored in state_dict not trained 
 
   def forward(self, x):
