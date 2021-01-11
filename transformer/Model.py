@@ -243,7 +243,7 @@ class MultiHead_Attn(torch.nn.Module):
     s = torch.matmul(Q, K.transpose(2, 3)) / self.kd**0.5 #[bs,nh,slq,qd] x [bs,nh,kd,slk] = [bs,nh,slq,slk] # thanks to qd==kd #in decoder slq are target words and slk are source words
     if msk is not None:
       s = s.masked_fill(msk == 0, -1e9) #score=-1e9 to masked tokens
-    w = torch.nn.functional.softmax(s, dim=-1) #[bs,nh,slq,slk] (these are the attention weights)
+    w = self.dropout(torch.nn.functional.softmax(s, dim=-1)) #[bs,nh,slq,slk] (these are the attention weights)
     z = torch.matmul(w,V) #[bs,nh,slq,slk] x [bs,nh,slv,vd] = [bs,nh,slq,vd] #thanks to slk==slv
     z = z.transpose(1, 2).contiguous().view([bs,slq,-1]) #=> [bs,slq,nh,vd] => [bs,slq,nh*vd]
     z = self.WO(z) #[bs,slq,ed]
