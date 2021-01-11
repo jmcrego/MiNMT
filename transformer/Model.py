@@ -274,16 +274,15 @@ class AddPositionalEncoding(torch.nn.Module):
   def __init__(self, emb_dim, dropout, max_len=5000):
     super(AddPositionalEncoding, self).__init__()
     self.dropout = torch.nn.Dropout(dropout)
-    pe = torch.zeros(max_len, emb_dim)
-    position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1)
-    div_term = torch.exp(torch.arange(0, emb_dim, 2).float() * (-math.log(10000.0) / emb_dim))
+    pe = torch.zeros(max_len, emb_dim) #[max_len=5000, ed]
+    position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1) #[max_len, 1]
+    div_term = torch.exp(torch.arange(0, emb_dim, 2).float() * (-math.log(10000.0) / emb_dim)) #[ed/2]
     pe[:, 0::2] = torch.sin(position * div_term)
     pe[:, 1::2] = torch.cos(position * div_term)
-    pe = pe.unsqueeze(0) #.transpose(0, 1)
+    pe = pe.unsqueeze(0) #.transpose(0, 1) #[1,max_len,ed]
     self.register_buffer('pe', pe) #register_buffer are for params saved&restored in state_dict not trained 
 
   def forward(self, x):
-    #x = x + self.pe[:x.size(0), :]
     x = x + self.pe[:, :x.size(1)]
     return self.dropout(x)
 
