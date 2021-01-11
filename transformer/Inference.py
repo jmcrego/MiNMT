@@ -115,20 +115,16 @@ class Beam():
           break
 
   def print_beam(self, tag):
-    lt = self.hyps.shape[1]
     print('[{}] hyps.size={}'.format(tag, self.hyps.shape[1]))    
-    b=0
     for i in range(self.hyps.shape[0]):
-      sum_logP_norm = sum(self.logP[i]) / norm_length(lt,self.alpha)
+      sum_logP_norm = sum(self.logP[i]) / norm_length(self.hyps.shape[1],self.alpha)
       if False:
         toks = ["{:.4f}:{}".format(self.logP[i,j].item(),self.tgt_vocab[self.hyps[i,j].item()]) for j in range(len(self.hyps[i]))]
         print('i={}\t{:.5f}\t{}'.format(i,sum_logP_norm,' '.join(toks)))
       else:
         toks1 = ["{}".format(self.tgt_vocab[self.hyps[i,j].item()]) for j in range(len(self.hyps[i]))]
         toks2 = ["{:.4f}".format(self.logP[i,j].item()) for j in range(len(self.hyps[i]))]
-        if i%self.K == 0:
-          b+=1
-        print('i={} b={}\t{:.5f}\t{}\t{}'.format(i,b,sum_logP_norm,' '.join(toks1),' '.join(toks2)))
+        print('i={} b={}\t{:.5f}\t{}\t{}'.format(i,int(i/self.K),sum_logP_norm,' '.join(toks1),' '.join(toks2)))
     
 
 
