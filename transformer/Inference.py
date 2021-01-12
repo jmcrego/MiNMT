@@ -47,7 +47,7 @@ class Beam():
         return False 
     return True ### do not stop
 
-  def extend_breath(self,y_next):
+  def advance(self,y_next):
     I = self.hyps.shape[0] ### number of input hyps (to expand)
     assert y_next.shape[0] == self.hyps.shape[0]
     # I is either:
@@ -158,7 +158,7 @@ class BeamSearch():
     beam = Beam(bs, self.beam_size, self.n_best, self.max_size, self.tgt_vocab, self.device)
     while not beam.done():
       y_next = self.model.decode(z_src, beam.hyps, msk_src, msk_tgt=None)[:,-1,:] #[bs*K,lt,Vt] => [bs*K,Vt]
-      beam.extend_breath(y_next)
+      beam.advance(y_next)
       #beam.print_beam(self.tgt_vocab)
       ### from now on i decode bs*K hyps (i need z_src/msk_src to be the same shape)
       if self.beam_size > 1 and msk_src.shape[0] == bs:
