@@ -117,10 +117,11 @@ class Learning():
         loss_batch = self.criter(pred, ref)
         loss_token = loss_batch / torch.sum(ref != self.idx_pad)
         ### optimize
-        self.optScheduler.optimizer.zero_grad()                                      ### sets gradients to zero
-        loss_token.backward()                                                        ### computes gradients
-        torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.clip_grad_norm) ### clip gradients
-        self.optScheduler.step()                                                     ### updates model parameters after incrementing step and updating lr
+        self.optScheduler.optimizer.zero_grad()                                        ### sets gradients to zero
+        loss_token.backward()                                                          ### computes gradients
+        if self.clip_grad_norm:
+          torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.clip_grad_norm) ### clip gradients to clip_grad_norm
+        self.optScheduler.step()                                                       ### updates model parameters after incrementing step and updating lr
         ### accumulate score
         score.step(loss_batch.item(), torch.sum(ref != self.idx_pad))
 

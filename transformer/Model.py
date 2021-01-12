@@ -280,7 +280,7 @@ class AddPositionalEncoding(torch.nn.Module):
     self.register_buffer('pe', pe) #register_buffer are for params saved&restored in state_dict not trained 
 
   def forward(self, x):
-    #x is [bs, l, ed]
+    #x is [bs, l, ed] l is the length of examples in batch (number of tokens)
     #self.pe is [1, max_len=5000, ed]
     return self.dropout(x + self.pe[:, :x.size(1), :])
 
