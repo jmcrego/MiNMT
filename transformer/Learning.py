@@ -119,7 +119,7 @@ class Learning():
         ### optimize
         self.optScheduler.optimizer.zero_grad()                                        ### sets gradients to zero
         loss_token.backward()                                                          ### computes gradients
-        if self.clip_grad_norm:
+        if self.clip_grad_norm > 0.0:
           torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.clip_grad_norm) ### clip gradients to clip_grad_norm
         self.optScheduler.step()                                                       ### updates model parameters after incrementing step and updating lr
         ### accumulate score
