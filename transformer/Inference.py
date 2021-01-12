@@ -186,9 +186,9 @@ class Inference():
     with torch.no_grad():
       self.model.eval()
       beamsearch = BeamSearch(self.model, self.tgt_vocab, self.beam_size, self.n_best, self.max_size, device)
-      for pos, batch_src, _ in testset:
+      for i, batch_src, _ in testset:
         beam = beamsearch.traverse(batch_src)
-        beam.print_nbest(pos) 
+        beam.print_nbest(i) 
 
 
 
