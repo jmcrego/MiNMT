@@ -7,6 +7,7 @@ import torch
 import math
 import numpy as np
 import glob
+from torch.autograd import Variable
 from transformer.Vocab import Vocab
 
 def numparameters(model):
@@ -271,18 +272,23 @@ class AddPositionalEncoding(torch.nn.Module):
     super(AddPositionalEncoding, self).__init__()
     assert emb_dim%2 == 0 #emb_dim must be pair
     self.dropout = torch.nn.Dropout(dropout)
+
     pe = torch.zeros(max_len, emb_dim) #[max_len=5000, ed]
     position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1) #[max_len, 1]
-    div_term = torch.exp(torch.arange(0, emb_dim, 2).float() * (-math.log(10000.0)/emb_dim)) #[ed/2]
-    pe[:, 0::2] = torch.sin(position * div_term) #[max_len=5000, ed]
-    pe[:, 1::2] = torch.cos(position * div_term) #[max_len=5000, ed]
-    pe = pe.unsqueeze(0) #[1, max_len=5000, ed]
-    self.register_buffer('pe', pe) #register_buffer are for params saved&restored in state_dict not trained 
+    div_term = torch.exp(torch.arange(0, emb_dim, 2).float() * (-math.log(10000.0) / emb_dim)) #[ed/2]
+    pe[:, 0::2] = torch.sin(position * div_term) #[max_len, 1] * [1, ed/2] => [max_len, ed] (pairs of pe)
+    pe[:, 1::2] = torch.cos(position * div_term) #[max_len, 1] * [1, ed/2] => [max_len, ed] (odds of pe)
+#new    pe = pe.unsqueeze(0) #[1, max_len=5000, ed]
+#old
+    pe = pe.unsqueeze(0).transpose(0, 1) #[max_len=5000, 1, ed]
+    self.register_buffer('pe', pe) #register_buffer is for params which are saved&restored in state_dict but not trained 
 
   def forward(self, x):
-    #x is [bs, l, ed] l is the length of examples in batch (number of tokens)
-    #self.pe is [1, max_len=5000, ed]
-    return self.dropout(x + self.pe[:, :x.size(1), :])
+    #x is [bs, l, ed] l is the length of examples in batch (number of tokens)    
+#new    x = x + Variable(self.pe1[:, :x.size(1)],requires_grad=False) #[bs, l, ed] + [1, max_len[:l], ed]
+#old
+    x = x + Variable(self.pe[:x.size(0), :],requires_grad=False) #[bs, l, ed] + [max_len[:l], 1, ed]
+    return self.dropout(x)
 
 ##############################################################################################################
 ### Generator ################################################################################################
