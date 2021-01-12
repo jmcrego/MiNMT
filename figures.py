@@ -70,7 +70,45 @@ def plotLRate(N):
   plotPoints2d(X, Y, xlabel=xlabel, ylabel=ylabel, legend=legend, f=file)
   
 
+def plotLearningCurve(file):
+	step_s = []
+	lr_s = []
+	loss_s = []
+	with open(file,'r') as f: 
+		for l in f:
+    	#[2021-01-12_12:07:11.086] INFO Learning step:363700 epoch:18 batch:4813/21111 ms/batch:213.41 lr:0.000147 loss/tok:2.486
+			step = None
+			lr = None
+			loss = None
+			for tok in l.rstrip().split():
+				if tok.startswith('step'):
+					step = int(tok.split(':')[1])
+				elif tok.startswith('lr'):
+					lr = float(tok.split(':')[1])
+				elif tok.startswith('loss/tok:'):
+					loss = float(tok.split(':')[1])
+			if step is not None and lr is not None and loss is not None:
+				step_s.append(step)
+				lr_s.append(lr)
+				loss_s.append(loss)
+
+	plt.figure(figsize=(20, 5))
+	plt.subplot(211)
+	plt.plot(np.asarray(step_s), np.asarray(loss_s))
+	plt.legend(["Learning Curve"])
+	plt.xlabel("#Steps")
+	plt.ylabel("Loss/tok")
+
+	plt.subplot(212)
+	plt.plot(np.asarray(step_s), np.asarray(lr_s))
+	plt.legend(["Learning Rate"])
+	plt.xlabel("#Steps")
+	plt.ylabel("Rate")
+
+	plt.show()
+
 if __name__ == '__main__':
 
-	plotPositionalEncoding()
-	plotLRate(200000)
+  #plotPositionalEncoding()
+  #plotLRate(200000)
+  plotLearningCurve(sys.argv[1])
