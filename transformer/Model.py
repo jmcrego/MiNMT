@@ -278,16 +278,16 @@ class AddPositionalEncoding(torch.nn.Module):
     div_term = torch.exp(torch.arange(0, emb_dim, 2).float() * (-math.log(10000.0) / emb_dim)) #[ed/2]
     pe[:, 0::2] = torch.sin(position * div_term) #[max_len, 1] * [1, ed/2] => [max_len, ed] (pairs of pe)
     pe[:, 1::2] = torch.cos(position * div_term) #[max_len, 1] * [1, ed/2] => [max_len, ed] (odds of pe)
-#new    pe = pe.unsqueeze(0) #[1, max_len=5000, ed]
-#old
-    pe = pe.unsqueeze(0).transpose(0, 1) #[max_len=5000, 1, ed]
+#new
+    pe = pe.unsqueeze(0) #[1, max_len=5000, ed]
+#bug    pe = pe.unsqueeze(0).transpose(0, 1) #[max_len=5000, 1, ed]
     self.register_buffer('pe', pe) #register_buffer is for params which are saved&restored in state_dict but not trained 
 
   def forward(self, x):
     #x is [bs, l, ed] l is the length of examples in batch (number of tokens)    
-#new    x = x + Variable(self.pe1[:, :x.size(1)],requires_grad=False) #[bs, l, ed] + [1, max_len[:l], ed]
-#old
-    x = x + Variable(self.pe[:x.size(0), :],requires_grad=False) #[bs, l, ed] + [max_len[:l], 1, ed]
+#new
+    x = x + Variable(self.pe[:, :x.size(1)], requires_grad=False) #[bs, l, ed] + [1, l, ed]
+#bug    x = x + Variable(self.pe[:x.size(0), :], requires_grad=False) #[bs, l, ed] + [bs, 1, ed]
     return self.dropout(x)
 
 ##############################################################################################################
