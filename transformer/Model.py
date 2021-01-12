@@ -240,7 +240,8 @@ class MultiHead_Attn(torch.nn.Module):
     s = torch.matmul(Q, K.transpose(2, 3)) / self.kd**0.5 #[bs,nh,slq,qd] x [bs,nh,kd,slk] = [bs,nh,slq,slk] # thanks to qd==kd #in decoder slq are target words and slk are source words
     if msk is not None:
       s = s.masked_fill(msk == 0, -1e9) #score=-1e9 to masked tokens
-    w = self.dropout(torch.nn.functional.softmax(s, dim=-1)) #[bs,nh,slq,slk] (these are the attention weights)
+    w = torch.nn.functional.softmax(s, dim=-1) #[bs,nh,slq,slk] (these are the attention weights)
+#jmcrego    w = self.dropout(torch.nn.functional.softmax(s, dim=-1)) #[bs,nh,slq,slk] (these are the attention weights)
     z = torch.matmul(w,V) #[bs,nh,slq,slk] x [bs,nh,slv,vd] = [bs,nh,slq,vd] #thanks to slk==slv
     z = z.transpose(1,2).contiguous().view([bs,slq,-1]) #=> [bs,slq,nh,vd] => [bs,slq,nh*vd]
     z = self.WO(z) #[bs,slq,ed]
@@ -276,18 +277,14 @@ class AddPositionalEncoding(torch.nn.Module):
     pe = torch.zeros(max_len, emb_dim) #[max_len=5000, ed]
     position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1) #[max_len, 1]
     div_term = torch.exp(torch.arange(0, emb_dim, 2).float() * (-math.log(10000.0) / emb_dim)) #[ed/2]
-    pe[:, 0::2] = torch.sin(position * div_term) #[max_len, 1] * [1, ed/2] => [max_len, ed] (pairs of pe)
-    pe[:, 1::2] = torch.cos(position * div_term) #[max_len, 1] * [1, ed/2] => [max_len, ed] (odds of pe)
-#new
+    pe[:, 0::2] = torch.sin(position*div_term) #[max_len, 1] * [1, ed/2] => [max_len, ed] (pairs of pe)
+    pe[:, 1::2] = torch.cos(position*div_term) #[max_len, 1] * [1, ed/2] => [max_len, ed] (odds of pe)
     pe = pe.unsqueeze(0) #[1, max_len=5000, ed]
-#bug    pe = pe.unsqueeze(0).transpose(0, 1) #[max_len=5000, 1, ed]
     self.register_buffer('pe', pe) #register_buffer is for params which are saved&restored in state_dict but not trained 
 
   def forward(self, x):
-    #x is [bs, l, ed] l is the length of examples in batch (number of tokens)    
-#new
-    x = x + Variable(self.pe[:, :x.size(1)], requires_grad=False) #[bs, l, ed] + [1, l, ed]
-#bug    x = x + Variable(self.pe[:x.size(0), :], requires_grad=False) #[bs, l, ed] + [bs, 1, ed]
+    bs, l, ed = x.shape
+    x = x + Variable(self.pe[:, :l], requires_grad=False) #[bs, l, ed] + [1, l, ed] => [bs, l, ed]
     return self.dropout(x)
 
 ##############################################################################################################
