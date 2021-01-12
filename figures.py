@@ -19,6 +19,7 @@ def plotPoints2d(X,Y,xlabel=None,ylabel=None,legend=None,f=None):
     plt.legend(legend)
   if f is not None:
     plt.savefig(f)
+  plt.grid(True)
   plt.show()
 
 def plotMatrix2d(X,f=None):
@@ -38,6 +39,7 @@ def plotPositionalEncoding():
   y = pe.forward(Variable(torch.zeros(bs, ls, ed))) #[bs, ls, ed]
   y = y[0, :, 4:8].data.numpy()                     #[ls, 4]
   plt.plot(np.arange(ls), y)
+  plt.grid(True)
   plt.legend(["dim %d"%p for p in [4,5,6,7]])
   plt.show()
 
@@ -111,5 +113,5 @@ def plotLearningCurve(file):
 if __name__ == '__main__':
 
   #plotPositionalEncoding()
-  #plotLRate(200000)
-  plotLearningCurve(sys.argv[1])
+  plotLRate(1000000)
+  #plotLearningCurve(sys.argv[1])
