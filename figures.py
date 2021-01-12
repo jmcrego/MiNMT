@@ -92,19 +92,20 @@ def plotLearningCurve(file):
 				lr_s.append(lr)
 				loss_s.append(loss)
 
-	plt.figure(figsize=(20, 5))
+	plt.figure(figsize=(20, 10))
 	plt.subplot(211)
 	plt.plot(np.asarray(step_s), np.asarray(loss_s))
 	plt.legend(["Learning Curve"])
 	plt.xlabel("#Steps")
-	plt.ylabel("Loss/tok")
+	plt.ylabel("Loss")
+	plt.grid(True)
 
 	plt.subplot(212)
 	plt.plot(np.asarray(step_s), np.asarray(lr_s))
 	plt.legend(["Learning Rate"])
 	plt.xlabel("#Steps")
 	plt.ylabel("Rate")
-
+	plt.grid(True)
 	plt.show()
 
 if __name__ == '__main__':
