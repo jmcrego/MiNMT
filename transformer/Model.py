@@ -16,7 +16,7 @@ def numparameters(model):
     if param.requires_grad: #learnable parameters only
       npars += param.numel()
       nbytes += param.numel() * param.data.element_size() #returns size of each parameter
-      logging.debug("{} => {} = {} x {} bytes".format(name, list(param.data.size()), param.data.numel(), param.data.element_size()))
+      logging.info("{} => {} = {} x {} bytes".format(name, list(param.data.size()), param.data.numel(), param.data.element_size()))
 
   name = ("B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB")
   if nbytes == 0:
@@ -127,11 +127,8 @@ class Encoder_Decoder(torch.nn.Module):
     #initially tgt contains only <eos> 
     #logging.info('tgt = {}'.format(tgt.shape))
     tgt = self.add_pos_enc(self.tgt_emb(tgt)) #[bs,lt,ed]
-    #logging.info('tgt = {}'.format(tgt.shape))
     z_tgt = self.stacked_decoder(z_src, tgt, msk_src, msk_tgt) #[bs,lt,ed]
-    #logging.info('z_tgt = {}'.format(z_tgt.shape))
     y = self.generator(z_tgt) #[bs, lt, Vt]
-    #logging.info('y = {}'.format(y.shape))
     return y
 
 ##############################################################################################################
