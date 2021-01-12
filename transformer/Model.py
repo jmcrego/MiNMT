@@ -203,7 +203,6 @@ class Decoder(torch.nn.Module):
     z = self.feedforward(tmp_norm) + tmp #[bs, lt, ed] contains dropout
     return z
 
-
 ##############################################################################################################
 ### MultiHead_Attn ###########################################################################################
 ##############################################################################################################
@@ -217,7 +216,7 @@ class MultiHead_Attn(torch.nn.Module):
     self.vd = v_dim
     self.WQ = torch.nn.Linear(emb_dim, qk_dim*n_heads)
     self.WK = torch.nn.Linear(emb_dim, qk_dim*n_heads)
-    self.WV = torch.nn.Linear(emb_dim,  v_dim*n_heads)
+    self.WV = torch.nn.Linear(emb_dim, v_dim*n_heads)
     self.WO = torch.nn.Linear(v_dim*n_heads, emb_dim)
     self.dropout = torch.nn.Dropout(dropout)
 
@@ -245,7 +244,7 @@ class MultiHead_Attn(torch.nn.Module):
       s = s.masked_fill(msk == 0, -1e9) #score=-1e9 to masked tokens
     w = self.dropout(torch.nn.functional.softmax(s, dim=-1)) #[bs,nh,slq,slk] (these are the attention weights)
     z = torch.matmul(w,V) #[bs,nh,slq,slk] x [bs,nh,slv,vd] = [bs,nh,slq,vd] #thanks to slk==slv
-    z = z.transpose(1, 2).contiguous().view([bs,slq,-1]) #=> [bs,slq,nh,vd] => [bs,slq,nh*vd]
+    z = z.transpose(1,2).contiguous().view([bs,slq,-1]) #=> [bs,slq,nh,vd] => [bs,slq,nh*vd]
     z = self.WO(z) #[bs,slq,ed]
     return self.dropout(z)
 
@@ -273,18 +272,20 @@ class FeedForward(torch.nn.Module):
 class AddPositionalEncoding(torch.nn.Module):
   def __init__(self, emb_dim, dropout, max_len=5000):
     super(AddPositionalEncoding, self).__init__()
+    assert emb_dim%2 == 0 #emb_dim must be pair
     self.dropout = torch.nn.Dropout(dropout)
     pe = torch.zeros(max_len, emb_dim) #[max_len=5000, ed]
     position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1) #[max_len, 1]
-    div_term = torch.exp(torch.arange(0, emb_dim, 2).float() * (-math.log(10000.0) / emb_dim)) #[ed/2]
-    pe[:, 0::2] = torch.sin(position * div_term)
-    pe[:, 1::2] = torch.cos(position * div_term)
-    pe = pe.unsqueeze(0) #[1,max_len,ed]
+    div_term = torch.exp(torch.arange(0, emb_dim, 2).float() * (-math.log(10000.0)/emb_dim)) #[ed/2]
+    pe[:, 0::2] = torch.sin(position * div_term) #[max_len=5000, ed]
+    pe[:, 1::2] = torch.cos(position * div_term) #[max_len=5000, ed]
+    pe = pe.unsqueeze(0) #[1, max_len=5000, ed]
     self.register_buffer('pe', pe) #register_buffer are for params saved&restored in state_dict not trained 
 
   def forward(self, x):
-    x = x + self.pe[:, :x.size(1)]
-    return self.dropout(x)
+    #x is [bs, l, ed]
+    #self.pe is [1, max_len=5000, ed]
+    return self.dropout(x + self.pe[:, :x.size(1), :])
 
 ##############################################################################################################
 ### Generator ################################################################################################
