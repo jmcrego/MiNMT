@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 from torch.autograd import Variable
 from transformer.Model import AddPositionalEncoding, Encoder_Decoder
 from transformer.Optimizer import OptScheduler
+from transformer.Learning import prepare_input
+
 
 def plotPoints2d(X,Y,xlabel=None,ylabel=None,legend=None,f=None):
   plt.figure(figsize=(15, 5))
@@ -108,10 +110,33 @@ def plotLearningCurve(file):
 	plt.xlabel("#Steps")
 	plt.ylabel("Rate")
 	plt.grid(True)
+
 	plt.show()
+
+def plotMasks():
+	batch_src = [[1, 2, 3, 4, 5, 6, 7], [1, 2, 3, 4, 5, 6, 7, 8, 9]]
+	batch_tgt = [[1, 2, 3, 4, 5, 6, 7, 8, 9], [1, 2, 3, 4, 5, 6]]
+	src, tgt, ref, msk_src, msk_tgt = prepare_input(batch_src, batch_tgt, 0, 'cpu')
+	print('src',src)
+	print('tgt',tgt)
+	print('ref',ref)
+	print('msk_src = {}'.format(msk_src.shape),msk_src)
+	print('msk_tgt = {}'.format(msk_tgt.shape),msk_tgt)
+
+	plt.figure(figsize=(5,5))
+
+	plt.subplot(211)
+	plt.imshow(msk_src.squeeze().data.numpy())
+
+	plt.subplot(212)
+	plt.imshow(msk_tgt[0].data.numpy())
+
+	plt.show()
+
 
 if __name__ == '__main__':
 
   #plotPositionalEncoding()
-  plotLRate(1000000)
+  #plotLRate(1000000)
   #plotLearningCurve(sys.argv[1])
+  plotMasks()
