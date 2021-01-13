@@ -91,7 +91,6 @@ def prepare_input(batch_src, batch_tgt, idx_pad, device):
   ref = [torch.tensor(seq[1:])  for seq in batch_tgt] #delete <bos>
   ref = torch.nn.utils.rnn.pad_sequence(ref, batch_first=True, padding_value=idx_pad).to(device)
   msk_tgt = (tgt != idx_pad).unsqueeze(-2) & (1 - torch.triu(torch.ones((1, tgt.size(1), tgt.size(1)), device=tgt.device), diagonal=1)).bool() #[bs,lt,lt]
-
   return src, tgt, ref, msk_src, msk_tgt
 
 ##############################################################################################################
