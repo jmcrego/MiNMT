@@ -6,18 +6,7 @@ import logging
 import numpy as np
 import torch
 import time
-from transformer.Model import save_checkpoint
-
-def prepare_input(batch_src, batch_tgt, idx_pad, device):
-  src = [torch.tensor(seq)      for seq in batch_src] #as is
-  src = torch.nn.utils.rnn.pad_sequence(src, batch_first=True, padding_value=idx_pad).to(device)
-  tgt = [torch.tensor(seq[:-1]) for seq in batch_tgt] #delete <eos>
-  tgt = torch.nn.utils.rnn.pad_sequence(tgt, batch_first=True, padding_value=idx_pad).to(device) 
-  ref = [torch.tensor(seq[1:])  for seq in batch_tgt] #delete <bos>
-  ref = torch.nn.utils.rnn.pad_sequence(ref, batch_first=True, padding_value=idx_pad).to(device)
-  msk_src = (src != idx_pad).unsqueeze(-2) #[bs,1,ls] (False where <pad> True otherwise)
-  msk_tgt = (tgt != idx_pad).unsqueeze(-2) & (1 - torch.triu(torch.ones((1, tgt.size(1), tgt.size(1)), device=tgt.device), diagonal=1)).bool() #[bs,lt,lt]
-  return src, tgt, ref, msk_src, msk_tgt
+from transformer.Model import save_checkpoint, prepare_input
 
 ##############################################################################################################
 ### Score ####################################################################################################

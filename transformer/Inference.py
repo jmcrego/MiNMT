@@ -6,13 +6,7 @@ import logging
 import numpy as np
 from collections import defaultdict
 import torch
-
-def encode_src(batch_src, model, idx_pad, device):
-  src = [torch.tensor(seq) for seq in batch_src] #[bs, ls]
-  src = torch.nn.utils.rnn.pad_sequence(src, batch_first=True, padding_value=idx_pad).to(device) #src is [bs,ls]
-  msk_src = (src != idx_pad).unsqueeze(-2) #[bs,1,ls] (False where <pad> True otherwise)
-  z_src = model.encode(src, msk_src) #[bs,ls,ed]
-  return msk_src, z_src
+from transformer.Model import prepare_input
 
 def norm_length(l, alpha):
   return (5+l)**alpha / (5+1)**alpha
@@ -149,9 +143,9 @@ class BeamSearch():
     ###
     ### encode the src sequence
     ###
-    msk_src, z_src = encode_src(batch_src, self.model, self.tgt_vocab.idx_pad, self.device)
-    #msk_src [bs,1,ls]
-    #z_src [bs,ls,ed]
+#    msk_src, z_src = encode_src(batch_src, self.model, self.tgt_vocab.idx_pad, self.device)
+    src, msk_src = prepare_input(batch_src, None, self.tgt_vocab.idx_pad, self.device) #src is [bs, ls] msk_src is [bs,1,ls]
+    z_src = self.model.encode(src, msk_src) #[bs,ls,ed]
     ###
     ### decode step-by-step (produce one tgt token at each time step for each hyp in beam)
     ###
