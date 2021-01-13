@@ -12,7 +12,7 @@ from transformer.Data import Dataset
 from transformer.Vocab import Vocab
 from transformer.ONMTTokenizer import ONMTTokenizer
 from transformer.Model import Encoder_Decoder, load_checkpoint_or_initialise, save_checkpoint, load_checkpoint, numparameters
-from transformer.Optimizer import OptScheduler, LabelSmoothing
+from transformer.Optimizer import OptScheduler, LabelSmoothing, NLLLoss
 from transformer.Learning import Learning
 from transformer.Inference import Inference
 import numpy as np

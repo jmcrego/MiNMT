@@ -71,3 +71,8 @@ class NLLLoss(torch.nn.Module):
     pred = pred.contiguous().view(-1, pred.size(-1)) #[bs*lt, Vt]
     gold = gold.contiguous().view(-1).long() #gold is [bs*lt]
     return self.criterion(pred, Variable(gold, requires_grad=False)) ### sum of loss of all words (other than <pad> in reference)
+
+
+
+
+

@@ -7,7 +7,6 @@ import torch
 import math
 import numpy as np
 import glob
-from torch.autograd import Variable
 from transformer.Vocab import Vocab
 
 def numparameters(model):
@@ -283,7 +282,7 @@ class AddPositionalEncoding(torch.nn.Module):
 
   def forward(self, x):
     bs, l, ed = x.shape
-    x = x + Variable(self.pe[:, :l], requires_grad=False) #[bs, l, ed] + [1, l, ed] => [bs, l, ed]
+    x = x + self.pe[:, :l] #[bs, l, ed] + [1, l, ed] => [bs, l, ed]
     return self.dropout(x)
 
 ##############################################################################################################
