@@ -100,7 +100,7 @@ class Learning():
         tgt, ref, msk_tgt = prepare_target(batch_tgt, self.idx_pad, device)
         pred = self.model.forward(src, tgt, msk_src, msk_tgt)
         ### compute loss
-        loss_batch = self.criter(pred, ref)
+        loss_batch = self.criter(pred, ref) #sum of losses in batch
         loss_token = loss_batch / torch.sum(ref != self.idx_pad)
         ### optimize
         self.optScheduler.optimizer.zero_grad()                                        ### sets gradients to zero
