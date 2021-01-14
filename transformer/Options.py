@@ -415,6 +415,7 @@ class Options():
     logging.info("Learning options = {}".format(self.learning.__dict__))
     logging.info("Inference options = {}".format(self.inference.__dict__))
     logging.info("Suffix = {}".format(self.suffix))
+    logging.info("seed = {}".format(seed))
     random.seed(seed)
 
   def usage(self):
