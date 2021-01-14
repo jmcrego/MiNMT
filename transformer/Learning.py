@@ -150,7 +150,7 @@ class Learning():
       for _, batch_src, batch_tgt in validset:
         n_batch += 1
         src, msk_src = prepare_source(batch_src, self.idx_pad, device)
-        tgt, ref, msk_tgt = prepare_source(batch_tgt, self.idx_pad, device)
+        tgt, ref, msk_tgt = prepare_target(batch_tgt, self.idx_pad, device)
         pred = self.model.forward(src, tgt, msk_src, msk_tgt)
         loss = self.criter(pred, ref) ### batch loss
         valid_loss += loss.item() / torch.sum(ref != self.idx_pad)
