@@ -47,8 +47,8 @@ class Beam():
     I = self.hyps.shape[0] ### number of input hyps (to expand)
     assert y_next.shape[0] == self.hyps.shape[0]
     # I is either:
-    # bs*1 (beam just created containing <eos> of each example in batch)
-    # bs*K (batch_size * beam_size)
+    # - bs*1 (beam just created containing <eos> of each example in batch)
+    # - bs*K (batch_size * beam_size)
     lt = self.hyps.shape[1] #current length of tgt hypotheses
     # self.hyps is [I,lt]
     # y_next is [I,Vt] contains the proba ef expanding I hyps with each word in vocab
@@ -127,7 +127,6 @@ class Beam():
         print('i={} b={}\t{:.5f}\t{}\t{}'.format(i,int(i/self.K),sum_logP_norm,' '.join(toks1),' '.join(toks2)))
     
 
-
 ##############################################################################################################
 ### BeamSearch ###############################################################################################
 ##############################################################################################################
@@ -143,7 +142,7 @@ class BeamSearch():
     #logging.info('Beam Search [init]: beam_size={} n_best={}'.format(self.beam_size,self.n_best))
 
   def traverse(self, batch_src):
-    #Vt, ed = self.model.tgt_emb.weight.shape
+    #Vt, ed = self.model.tgt_emb.emb.weight.shape
     bs = len(batch_src) #batch_size
     K = self.beam_size
     ###
