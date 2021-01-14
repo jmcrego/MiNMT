@@ -93,7 +93,6 @@ def prepare_target(batch_tgt, idx_pad, device):
   msk_tgt = (tgt != idx_pad).unsqueeze(-2) & (1 - torch.triu(torch.ones((1, tgt.size(1), tgt.size(1)), device=tgt.device), diagonal=1)).bool() #[bs,lt,lt]
   return tgt, ref, msk_tgt
 
-
 ##############################################################################################################
 ### Endcoder_Decoder #########################################################################################
 ##############################################################################################################
@@ -101,13 +100,12 @@ class Encoder_Decoder(torch.nn.Module):
   def __init__(self, n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout, src_voc_size, tgt_voc_size, idx_pad): 
     super(Encoder_Decoder, self).__init__()
     self.idx_pad = idx_pad
-    self.src_emb = torch.nn.Embedding(src_voc_size, emb_dim, padding_idx=idx_pad)
-    self.tgt_emb = torch.nn.Embedding(tgt_voc_size, emb_dim, padding_idx=idx_pad)
+    self.src_emb = Embedding(src_voc_size, emb_dim, idx_pad) 
+    self.tgt_emb = Embedding(tgt_voc_size, emb_dim, idx_pad) 
     self.add_pos_enc = AddPositionalEncoding(emb_dim, dropout, max_len=5000)
     self.stacked_encoder = Stacked_Encoder(n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout)
     self.stacked_decoder = Stacked_Decoder(n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout)
     self.generator = Generator(emb_dim, tgt_voc_size)
-    self.sqrt_ed = math.sqrt(emb_dim)
     logging.debug('n_layers={}'.format(n_layers))
     logging.debug('ff_dim={}'.format(ff_dim))
     logging.debug('n_heads={}'.format(n_heads))
@@ -122,8 +120,8 @@ class Encoder_Decoder(torch.nn.Module):
     #tgt is [bs,lt]
     #msk_src is [bs,1,ls] (False where <pad> True otherwise)
     #mst_tgt is [bs,lt,lt]
-    src = self.add_pos_enc(self.src_emb(src)*self.sqrt_ed) #[bs,ls,ed]
-    tgt = self.add_pos_enc(self.tgt_emb(tgt)*self.sqrt_ed) #[bs,lt,ed]
+    src = self.add_pos_enc(self.src_emb(src)) #[bs,ls,ed]
+    tgt = self.add_pos_enc(self.tgt_emb(tgt)) #[bs,lt,ed]
     assert src.shape[0] == tgt.shape[0] ### src/tgt batch_sizes must be equal
     z_src = self.stacked_encoder(src, msk_src) #[bs,ls,ed]
     z_tgt = self.stacked_decoder(z_src, tgt, msk_src, msk_tgt) #[bs,lt,ed]
@@ -131,7 +129,7 @@ class Encoder_Decoder(torch.nn.Module):
     return y
 
   def encode(self, src, msk_src):
-    src = self.add_pos_enc(self.src_emb(src)*self.sqrt_ed) #[bs,ls,ed]
+    src = self.add_pos_enc(self.src_emb(src)) #[bs,ls,ed]
     z_src = self.stacked_encoder(src, msk_src) #[bs,ls,ed]
     return z_src
 
@@ -142,10 +140,22 @@ class Encoder_Decoder(torch.nn.Module):
     #tgt is the history (words already generated) for current step [bs, lt]
     #initially tgt contains only <eos> 
     #logging.info('tgt = {}'.format(tgt.shape))
-    tgt = self.add_pos_enc(self.tgt_emb(tgt)*self.sqrt_edq) #[bs,lt,ed]
+    tgt = self.add_pos_enc(self.tgt_emb(tgt)) #[bs,lt,ed]
     z_tgt = self.stacked_decoder(z_src, tgt, msk_src, msk_tgt) #[bs,lt,ed]
     y = self.generator(z_tgt) #[bs, lt, Vt]
     return y
+
+##############################################################################################################
+### Embedding ################################################################################################
+##############################################################################################################
+class Embedding(nn.Module):
+    def __init__(self, vocab, emb_dim, idx_pad):
+        super(Embedding, self).__init__()
+        self.emb = torch.nn.Embedding(vocab, emb_dim, padding_idx=idx_pad)
+        self.sqrt_emb_dim = math.sqrt(emb_dim)
+
+    def forward(self, x):
+        return self.emb(x) * self.sqrt_emb_dim
 
 ##############################################################################################################
 ### Stacked_Encoder ##########################################################################################
