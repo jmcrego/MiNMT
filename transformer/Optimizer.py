@@ -51,7 +51,7 @@ class LabelSmoothing(torch.nn.Module):
     true_dist[:, self.padding_idx] = 0
     mask = torch.nonzero(gold.data == self.padding_idx, as_tuple=False)
     true_dist.index_fill_(0, mask.squeeze(), 0.0)
-    logging.info('batch with {} tokens and {} non-padded tokens'.format(ref.numel(), torch.sum(gold != self.padding_idx)))
+    logging.info('batch with {} tokens and {} non-padded tokens'.format(gold.numel(), torch.sum(gold != self.padding_idx)))
     return self.criterion(pred, Variable(true_dist, requires_grad=False)) ### sum of loss of all words (other than <pad> in reference)
 
 
