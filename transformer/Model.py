@@ -114,6 +114,7 @@ class Encoder_Decoder(torch.nn.Module):
     logging.debug('v_dim={}'.format(v_dim))
     logging.debug('Vs={}'.format(src_voc_size))
     logging.debug('Vt={}'.format(tgt_voc_size))
+    ### share src/tgt embeddings if required
 
   def forward(self, src, tgt, msk_src, msk_tgt):
     #src is [bs,ls]
