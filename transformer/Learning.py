@@ -25,7 +25,6 @@ class Score():
     self.nsteps_report = 0
     self.msec_report = self.msec_epoch
 
-
   def step(self, sum_loss_batch, ntoks_batch):
     #global
     self.nsteps += 1

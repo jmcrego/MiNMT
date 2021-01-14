@@ -233,31 +233,31 @@ class MultiHead_Attn(torch.nn.Module):
     self.dropout = torch.nn.Dropout(dropout)
 
   def forward(self, q, k, v, msk=None):
-    #q is [bs, slq, ed]
-    #k is [bs, slk, ed]
-    #v is [bs, slv, ed]
+    #q is [bs, lq, ed]
+    #k is [bs, lk, ed]
+    #v is [bs, lv, ed]
     #msk is [bs, 1, ls] or [bs, lt, lt]
     if msk is not None:
       msk = msk.unsqueeze(1) #[bs, 1, 1, ls] or [bs, 1, lt, lt]
     bs = q.shape[0]
-    slq = q.shape[1] 
-    slk = k.shape[1]
-    slv = v.shape[1]
+    lq = q.shape[1] ### sequence length of q vectors (length of target sentences)
+    lk = k.shape[1] ### sequence length of k vectors (may be length of source/target sentences)
+    lv = v.shape[1] ### sequence length of v vectors (may be length of source/target sentences)
     ed = q.shape[2]
     assert self.ed == q.shape[2] == k.shape[2] == v.shape[2]
-    assert slk == slv #when applied in decoder both refer the source-side (slq refers the target-side)
+    assert lk == lv #when applied in decoder both refer the source-side (slq refers the target-side)
 
-    Q = self.WQ(q).contiguous().view([bs,slq,self.nh,self.qd]).permute(0,2,1,3) #=> [bs,slq,nh*qd] => [bs,slq,nh,qd] => [bs,nh,slq,qd]
-    K = self.WK(k).contiguous().view([bs,slk,self.nh,self.kd]).permute(0,2,1,3) #=> [bs,slk,nh*kd] => [bs,slk,nh,kd] => [bs,nh,slk,kd]
-    V = self.WV(v).contiguous().view([bs,slv,self.nh,self.vd]).permute(0,2,1,3) #=> [bs,slv,nh*vd] => [bs,slv,nh,vd] => [bs,nh,slv,vd]
-    #Scaled dot-product Attn from multiple Q, K, V vectors (bs*nh*sl vectors)
-    s = torch.matmul(Q, K.transpose(2, 3)) / self.kd**0.5 #[bs,nh,slq,qd] x [bs,nh,kd,slk] = [bs,nh,slq,slk] # thanks to qd==kd #in decoder slq are target words and slk are source words
+    Q = self.WQ(q).contiguous().view([bs,lq,self.nh,self.qd]).permute(0,2,1,3) #=> [bs,lq,nh*qd] => [bs,lq,nh,qd] => [bs,nh,lq,qd]
+    K = self.WK(k).contiguous().view([bs,lk,self.nh,self.kd]).permute(0,2,1,3) #=> [bs,lk,nh*kd] => [bs,lk,nh,kd] => [bs,nh,lk,kd]
+    V = self.WV(v).contiguous().view([bs,lv,self.nh,self.vd]).permute(0,2,1,3) #=> [bs,lv,nh*vd] => [bs,lv,nh,vd] => [bs,nh,lv,vd]
+    #Scaled dot-product Attn from multiple Q, K, V vectors (bs*nh*l vectors)
+    s = torch.matmul(Q, K.transpose(2, 3)) / self.kd**0.5 #[bs,nh,lq,qd] x [bs,nh,kd,lk] = [bs,nh,lq,lk] # thanks to qd==kd #in decoder lq are target words and lk are source words
     if msk is not None:
       s = s.masked_fill(msk == 0, -1e9) #score=-1e9 to masked tokens
-    w = self.dropout(torch.nn.functional.softmax(s, dim=-1)) #[bs,nh,slq,slk] (these are the attention weights)
-    z = torch.matmul(w,V) #[bs,nh,slq,slk] x [bs,nh,slv,vd] = [bs,nh,slq,vd] #thanks to slk==slv
-    z = z.transpose(1,2).contiguous().view([bs,slq,-1]) #=> [bs,slq,nh,vd] => [bs,slq,nh*vd]
-    z = self.WO(z) #[bs,slq,ed]
+    w = self.dropout(torch.nn.functional.softmax(s, dim=-1)) #[bs,nh,lq,lk] (these are the attention weights)
+    z = torch.matmul(w,V) #[bs,nh,lq,lk] x [bs,nh,lv,vd] = [bs,nh,lq,vd] #thanks to lk==lv
+    z = z.transpose(1,2).contiguous().view([bs,slq,-1]) #=> [bs,lq,nh,vd] => [bs,lq,nh*vd]
+    z = self.WO(z) #[bs,lq,ed]
     return self.dropout(z)
 
 ##############################################################################################################
