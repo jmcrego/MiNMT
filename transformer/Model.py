@@ -149,9 +149,9 @@ class Encoder_Decoder(torch.nn.Module):
 ### Embedding ################################################################################################
 ##############################################################################################################
 class Embedding(torch.nn.Module):
-    def __init__(self, vocab, emb_dim, idx_pad):
+    def __init__(self, vocab_size, emb_dim, idx_pad):
         super(Embedding, self).__init__()
-        self.emb = torch.nn.Embedding(vocab, emb_dim, padding_idx=idx_pad)
+        self.emb = torch.nn.Embedding(vocab_size, emb_dim, padding_idx=idx_pad)
         self.sqrt_emb_dim = math.sqrt(emb_dim)
 
     def forward(self, x):
