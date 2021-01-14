@@ -113,7 +113,7 @@ class Learning():
 
         if self.report_every and self.optScheduler._step % self.report_every == 0: ### report
           loss_per_tok, ms_per_step = score.report()
-          logging.info('Learning step:{} epoch:{} batch:{}/{} ms/batch:{:.2f} lr:{:.6f} loss/tok:{:.3f}'.format(self.optScheduler._step, n_epoch, n_batch, len(trainset), ms_per_step, self.optScheduler._rate, loss_per_tok))
+          logging.info('LearningStep: {} epoch: {} batch: {} / {} steps/ms: {:.2f} lr: {:.6f} loss: {:.3f}'.format(self.optScheduler._step, n_epoch, n_batch, len(trainset), 1.0/ms_per_step, self.optScheduler._rate, loss_per_tok))
 
         if self.validate_every and self.optScheduler._step % self.validate_every == 0: ### validate
           if validset is not None:
@@ -126,17 +126,17 @@ class Learning():
           if validset is not None:
             vloss = self.validate(validset, device)
           save_checkpoint(self.suffix, self.model, self.OptScheduler.optimizer, self.optScheduler._step, self.keep_last_n)
-          logging.info('Learning: STOP by [steps={}]'.format(self.optScheduler._step))
+          logging.info('Learning STOP by [steps={}]'.format(self.optScheduler._step))
           return
 
       loss_per_tok, ms_epoch = score.epoch()
-      logging.info('End of epoch {} #batches:{} loss/tok:{:.3f} sec:{:.2f}'.format(n_epoch,n_batch,loss_per_tok,ms_epoch/1000.0))
+      logging.info('EndOfEpoch: {} #batchs: {} loss: {:.3f} sec: {:.2f}'.format(n_epoch,n_batch,loss_per_tok,ms_epoch/1000.0))
 
       if self.max_epochs and n_epoch >= self.max_epochs: ### stop by max_epochs
         if validset is not None:
           vloss = self.validate(validset, device)
         save_checkpoint(self.suffix, self.model, self.optScheduler.optimizer, self.optScheduler._step, self.keep_last_n)
-        logging.info('Learning: STOP by [epochs={}]'.format(n_epoch))
+        logging.info('Learning STOP by [epochs={}]'.format(n_epoch))
         return
     return
 
@@ -156,7 +156,7 @@ class Learning():
 
     toc = time.time()
     loss = 1.0*valid_loss/n_batch if n_batch else 0.0
-    logging.info('Validation learning steps:{} #batchs:{} sec:{:.2f} loss:{:.3f}'.format(self.optScheduler._step, n_batch, toc-tic, loss))
+    logging.info('Validation learningSteps: {} #batchs: {} sec: {:.2f} loss: {:.3f}'.format(self.optScheduler._step, n_batch, toc-tic, loss))
     return loss
 
 
