@@ -107,6 +107,7 @@ class Encoder_Decoder(torch.nn.Module):
     self.stacked_encoder = Stacked_Encoder(n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout)
     self.stacked_decoder = Stacked_Decoder(n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout)
     self.generator = Generator(emb_dim, tgt_voc_size)
+    self.sqrt_ed = math.sqrt(emb_dim)
     logging.debug('n_layers={}'.format(n_layers))
     logging.debug('ff_dim={}'.format(ff_dim))
     logging.debug('n_heads={}'.format(n_heads))
@@ -121,8 +122,8 @@ class Encoder_Decoder(torch.nn.Module):
     #tgt is [bs,lt]
     #msk_src is [bs,1,ls] (False where <pad> True otherwise)
     #mst_tgt is [bs,lt,lt]
-    src = self.add_pos_enc(self.src_emb(src)) #[bs,ls,ed]
-    tgt = self.add_pos_enc(self.tgt_emb(tgt)) #[bs,lt,ed]
+    src = self.add_pos_enc(self.src_emb(src)*self.sqrt_ed) #[bs,ls,ed]
+    tgt = self.add_pos_enc(self.tgt_emb(tgt)*self.sqrt_ed) #[bs,lt,ed]
     assert src.shape[0] == tgt.shape[0] ### src/tgt batch_sizes must be equal
     z_src = self.stacked_encoder(src, msk_src) #[bs,ls,ed]
     z_tgt = self.stacked_decoder(z_src, tgt, msk_src, msk_tgt) #[bs,lt,ed]
@@ -130,7 +131,7 @@ class Encoder_Decoder(torch.nn.Module):
     return y
 
   def encode(self, src, msk_src):
-    src = self.add_pos_enc(self.src_emb(src)) #[bs,ls,ed]
+    src = self.add_pos_enc(self.src_emb(src)*self.sqrt_ed) #[bs,ls,ed]
     z_src = self.stacked_encoder(src, msk_src) #[bs,ls,ed]
     return z_src
 
@@ -141,7 +142,7 @@ class Encoder_Decoder(torch.nn.Module):
     #tgt is the history (words already generated) for current step [bs, lt]
     #initially tgt contains only <eos> 
     #logging.info('tgt = {}'.format(tgt.shape))
-    tgt = self.add_pos_enc(self.tgt_emb(tgt)) #[bs,lt,ed]
+    tgt = self.add_pos_enc(self.tgt_emb(tgt)*self.sqrt_edq) #[bs,lt,ed]
     z_tgt = self.stacked_decoder(z_src, tgt, msk_src, msk_tgt) #[bs,lt,ed]
     y = self.generator(z_tgt) #[bs, lt, Vt]
     return y
@@ -286,7 +287,6 @@ class AddPositionalEncoding(torch.nn.Module):
     super(AddPositionalEncoding, self).__init__()
     assert emb_dim%2 == 0 #emb_dim must be pair
     self.dropout = torch.nn.Dropout(dropout)
-
     pe = torch.zeros(max_len, emb_dim) #[max_len=5000, ed]
     position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1) #[max_len, 1]
     div_term = torch.exp(torch.arange(0, emb_dim, 2).float() * (-math.log(10000.0) / emb_dim)) #[ed/2]
