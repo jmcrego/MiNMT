@@ -6,7 +6,7 @@ import logging
 import numpy as np
 import torch
 import time
-from transformer.Model import save_checkpoint, prepare_input
+from transformer.Model import save_checkpoint, prepare_source, prepare_target
 
 ##############################################################################################################
 ### Score ####################################################################################################
@@ -96,8 +96,9 @@ class Learning():
       for _, batch_src, batch_tgt in trainset:
         n_batch += 1
         self.model.train()
-        ### predict (forward)
-        src, tgt, ref, msk_src, msk_tgt = prepare_input(batch_src, batch_tgt, self.idx_pad, device)
+        ### forward
+        src, msk_src = prepare_source(batch_src, self.idx_pad, device)
+        tgt, ref, msk_tgt = prepare_target(batch_tgt, self.idx_pad, device)
         pred = self.model.forward(src, tgt, msk_src, msk_tgt)
         ### compute loss
         loss_batch = self.criter(pred, ref)
@@ -148,7 +149,8 @@ class Learning():
       n_batch = 0
       for _, batch_src, batch_tgt in validset:
         n_batch += 1
-        src, tgt, ref, msk_src, msk_tgt = prepare_input(batch_src, batch_tgt, self.idx_pad, device)
+        src, msk_src = prepare_source(batch_src, self.idx_pad, device)
+        tgt, ref, msk_tgt = prepare_source(batch_tgt, self.idx_pad, device)
         pred = self.model.forward(src, tgt, msk_src, msk_tgt)
         loss = self.criter(pred, ref) ### batch loss
         valid_loss += loss.item() / torch.sum(ref != self.idx_pad)

@@ -6,7 +6,7 @@ import logging
 import numpy as np
 from collections import defaultdict
 import torch
-from transformer.Model import prepare_input
+from transformer.Model import prepare_source
 
 def norm_length(l, alpha):
   return (5+l)**alpha / (5+1)**alpha
@@ -143,8 +143,7 @@ class BeamSearch():
     ###
     ### encode the src sequence
     ###
-#    msk_src, z_src = encode_src(batch_src, self.model, self.tgt_vocab.idx_pad, self.device)
-    src, msk_src = prepare_input(batch_src, None, self.tgt_vocab.idx_pad, self.device) #src is [bs, ls] msk_src is [bs,1,ls]
+    src, msk_src = prepare_source(batch_src, self.tgt_vocab.idx_pad, self.device) #src is [bs, ls] msk_src is [bs,1,ls]
     z_src = self.model.encode(src, msk_src) #[bs,ls,ed]
     ###
     ### decode step-by-step (produce one tgt token at each time step for each hyp in beam)
