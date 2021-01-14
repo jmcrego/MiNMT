@@ -245,7 +245,7 @@ class MultiHead_Attn(torch.nn.Module):
     lv = v.shape[1] ### sequence length of v vectors (may be length of source/target sentences)
     ed = q.shape[2]
     assert self.ed == q.shape[2] == k.shape[2] == v.shape[2]
-    assert lk == lv #when applied in decoder both refer the source-side (slq refers the target-side)
+    assert lk == lv #when applied in decoder both refer the source-side (lq refers the target-side)
 
     Q = self.WQ(q).contiguous().view([bs,lq,self.nh,self.qd]).permute(0,2,1,3) #=> [bs,lq,nh*qd] => [bs,lq,nh,qd] => [bs,nh,lq,qd]
     K = self.WK(k).contiguous().view([bs,lk,self.nh,self.kd]).permute(0,2,1,3) #=> [bs,lk,nh*kd] => [bs,lk,nh,kd] => [bs,nh,lk,kd]
@@ -256,7 +256,7 @@ class MultiHead_Attn(torch.nn.Module):
       s = s.masked_fill(msk == 0, -1e9) #score=-1e9 to masked tokens
     w = self.dropout(torch.nn.functional.softmax(s, dim=-1)) #[bs,nh,lq,lk] (these are the attention weights)
     z = torch.matmul(w,V) #[bs,nh,lq,lk] x [bs,nh,lv,vd] = [bs,nh,lq,vd] #thanks to lk==lv
-    z = z.transpose(1,2).contiguous().view([bs,slq,-1]) #=> [bs,lq,nh,vd] => [bs,lq,nh*vd]
+    z = z.transpose(1,2).contiguous().view([bs,lq,-1]) #=> [bs,lq,nh,vd] => [bs,lq,nh*vd]
     z = self.WO(z) #[bs,lq,ed]
     return self.dropout(z)
 
