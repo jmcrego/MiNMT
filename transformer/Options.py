@@ -194,9 +194,9 @@ class data_options():
    -valid_set    FILE : validation dataset is read/written from/into FILE.bin
    -test_set     FILE : test dataset is read/written from/into FILE.bin
    -shard_size    INT : maximum shard size ({}) use 0 to consider all data in a single shard
-   -max_length        INT : max number of tokens for src/tgt sentences ({})
-   -batch_size        INT : maximum batch size ({})
-   -batch_type     STRING : sentences or tokens ({})'''.format(self.shard_size, self.max_length, self.batch_size, self.batch_type)
+   -max_length    INT : max number of tokens for src/tgt sentences ({})
+   -batch_size    INT : maximum batch size ({})
+   -batch_type STRING : sentences or tokens ({})'''.format(self.shard_size, self.max_length, self.batch_size, self.batch_type)
 
   def read_opt(self, key, value):
       if key=='-data_options':
@@ -265,8 +265,8 @@ class learning_options():
     self.max_steps = 0
     self.max_epochs = 0
     self.validate_every = 5000
-    self.save_every =10000
-    self.report_every = 200
+    self.save_every =5000
+    self.report_every = 100
     self.keep_last_n = 10
     self.clip_grad_norm = 0.0
 
