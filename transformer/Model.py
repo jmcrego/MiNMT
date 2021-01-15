@@ -16,7 +16,7 @@ def numparameters(model):
     if param.requires_grad: #learnable parameters only
       npars += param.numel()
       nbytes += param.numel() * param.data.element_size() #returns size of each parameter
-      logging.info("{} => {} = {} x {} bytes".format(name, list(param.data.size()), param.data.numel(), param.data.element_size()))
+      logging.debug("{} => {} = {} x {} bytes".format(name, list(param.data.size()), param.data.numel(), param.data.element_size()))
 
   name = ("B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB")
   if nbytes == 0:
