@@ -204,9 +204,9 @@ class Inference():
           p = pos[b] + 1
           src = ' '.join(map(str,batch_src[b]))
           for i in range(len(hyps[b])):
-            cst = logp[b,i]
-            hyp = ' '.join(map(str,hyps[b,i]))
-            detok = self.tgt_token.detokenize(hyps[b,i])
+            cst = logp[b][i]
+            hyp = ' '.join(map(str,hyps[b][i]))
+            detok = self.tgt_token.detokenize(hyps[b][i])
             print(p, src, cst, hyp, detok)
 
 
