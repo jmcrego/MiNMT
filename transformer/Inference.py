@@ -98,12 +98,13 @@ class Beam():
       self.logP[i,-1] = -float('Inf') # assign ending hypotheses -Inf so wont remain in beam the next time step
       logging.debug('[final i={}]'.format(i))
 
-  def print_nbest(self, pos):
+  def print_nbest(self, pos, tgt_token):
     for b in range(self.bs):
       n = 0
       dicthyps = self.final[b]
       for hyp, sum_logP_norm in sorted(dicthyps.items(), key=lambda kv: kv[1], reverse=True):
         toks = [self.tgt_vocab[int(idx)] for idx in hyp.split(' ')]
+        toks = tgt_token.detokenize(toks)
         print('{}\t{:.5f}\t{}'.format(pos[b]+1, sum_logP_norm, ' '.join(toks)))
         n += 1
         if n >= self.N:
@@ -165,10 +166,11 @@ class BeamSearch():
 ### Inference ################################################################################################
 ##############################################################################################################
 class Inference():
-  def __init__(self, model, tgt_vocab, oi): 
+  def __init__(self, model, tgt_vocab, tgt_token, oi): 
     super(Inference, self).__init__()
     self.model = model
     self.tgt_vocab = tgt_vocab
+    self.tgt_token = tgt_token
     self.beam_size = oi.beam_size
     self.max_size = oi.max_size
     self.n_best = oi.n_best
@@ -181,7 +183,7 @@ class Inference():
       beamsearch = BeamSearch(self.model, self.tgt_vocab, self.beam_size, self.n_best, self.max_size, device)
       for i, batch_src, _ in testset:
         beam = beamsearch.traverse(batch_src)
-        beam.print_nbest(i) 
+        beam.print_nbest(i, self.tgt_token) 
 
 
 
