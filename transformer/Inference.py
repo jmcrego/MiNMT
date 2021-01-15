@@ -199,9 +199,11 @@ class Inference():
             out.append("{}".format(pos[b]+1))           ### position in input file
             out.append("{}".format(n+1))                ### n-best order
             out.append("{:.6f}".format(logp[b][n]))     ### cost (logP)
-            out.append(' '.join(map(str,batch_src[b]))) ### input sentence (indexs)
-            out.append(' '.join(src))                   ### input sentence (tokenized)
+            #src
             out.append(src_detok)                       ### input sentence (detokenized)
+            out.append(' '.join(src))                   ### input sentence (tokenized)
+            out.append(' '.join(map(str,batch_src[b]))) ### input sentence (indexs)
+            #tgt
             out.append(' '.join(map(str,hyp)))          ### output sentence (indexs)
             out.append(' '.join(tgt))                   ### output sentence (tokenized)
             out.append(tgt_detok)                       ### output sentence (detokenized)
