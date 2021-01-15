@@ -200,7 +200,7 @@ class data_options():
 
   def read_opt(self, key, value):
       if key=='-data_options':
-        self.read_file_options(value, self)
+        read_file_options(value, self)
         return True
       elif key=='-src_token':
         self.src_token = value
@@ -284,7 +284,7 @@ class learning_options():
 
   def read_opt(self, key, value):
       if key=='-learning_options':
-        self.read_file_options(value, self)
+        read_file_options(value, self)
         return True
       elif key=='-max_steps':
         self.max_steps = int(value)
@@ -330,7 +330,7 @@ class inference_options():
 
   def read_opt(self, key, value):
       if key=='-inference_options':
-        self.read_file_options(value, self)
+        read_file_options(value, self)
         return True
       if key=='-beam_size':
         self.beam_size = int(value)

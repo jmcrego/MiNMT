@@ -98,6 +98,18 @@ class Beam():
       self.logP[i,-1] = -float('Inf') # assign ending hypotheses -Inf so wont remain in beam the next time step
       logging.debug('[final i={}]'.format(i))
 
+  def get_hyps(self):
+    hyps = []
+    for b in range(self.bs):
+      hyps.append([])
+      dicthyps = self.final[b]
+      for hyp, sum_logP_norm in sorted(dicthyps.items(), key=lambda kv: kv[1], reverse=True):
+        toks = [self.tgt_vocab[int(idx)] for idx in hyp.split(' ')]
+        hyps[-1].append(' '.join(toks))
+        if len(hyps[-1]) >= self.N:
+          break
+    return hyps
+
   def print_nbest(self, pos, tgt_token):
     for b in range(self.bs):
       n = 0
@@ -181,10 +193,12 @@ class Inference():
     with torch.no_grad():
       self.model.eval()
       beamsearch = BeamSearch(self.model, self.tgt_vocab, self.beam_size, self.n_best, self.max_size, device)
-      for i, batch_src, _ in testset:
+      for pos, batch_src, _ in testset:
         beam = beamsearch.traverse(batch_src)
-        beam.print_nbest(i, self.tgt_token) 
-
+        #beam.print_nbest(i, self.tgt_token) 
+        hyps = beam.get_hyps()
+        for i in range(len(pos)):
+          print(pos[i],batch_src[i],hyps[i])
 
 
 
