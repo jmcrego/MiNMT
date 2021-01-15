@@ -94,7 +94,7 @@ class Beam():
       b = i//self.K #the batch example where it belongs
       h = self.hyps[i].tolist() #[lt] hypothesis
       c = sum(self.logP[i]) / norm_length(len(h),self.alpha) ### final cost of hypothesis normalized by length
-      self.final[b][' '.join(map(str,h[1:-1]))] = c ### save ending hyp into self.final (discard <bos> and <eos>)
+      self.final[b][' '.join(map(str,h))] = c ### save ending hyp into self.final (discard <bos> and <eos>)
       self.logP[i,-1] = -float('Inf') # assign ending hypotheses -Inf so wont remain in beam the next time step
       logging.debug('[final i={}]'.format(i))
 
