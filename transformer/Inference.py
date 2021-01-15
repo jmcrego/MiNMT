@@ -106,7 +106,8 @@ class Beam():
       logp.append([])
       dicthyps = self.final[b]
       for hyp, sum_logP_norm in sorted(dicthyps.items(), key=lambda kv: kv[1], reverse=True):
-        hyps[-1].append(map(int,hyp.split(' ')))
+        hyp = map(int, hyp.split(' '))
+        hyps[-1].append(hyp) #map(int,hyp.split(' ')))
         logp[-1].append(sum_logP_norm.item())
         if len(hyps[-1]) >= self.N:
           break
