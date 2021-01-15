@@ -111,7 +111,7 @@ class Beam():
         logp[-1].append(sum_logP_norm)
         if len(hyps[-1]) >= self.N:
           break
-    return hyps
+    return logp, hyps
 
   def print_nbest(self, pos, tgt_token):
     for b in range(self.bs):
