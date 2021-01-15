@@ -195,13 +195,13 @@ class Inference():
             toks = [self.tgt_vocab[idx] for idx in hyp]
             detok = self.tgt_token.detokenize(toks)
             out = []
-            out.append("{}".format(pos[b]+1)) ### position in input file
-            out.append("{}".format(n+1)) ### n-best
-            out.append("{:.6f}".format(logp[b][n])) ### cost
-            #out.append(' '.join(map(str,batch_src[b]))) ### input sentence
-            #out.append(' '.join(hyps[b][n])) ### hyp (indexs)
-            out.append(' '.join(toks)) ### hyp (tokenized)
-            out.append(detok) ### hyp (detokenized)
+            out.append("{}".format(pos[b]+1))            ### position in input file
+            out.append("{}".format(n+1))                 ### n-best order
+            out.append("{:.6f}".format(logp[b][n]))      ### cost (logP)
+            #out.append(' '.join(map(str,batch_src[b]))) ### input sentence (indexs)
+            #out.append(' '.join(hyps[b][n]))            ### hyp (indexs)
+            #out.append(' '.join(toks))                  ### hyp (tokenized)
+            out.append(detok)                            ### hyp (detokenized)
             print('\t'.join(out))
 
 
