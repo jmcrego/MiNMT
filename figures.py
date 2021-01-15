@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from torch.autograd import Variable
 from transformer.Model import AddPositionalEncoding, Encoder_Decoder
 from transformer.Optimizer import OptScheduler
-from transformer.Learning import prepare_input
+from transformer.Model import prepare_source, prepare_target
 
 
 def plotPoints2d(X,Y,xlabel=None,ylabel=None,legend=None,f=None):
@@ -78,25 +78,26 @@ def plotLearningCurve(file):
 	step_s = []
 	lr_s = []
 	loss_s = []
+	vstep_s = []
+	vloss_s = []
 	with open(file,'r') as f: 
 		for l in f:
     	#[2021-01-12_12:07:11.086] INFO Learning step:363700 epoch:18 batch:4813/21111 ms/batch:213.41 lr:0.000147 loss/tok:2.486
 			step = None
 			lr = None
 			loss = None
-			for tok in l.rstrip().split():
-				if tok.startswith('step'):
-					step = int(tok.split(':')[1])
-				elif tok.startswith('lr'):
-					lr = float(tok.split(':')[1])
-				elif tok.startswith('loss/tok:'):
-					loss = float(tok.split(':')[1])
-			if step is not None and lr is not None and loss is not None:
-				step_s.append(step)
-				lr_s.append(lr)
-				loss_s.append(loss)
+			toks = l.rstrip().split()
+			if toks[2] == 'LearningStep:' and toks[12] == 'lr:' and toks[14] == 'loss:':
+				step_s.append(int(toks[3]))
+				lr_s.append(float(toks[13]))
+				loss_s.append(float(toks[15]))
+			if toks[2] == 'Validation' and toks[3] == 'learningSteps:' and toks[9] == 'loss:':
+				vstep_s.append(int(toks[4]))
+				vloss_s.append(float(toks[10]))
+
 
 	plt.figure(figsize=(20, 10))
+
 	plt.subplot(211)
 	plt.plot(np.asarray(step_s), np.asarray(loss_s))
 	plt.legend(["Learning Curve"])
@@ -105,18 +106,25 @@ def plotLearningCurve(file):
 	plt.grid(True)
 
 	plt.subplot(212)
-	plt.plot(np.asarray(step_s), np.asarray(lr_s))
-	plt.legend(["Learning Rate"])
+	plt.plot(np.asarray(vstep_s), np.asarray(vloss_s))
+	plt.legend(["Validation Curve"])
 	plt.xlabel("#Steps")
-	plt.ylabel("Rate")
+	plt.ylabel("Loss")
 	plt.grid(True)
+
+#	plt.subplot(213)
+#	plt.plot(np.asarray(step_s), np.asarray(lr_s))
+#	plt.legend(["Learning Rate"])
+#	plt.xlabel("#Steps")
+#	plt.ylabel("Rate")
+#	plt.grid(True)
 
 	plt.show()
 
 def plotMasks():
 	batch_src = [[1, 2, 3, 4, 5, 6, 7], [1, 2, 3, 4, 5, 6, 7, 8, 9]]
 	batch_tgt = [[1, 2, 3, 4, 5, 6, 7, 8, 9], [1, 2, 3, 4, 5, 6]]
-	src, tgt, ref, msk_src, msk_tgt = prepare_input(batch_src, batch_tgt, 0, 'cpu')
+	src, tgt, ref, msk_src, msk_tgt = prepare_source(batch_src, batch_tgt, 0, 'cpu')
 	print('src',src)
 	print('tgt',tgt)
 	print('ref',ref)
@@ -138,5 +146,5 @@ if __name__ == '__main__':
 
   #plotPositionalEncoding()
   #plotLRate(1000000)
-  #plotLearningCurve(sys.argv[1])
-  plotMasks()
+  plotLearningCurve(sys.argv[1])
+  #plotMasks()
