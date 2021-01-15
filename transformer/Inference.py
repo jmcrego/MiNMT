@@ -104,8 +104,8 @@ class Beam():
       dicthyps = self.final[b]
       for hyp, sum_logP_norm in sorted(dicthyps.items(), key=lambda kv: kv[1], reverse=True):
         toks = [self.tgt_vocab[int(idx)] for idx in hyp.split(' ')]
-        toks = tgt_token.detokenize(toks)
-        print('{}\t{:.5f}\t{}'.format(pos[b]+1, sum_logP_norm, toks)) #' '.join(toks)))
+        line = tgt_token.detokenize(toks)
+        print('{}\t{:.5f}\t{}'.format(pos[b]+1, sum_logP_norm, line)) #' '.join(toks)))
         n += 1
         if n >= self.N:
           break
