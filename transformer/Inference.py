@@ -108,7 +108,7 @@ class Beam():
       for hyp, sum_logP_norm in sorted(dicthyps.items(), key=lambda kv: kv[1], reverse=True):
         toks = [self.tgt_vocab[int(idx)] for idx in hyp.split(' ')]
         hyps[-1].append(' '.join(toks))
-        logp[-1].append(sum_logP_norm)
+        logp[-1].append(sum_logP_norm.item())
         if len(hyps[-1]) >= self.N:
           break
     return logp, hyps
@@ -201,8 +201,12 @@ class Inference():
         #beam.print_nbest(i, self.tgt_token) 
         logp, hyps = beam.get_hyps()
         for i in range(len(pos)):
-          hypdetok = self.tgt_token.detokenize(hyps[i])
-          print(pos[i]+1,batch_src[i],logp[i].item(),hyps[i],hypdetok)
+          p = pos[i] + 1
+          src = batch_src[i]
+          hyp = hyps[i]
+          logp = logp[i]
+          detok = self.tgt_token.detokenize(hyps[i])
+          print(pos, src, logp, hyp, detok)
 
 
 
