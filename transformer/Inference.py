@@ -204,9 +204,9 @@ class Inference():
           p = pos[i] + 1
           src = batch_src[i]
           hyp = hyps[i]
-          logp = logp[i]
+          cst = logp[i]
           detok = self.tgt_token.detokenize(hyps[i])
-          print(pos, src, logp, hyp, detok)
+          print(pos, src, cst, hyp, detok)
 
 
 
