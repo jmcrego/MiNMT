@@ -157,7 +157,7 @@ class Learning():
 
     toc = time.time()
     loss = 1.0*valid_loss/n_batch if n_batch else 0.0
-    logging.info('Validation learningSteps: {} #batchs: {} sec: {:.2f} loss: {:.3f}'.format(self.optScheduler._step, n_batch, toc-tic, loss))
+    logging.info('Validation LearningStep: {} #batchs: {} sec: {:.2f} loss: {:.3f}'.format(self.optScheduler._step, n_batch, toc-tic, loss))
     return loss
 
 
