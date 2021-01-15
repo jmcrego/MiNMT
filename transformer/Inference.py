@@ -190,15 +190,20 @@ class Inference():
         logp, hyps = beam.get_hyps()
         assert len(pos) == len(batch_src) == len(logp) == len(hyps)
         for b in range(len(logp)):
-          p = pos[b]
-          src = ' '.join(map(str,batch_src[b]))
           for n in range(len(logp[b])):
-            cst = logp[b][n]
             hyp = map(int,hyps[b][n])
             toks = [self.tgt_vocab[idx] for idx in hyp]
             detok = self.tgt_token.detokenize(toks)
-            hyp = ' '.join(hyps[b][n])
-            print("{}\t{}\t{:.6f}\t{}\t{}\t{}".format(p+1, n+1, cst, src, hyp, detok))
+            out = []
+            out.append(pos[b]+1)
+            out.append(n+1)
+            out.append("{:.6f}".format(logp[b][n])) #cost
+            out.append(' '.join(map(str,batch_src[b])))
+            out.append(' '.join(hyps[b][n]))
+            out.append(' '.join(toks))
+            out.append(detok)
+            print('\t'.join(out))
+#            print("{}\t{}\t{:.6f}\t{}\t{}\t{}".format(p+1, n+1, cst, src, hyp, detok))
 
 
 
