@@ -190,7 +190,7 @@ class Inference():
         for b in range(len(logp)):
           for n in range(len(logp[b])):
             hyp = hyps[b][n]
-            toks = [self.tgt_vocab[str(idx)] for idx in hyp]
+            toks = [self.tgt_vocab[idx] for idx in hyp]
             detok = self.tgt_token.detokenize(toks)
             out = []
             out.append("{}".format(pos[b]+1))            ### position in input file
