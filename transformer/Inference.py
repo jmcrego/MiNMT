@@ -200,13 +200,14 @@ class Inference():
         beam = beamsearch.traverse(batch_src)
         #beam.print_nbest(i, self.tgt_token) 
         logp, hyps = beam.get_hyps()
-        for i in range(len(pos)):
-          p = pos[i] + 1
-          src = ' '.join(map(str,batch_src[i]))
-          hyp = ' '.join(map(str,hyps[i]))
-          cst = logp[i]
-          detok = self.tgt_token.detokenize(hyps[i])
-          print(p, src, cst, hyp, detok)
+        for b in range(len(pos)):
+          p = pos[b] + 1
+          src = ' '.join(map(str,batch_src[b]))
+          for i in range(len(hyps[b])):
+            cst = logp[b,i]
+            hyp = ' '.join(map(str,hyps[b,i]))
+            detok = self.tgt_token.detokenize(hyps[b,i])
+            print(p, src, cst, hyp, detok)
 
 
 
