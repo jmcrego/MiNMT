@@ -189,10 +189,10 @@ class Inference():
         beam = beamsearch.traverse(batch_src)
         logp, hyps = beam.get_hyps()
         assert len(pos) == len(batch_src) == len(logp) == len(hyps)
-        for b in range(len(hyps)):
+        for b in range(len(logp)):
           p = pos[b]
           src = ' '.join(map(str,batch_src[b]))
-          for n in range(len(hyps[b])):
+          for n in range(len(logp[b])):
             cst = logp[b][n]
             hyp = map(int,hyps[b][n])
             toks = [self.tgt_vocab[idx] for idx in hyp]
