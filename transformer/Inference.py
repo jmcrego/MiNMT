@@ -201,13 +201,13 @@ class Inference():
         #beam.print_nbest(i, self.tgt_token) 
         logp, hyps = beam.get_hyps()
         for b in range(len(pos)):
-          p = pos[b] + 1
+          p = pos[b]
           src = ' '.join(map(str,batch_src[b]))
-          for i in range(len(hyps[b])):
-            cst = logp[b][i]
-            hyp = ' '.join(map(str,hyps[b][i]))
-            detok = self.tgt_token.detokenize(hyps[b][i])
-            print(p, i, cst, src, hyp, detok)
+          for n in range(len(hyps[b])):
+            cst = logp[b][n]
+            hyp = ' '.join(map(str,hyps[b][n]))
+            detok = self.tgt_token.detokenize(hyps[b][n])
+            print(p+1, n+1, cst, src, hyp, detok)
 
 
 
