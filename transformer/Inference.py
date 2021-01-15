@@ -189,6 +189,7 @@ class Inference():
         assert len(pos) == len(batch_src) == len(logp) == len(hyps)
         for b in range(len(logp)):
           for n in range(len(logp[b])):
+            src = testset.get_input(pos[b])
             hyp = hyps[b][n]
             toks = [self.tgt_vocab[idx] for idx in hyp]
             detok = self.tgt_token.detokenize(toks)
@@ -196,9 +197,10 @@ class Inference():
             out.append("{}".format(pos[b]+1))           ### position in input file
             out.append("{}".format(n+1))                ### n-best order
             out.append("{:.6f}".format(logp[b][n]))     ### cost (logP)
-#            out.append(' '.join(map(str,batch_src[b]))) ### input sentence (indexs)
-#            out.append(' '.join(map(str,hyps[b][n])))   ### hyp (indexs)
-#            out.append(' '.join(toks))                  ### hyp (tokenized)
+            out.append(' '.join(map(str,batch_src[b]))) ### input sentence (indexs)
+            out.append(' '.join(src))                   ### input sentence (tokenized)
+            out.append(' '.join(map(str,hyps[b][n])))   ### hyp (indexs)
+            out.append(' '.join(toks))                  ### hyp (tokenized)
             out.append(detok)                           ### hyp (detokenized)
             print('\t'.join(out))
 
