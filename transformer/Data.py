@@ -79,16 +79,6 @@ class Batch():
     for i in range(len(self.idxs_src)):
       self.idxs_src[i] += [idx_pad] * (self.max_len_src - len(self.idxs_src[i]))
       self.idxs_tgt[i] += [idx_pad] * (self.max_len_tgt - len(self.idxs_tgt[i]))
-
-#    print('BEGIN Batch size is {}'.format(len(self.idxs_src)))
-#    print('SRC')
-#    for l in self.idxs_src:
-#      print(l,'slen={}'.format(len(l)))
-#    print('TGT')
-#    for l in self.idxs_tgt:
-#      print(l,'tlen={}'.format(len(l)))
-#    print('END Batch')
-
     return self.pos, self.idxs_src, self.idxs_tgt
 
   def max_lsrc(self):
@@ -203,7 +193,8 @@ class Dataset():
       logging.error('Attempt to read None binfile')
       sys.exit()
     data = pickle.load(open(binfile, 'rb'))
-    self.shards, self.idxs_src, self.idxs_tgt = data
+#    self.shards, self.idxs_src, self.idxs_tgt = data
+    self.shards, self.idxs_src, self.idxs_tgt, self.txts_src, self.txts_tgt = data
     if self.idxs_tgt is None:
       self.bitext = False
     else:
@@ -215,7 +206,11 @@ class Dataset():
       logging.error('Attempt to write None binfile')
       sys.exit()
     logging.info('Dumping {} shards to binfile {}'.format(len(self.shards), binfile))
-    pickle.dump([self.shards, self.idxs_src, self.idxs_tgt], open(binfile, 'wb'), pickle.HIGHEST_PROTOCOL)
+#    pickle.dump([self.shards, self.idxs_src, self.idxs_tgt], open(binfile, 'wb'), pickle.HIGHEST_PROTOCOL)
+    pickle.dump([self.shards, self.idxs_src, self.idxs_tgt, self.txts_src, self.txts_tgt], open(binfile, 'wb'), pickle.HIGHEST_PROTOCOL)
+
+  def get_input(self, pos):
+    return self.txts_src[pos]
 
   def shuffle(self):
     np.random.shuffle(self.batches)
