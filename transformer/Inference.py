@@ -106,8 +106,9 @@ class Beam():
       logp.append([])
       dicthyps = self.final[b]
       for hyp, sum_logP_norm in sorted(dicthyps.items(), key=lambda kv: kv[1], reverse=True):
-        toks = [self.tgt_vocab[int(idx)] for idx in hyp.split(' ')]
-        hyps[-1].append(toks)
+#        toks = [self.tgt_vocab[int(idx)] for idx in hyp.split(' ')]
+#        hyps[-1].append(toks)
+        hyps[-1] = hyp.split(' ')
         logp[-1].append(sum_logP_norm.item())
         if len(hyps[-1]) >= self.N:
           break
@@ -188,13 +189,15 @@ class Inference():
         beam = beamsearch.traverse(batch_src)
         logp, hyps = beam.get_hyps()
         assert len(pos) == len(batch_src) == len(logp) == len(hyps)
-        for b in range(len(pos)):
+        for b in range(len(hyps)):
           p = pos[b]
           src = ' '.join(map(str,batch_src[b]))
           for n in range(len(hyps[b])):
             cst = logp[b][n]
-            hyp = ' '.join(map(str,hyps[b][n]))
-            detok = self.tgt_token.detokenize(hyps[b][n])
+            hyp = map(int,hyps[b][n])
+            toks = [self.tgt_vocab[idx] for idx in hyp]
+            detok = self.tgt_token.detokenize(toks)
+            hyp = ' '.join(hyps[b][n])
             print("{}\t{}\t{:.6f}\t{}\t{}\t{}".format(p+1, n+1, cst, src, hyp, detok))
 
 
