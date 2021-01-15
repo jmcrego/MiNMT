@@ -45,8 +45,10 @@ if __name__ == '__main__':
   od = opts.data
   oi = opts.inference
 
-  src_vocab = Vocab(ONMTTokenizer(fyaml=od.src_token), file=od.src_vocab)
-  tgt_vocab = Vocab(ONMTTokenizer(fyaml=od.tgt_token), file=od.tgt_vocab)
+  src_token = ONMTTokenizer(fyaml=od.src_token)
+  src_vocab = Vocab(src_token, file=od.src_vocab)
+  tgt_token = ONMTTokenizer(fyaml=od.tgt_token)
+  tgt_vocab = Vocab(tgt_token, file=od.tgt_vocab)
   assert src_vocab.idx_pad == tgt_vocab.idx_pad
 
   device = torch.device('cuda' if opts.cuda and torch.cuda.is_available() else 'cpu')
@@ -73,7 +75,7 @@ if __name__ == '__main__':
   if od.test_set or od.src_test:
     model = load_checkpoint(opts.suffix, model, device)
     test = load_dataset(src_vocab, None, od.test_set, od.src_test, None, od.shard_size, od.max_length, od.batch_size, od.batch_type)
-    inference = Inference(model, tgt_vocab, oi)
+    inference = Inference(model, tgt_vocab, tgt_token, oi)
     inference.translate(test, device)
 
   toc = time.time()
