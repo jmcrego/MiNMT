@@ -108,7 +108,7 @@ class Beam():
       for hyp, sum_logP_norm in sorted(dicthyps.items(), key=lambda kv: kv[1], reverse=True):
         toks = [self.tgt_vocab[int(idx)] for idx in hyp.split(' ')]
         hyps[-1].append(' '.join(toks))
-        logp[-1].append(sum_logP_norm)
+        logp[-1].append(sum_logP_norm.item())
         if len(hyps[-1]) >= self.N:
           break
     return logp, hyps
