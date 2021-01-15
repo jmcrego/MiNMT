@@ -106,9 +106,7 @@ class Beam():
       logp.append([])
       dicthyps = self.final[b]
       for hyp, sum_logP_norm in sorted(dicthyps.items(), key=lambda kv: kv[1], reverse=True):
-#        toks = [self.tgt_vocab[int(idx)] for idx in hyp.split(' ')]
-#        hyps[-1].append(toks)
-        hyps[-1].append(hyp.split(' '))
+        hyps[-1].append(map(int,hyp.split(' ')))
         logp[-1].append(sum_logP_norm.item())
         if len(hyps[-1]) >= self.N:
           break
@@ -191,16 +189,16 @@ class Inference():
         assert len(pos) == len(batch_src) == len(logp) == len(hyps)
         for b in range(len(logp)):
           for n in range(len(logp[b])):
-            hyp = map(int,hyps[b][n])
-            toks = [self.tgt_vocab[idx] for idx in hyp]
+            hyp = hyps[b][n]
+            toks = [self.tgt_vocab[str(idx)] for idx in hyp]
             detok = self.tgt_token.detokenize(toks)
             out = []
             out.append("{}".format(pos[b]+1))            ### position in input file
             out.append("{}".format(n+1))                 ### n-best order
             out.append("{:.6f}".format(logp[b][n]))      ### cost (logP)
-            #out.append(' '.join(map(str,batch_src[b]))) ### input sentence (indexs)
-            #out.append(' '.join(hyps[b][n]))            ### hyp (indexs)
-            #out.append(' '.join(toks))                  ### hyp (tokenized)
+            out.append(' '.join(map(str,batch_src[b]))) ### input sentence (indexs)
+            out.append(' '.join(map(str,hyps[b][n])))   ### hyp (indexs)
+            out.append(' '.join(toks))                  ### hyp (tokenized)
             out.append(detok)                            ### hyp (detokenized)
             print('\t'.join(out))
 
