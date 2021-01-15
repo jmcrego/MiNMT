@@ -74,7 +74,7 @@ def plotLRate(N):
   plotPoints2d(X, Y, xlabel=xlabel, ylabel=ylabel, legend=legend, f=file)
   
 
-def plotLearningCurve(file):
+def plotCurves(file):
 	step_s = []
 	lr_s = []
 	loss_s = []
@@ -91,10 +91,9 @@ def plotLearningCurve(file):
 				step_s.append(int(toks[3]))
 				lr_s.append(float(toks[13]))
 				loss_s.append(float(toks[15]))
-			if toks[2] == 'Validation' and toks[3] == 'learningSteps:' and toks[9] == 'loss:':
+			elif toks[2] == 'Validation' and toks[3] == 'LearningStep:' and toks[9] == 'loss:':
 				vstep_s.append(int(toks[4]))
 				vloss_s.append(float(toks[10]))
-
 
 	plt.figure(figsize=(20, 10))
 
@@ -146,5 +145,5 @@ if __name__ == '__main__':
 
   #plotPositionalEncoding()
   #plotLRate(1000000)
-  plotLearningCurve(sys.argv[1])
   #plotMasks()
+  plotCurves(sys.argv[1])
