@@ -194,7 +194,7 @@ class Dataset():
       sys.exit()
     data = pickle.load(open(binfile, 'rb'))
 #    self.shards, self.idxs_src, self.idxs_tgt = data
-    self.shards, self.idxs_src, self.idxs_tgt, self.txts_src, self.txts_tgt = data
+    self.shards, self.idxs_src, self.idxs_tgt, self.txts_src = data
     if self.idxs_tgt is None:
       self.bitext = False
     else:
@@ -207,7 +207,7 @@ class Dataset():
       sys.exit()
     logging.info('Dumping {} shards to binfile {}'.format(len(self.shards), binfile))
 #    pickle.dump([self.shards, self.idxs_src, self.idxs_tgt], open(binfile, 'wb'), pickle.HIGHEST_PROTOCOL)
-    pickle.dump([self.shards, self.idxs_src, self.idxs_tgt, self.txts_src, self.txts_tgt], open(binfile, 'wb'), pickle.HIGHEST_PROTOCOL)
+    pickle.dump([self.shards, self.idxs_src, self.idxs_tgt, self.txts_src], open(binfile, 'wb'), pickle.HIGHEST_PROTOCOL)
 
   def get_input(self, pos):
     return self.txts_src[pos]
