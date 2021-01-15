@@ -38,7 +38,7 @@ class Score():
   def report(self):
     tnow = time.time()
     if self.ntoks_report and self.nsteps_report:
-      print('Report loss={:.5f} ntoks={}'.format(self.loss_report, self.ntoks_report))
+      #print('Report loss={:.5f} ntoks={}'.format(self.loss_report, self.ntoks_report))
       loss_per_tok = self.loss_report / (1.0*self.ntoks_report)
       ms_per_step = 1000.0 * (tnow - self.msec_report) / (1.0*self.nsteps_report)
     else:
