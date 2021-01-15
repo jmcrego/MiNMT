@@ -207,7 +207,7 @@ class Inference():
             cst = logp[b][n]
             hyp = ' '.join(map(str,hyps[b][n]))
             detok = self.tgt_token.detokenize(hyps[b][n])
-            print(p+1, n+1, cst, src, hyp, detok)
+            print("{}\t{}\t{:.5f}\t{}\t{}\t{}".format(p+1, n+1, cst, src, hyp, detok))
 
 
 
