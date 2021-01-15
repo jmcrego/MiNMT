@@ -195,8 +195,8 @@ class Inference():
             toks = [self.tgt_vocab[idx] for idx in hyp]
             detok = self.tgt_token.detokenize(toks)
             out = []
-            out.append(pos[b]+1)
-            out.append(n+1)
+            out.append("{}".format(pos[b]+1))
+            out.append("{}".format(n+1))
             out.append("{:.6f}".format(logp[b][n])) #cost
             out.append(' '.join(map(str,batch_src[b])))
             out.append(' '.join(hyps[b][n]))
