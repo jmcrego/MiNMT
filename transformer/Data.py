@@ -175,7 +175,7 @@ class Dataset():
       for i in range(len(shard)):
         pos = shard[i]
         idx_src = self.idxs_src[pos]
-        if self.parallel:
+        if self.bitext:
           idx_tgt = self.idxs_tgt[pos]
         else:
           idx_tgt = []
@@ -205,10 +205,10 @@ class Dataset():
     data = pickle.load(open(binfile, 'rb'))
     self.shards, self.idxs_src, self.idxs_tgt = data
     if self.idxs_tgt is None:
-      self.parallel = False
+      self.bitext = False
     else:
-      self.parallel = True
-    logging.info('Loaded {} shards [{}] from binfile {}'.format(len(self.shards), 'Bilingual' if self.parallel else 'Monolingual', binfile))
+      self.bitext = True
+    logging.info('Loaded {} shards [{}] from binfile {}'.format(len(self.shards), 'Bilingual' if self.bitext else 'Monolingual', binfile))
 
   def dump_shards(self, binfile):
     if binfile is None:
