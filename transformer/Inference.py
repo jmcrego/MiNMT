@@ -107,7 +107,7 @@ class Beam():
       dicthyps = self.final[b]
       for hyp, sum_logP_norm in sorted(dicthyps.items(), key=lambda kv: kv[1], reverse=True):
         toks = [self.tgt_vocab[int(idx)] for idx in hyp.split(' ')]
-        hyps[-1].append(' '.join(toks))
+        hyps[-1].append(toks)
         logp[-1].append(sum_logP_norm.item())
         if len(hyps[-1]) >= self.N:
           break
@@ -207,7 +207,7 @@ class Inference():
             cst = logp[b][i]
             hyp = ' '.join(map(str,hyps[b][i]))
             detok = self.tgt_token.detokenize(hyps[b][i])
-            print(p, src, cst, hyp, detok)
+            print(p, i, cst, src, hyp, detok)
 
 
 
