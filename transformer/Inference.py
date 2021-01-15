@@ -190,11 +190,8 @@ class Inference():
         for b in range(len(logp)):
           for n in range(len(logp[b])):
             hyp = hyps[b][n]
-            print(hyp)
             toks = [self.tgt_vocab[idx] for idx in hyp]
-            print(toks)
             detok = self.tgt_token.detokenize(toks)
-            print(detok)
             out = []
             out.append("{}".format(pos[b]+1))           ### position in input file
             out.append("{}".format(n+1))                ### n-best order
