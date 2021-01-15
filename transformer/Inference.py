@@ -113,18 +113,6 @@ class Beam():
           break
     return logp, hyps
 
-  def print_nbest(self, pos, tgt_token):
-    for b in range(self.bs):
-      n = 0
-      dicthyps = self.final[b]
-      for hyp, sum_logP_norm in sorted(dicthyps.items(), key=lambda kv: kv[1], reverse=True):
-        toks = [self.tgt_vocab[int(idx)] for idx in hyp.split(' ')]
-        line = tgt_token.detokenize(toks)
-        print('{}\t{:.5f}\t{}'.format(pos[b]+1, sum_logP_norm, line)) #' '.join(toks)))
-        n += 1
-        if n >= self.N:
-          break
-
   def print_beam(self, tag):
     logging.debug('[{}] hyps.size={}'.format(tag, self.hyps.shape[1]))    
     for i in range(self.hyps.shape[0]):
@@ -198,8 +186,8 @@ class Inference():
       beamsearch = BeamSearch(self.model, self.tgt_vocab, self.beam_size, self.n_best, self.max_size, device)
       for pos, batch_src, _ in testset:
         beam = beamsearch.traverse(batch_src)
-        #beam.print_nbest(i, self.tgt_token) 
         logp, hyps = beam.get_hyps()
+        assert len(pos) == len(batch_src) == len(logp) == len(hyps)
         for b in range(len(pos)):
           p = pos[b]
           src = ' '.join(map(str,batch_src[b]))
@@ -207,7 +195,7 @@ class Inference():
             cst = logp[b][n]
             hyp = ' '.join(map(str,hyps[b][n]))
             detok = self.tgt_token.detokenize(hyps[b][n])
-            print("{}\t{}\t{:.5f}\t{}\t{}\t{}".format(p+1, n+1, cst, src, hyp, detok))
+            print("{}\t{}\t{:.6f}\t{}\t{}\t{}".format(p+1, n+1, cst, src, hyp, detok))
 
 
 
