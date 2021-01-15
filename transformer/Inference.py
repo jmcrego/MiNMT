@@ -202,11 +202,11 @@ class Inference():
         logp, hyps = beam.get_hyps()
         for i in range(len(pos)):
           p = pos[i] + 1
-          src = batch_src[i]
-          hyp = hyps[i]
+          src = ' '.join(batch_src[i])
+          hyp = ' '.join(hyps[i])
           cst = logp[i]
           detok = self.tgt_token.detokenize(hyps[i])
-          print(pos, src, cst, hyp, detok)
+          print(p, src, cst, hyp, detok)
 
 
 
