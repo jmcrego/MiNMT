@@ -189,7 +189,7 @@ class Inference():
         assert len(pos) == len(batch_src) == len(logp) == len(hyps)
         for b in range(len(logp)):
           for n in range(len(logp[b])):
-            src = testset.get_input(pos[b])
+            src = testset.get_input(pos[b])[1:-1]
             hyp = hyps[b][n]
             toks = [self.tgt_vocab[idx] for idx in hyp]
             detok = self.tgt_token.detokenize(toks)
