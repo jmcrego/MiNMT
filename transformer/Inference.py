@@ -201,10 +201,10 @@ class Inference():
             out.append("{:.6f}".format(logp[b][n]))     ### cost (logP)
             out.append(' '.join(map(str,batch_src[b]))) ### input sentence (indexs)
             out.append(' '.join(src))                   ### input sentence (tokenized)
-            out.append(' '.join(src_detok))             ### input sentence (detokenized)
-            out.append(' '.join(map(str,hyps[b][n])))   ### hyp (indexs)
-            out.append(' '.join(tgt))                   ### hyp (tokenized)
-            out.append(tgt_detok)                       ### hyp (detokenized)
+            out.append(src_detok)                       ### input sentence (detokenized)
+            out.append(' '.join(map(str,hyp)))          ### output sentence (indexs)
+            out.append(' '.join(tgt))                   ### output sentence (tokenized)
+            out.append(tgt_detok)                       ### output sentence (detokenized)
             print('\t'.join(out))
 
 
