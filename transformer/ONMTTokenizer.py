@@ -24,8 +24,7 @@ class ONMTTokenizer():
       self.update_opts(opts)
       self.build()
     else:
-      logging.error('ununitialised tokenizer')
-      sys.exit()
+      self.build()
 
   def update_yaml(self, fyaml):
     with open(fyaml) as yamlfile: 
