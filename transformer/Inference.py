@@ -209,7 +209,7 @@ class Inference():
             #out.append(' '.join(map(str,hyp)))          ### output sentence (indexs)
             #out.append(' '.join(tgt))                   ### output sentence (tokenized)
             out.append(tgt_detok)                       ### output sentence (detokenized)
-            print('\t'.join(out))
+            print('\t'.join(out), flush=True)
 
 
 
