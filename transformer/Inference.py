@@ -177,6 +177,7 @@ class Inference():
     self.beam_size = oi.beam_size
     self.max_size = oi.max_size
     self.n_best = oi.n_best
+    self.format = oi.format
 
   def translate(self, testset, device):
     logging.info('Running: inference')
@@ -196,19 +197,26 @@ class Inference():
             tgt = [self.tgt_vocab[idx] for idx in hyp]
             tgt_detok = self.tgt_token.detokenize(tgt[1:-1])
             out = []
-            out.append("{}".format(pos[b]+1))           ### position in input file
-            #out.append("{}".format(n+1))                ### n-best order
-            out.append("{:.6f}".format(logp[b][n]))     ### cost (logP)
-            #src
-            ####
-            #out.append(src_detok)                       ### input sentence (detokenized)
-            #out.append(' '.join(src))                   ### input sentence (tokenized)
-            #out.append(' '.join(map(str,batch_src[b]))) ### input sentence (indexs)
-            #tgt
-            ####
-            #out.append(' '.join(map(str,hyp)))          ### output sentence (indexs)
-            #out.append(' '.join(tgt))                   ### output sentence (tokenized)
-            out.append(tgt_detok)                       ### output sentence (detokenized)
+            for c in self.format:
+              if c=='i':
+                out.append("{}".format(pos[b]+1))           ### position in input file
+              elif c=='n':
+                out.append("{}".format(n+1))                ### n-best order
+              elif c=='c':
+                out.append("{:.6f}".format(logp[b][n]))     ### cost (logP)
+              elif c=='s':
+                out.append(' '.join(src))                   ### input sentence (tokenized)
+              elif c=='S':
+                out.append(src_detok)                       ### input sentence (detokenized)
+                #out.append(' '.join(map(str,batch_src[b])))### input sentence (indexs)
+              elif c=='h':
+                out.append(' '.join(tgt))                   ### output sentence (tokenized)
+                #out.append(' '.join(map(str,hyp)))         ### output sentence (indexs)
+              elif c=='H':
+                out.append(tgt_detok)                       ### output sentence (detokenized)
+              else:
+                logging.error('invalid format option {} in {}'.format(c,self.format))
+                sys.exit()
             print('\t'.join(out), flush=True)
 
 
