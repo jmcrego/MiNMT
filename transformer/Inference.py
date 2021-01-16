@@ -198,7 +198,7 @@ class Inference():
             out = []
             out.append("{}".format(pos[b]+1))           ### position in input file
             #out.append("{}".format(n+1))                ### n-best order
-            #out.append("{:.6f}".format(logp[b][n]))     ### cost (logP)
+            out.append("{:.6f}".format(logp[b][n]))     ### cost (logP)
             #src
             ####
             #out.append(src_detok)                       ### input sentence (detokenized)
