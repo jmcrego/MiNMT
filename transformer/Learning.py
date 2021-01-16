@@ -126,7 +126,7 @@ class Learning():
         if self.max_steps and self.optScheduler._step >= self.max_steps: ### stop by max_steps
           if validset is not None:
             vloss = self.validate(validset, device)
-          save_checkpoint(self.suffix, self.model, self.OptScheduler.optimizer, self.optScheduler._step, self.keep_last_n)
+          save_checkpoint(self.suffix, self.model, self.optScheduler.optimizer, self.optScheduler._step, self.keep_last_n)
           logging.info('Learning STOP by [steps={}]'.format(self.optScheduler._step))
           return
 
