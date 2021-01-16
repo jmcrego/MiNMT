@@ -198,7 +198,7 @@ class Dataset():
       self.bitext = False
     else:
       self.bitext = True
-    logging.info('Loaded {} shards [{}] from binfile {}'.format(len(self.shards), 'Bilingual' if self.bitext else 'Monolingual', binfile))
+    logging.info('Loaded {} shards [{}] from binfile {}'.format(len(self.shards), 'Bitext' if self.bitext else 'Monolingual', binfile))
 
   def dump_shards(self, binfile):
     if binfile is None:
