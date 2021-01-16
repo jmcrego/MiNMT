@@ -193,7 +193,7 @@ class Inference():
           for n in range(len(logp[b])):
             hyp = hyps[b][n] #list
             print(hyp)
-            src = testset.get_input(pos[b]).split(' ')[1:-1] #list
+            src = testset.get_input(pos[b])[1:-1] #list
             print(src)
             src_detok = self.src_token.detokenize(src) #string
             print(src_detok)
