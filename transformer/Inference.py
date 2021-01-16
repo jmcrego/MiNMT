@@ -191,11 +191,16 @@ class Inference():
         assert len(pos) == len(batch_src) == len(logp) == len(hyps)
         for b in range(len(logp)):
           for n in range(len(logp[b])):
-            hyp = hyps[b][n]
-            src = testset.get_input(pos[b][1:-1])
-            src_detok = self.src_token.detokenize(src)
-            tgt = [self.tgt_vocab[idx] for idx in hyp[1:-1]]
+            hyp = hyps[b][n] #list
+            print(hyp)
+            src = testset.get_input(pos[b]).split(' ')[1:-1] #list
+            print(src)
+            src_detok = self.src_token.detokenize(src) #string
+            print(src_detok)
+            tgt = [self.tgt_vocab[idx] for idx in hyp[1:-1]] #list
+            print(tgt)
             tgt_detok = self.tgt_token.detokenize(tgt)
+            print(tgt_detok)
             out = []
             for c in self.format:
               if c=='i':
