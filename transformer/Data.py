@@ -193,8 +193,7 @@ class Dataset():
       logging.error('Attempt to read None binfile')
       sys.exit()
     data = pickle.load(open(binfile, 'rb'))
-#    self.shards, self.idxs_src, self.idxs_tgt, self.txts_src = data
-    self.shards, self.idxs_src, self.idxs_tgt = data
+    self.shards, self.idxs_src, self.idxs_tgt, self.txts_src = data
     if self.idxs_tgt is None:
       self.bitext = False
     else:
