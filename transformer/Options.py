@@ -328,7 +328,7 @@ class inference_options():
    -beam_size          INT : size of beam ({})
    -n_best             INT : return n-best translation hypotheses ({})
    -max_size           INT : max hypothesis size ({})
-   -format          STRING : output format (default {})
+   -format          STRING : format of output lines (default {})
                               [i] index in test set
                               [n] rank in n-best
                               [c] global hypothesis cost

@@ -192,10 +192,10 @@ class Inference():
         for b in range(len(logp)):
           for n in range(len(logp[b])):
             hyp = hyps[b][n]
-            src = testset.get_input(pos[b])
-            src_detok = self.src_token.detokenize(src[1:-1])
-            tgt = [self.tgt_vocab[idx] for idx in hyp]
-            tgt_detok = self.tgt_token.detokenize(tgt[1:-1])
+            src = testset.get_input(pos[b][1:-1])
+            src_detok = self.src_token.detokenize(src)
+            tgt = [self.tgt_vocab[idx] for idx in hyp[1:-1]]
+            tgt_detok = self.tgt_token.detokenize(tgt)
             out = []
             for c in self.format:
               if c=='i':
