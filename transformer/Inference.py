@@ -159,7 +159,7 @@ class BeamSearch():
       ### from now on i decode bs*K hyps (i need z_src/msk_src to be the same shape)
       if self.beam_size > 1 and msk_src.shape[0] == bs:
         msk_src = msk_src.repeat_interleave(repeats=K, dim=0) #[bs*K,1,ls] 
-        z_src = z_src.repeat_interleave(repeats=K, dim=0) #[bs*K,ls,ed] 
+        z_src = z_src.repeat_interleave(repeats=K, dim=0) #[bs*K,ls,ed]
 
     return beam
 
