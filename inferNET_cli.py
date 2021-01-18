@@ -39,6 +39,7 @@ class Options():
     self.beam_size = 4
     self.n_best = 1
     self.max_size = 250
+    self.alpha = 0.0
     self.format = 'iH'
     self.shard_size = 0
     self.max_length = 250
@@ -62,6 +63,8 @@ class Options():
         self.max_size = int(argv.pop(0))
       elif tok=='-format' and len(argv):
         self.format = argv.pop(0)
+      elif tok=='-alpha' and len(argv):
+        self.alpha = float(argv.pop(0))
       elif tok=='-i' and len(argv):
         self.input = argv.pop(0)
       elif tok=='-shard_size' and len(argv):
@@ -98,6 +101,7 @@ class Options():
    -beam_size     INT : size of beam ({})
    -n_best        INT : return n-best translation hypotheses ({})
    -max_size      INT : max hypothesis size ({})
+   -alpha       FLOAT : hypothesis length-normalization parameter ({}) [0.0 for unnormalized otherwise (5+len)**alpha / (5+1)**alpha]
    -format     STRING : format of output lines (default {})
                           [i] index in test set
                           [n] rank in n-best
@@ -110,7 +114,7 @@ class Options():
    -log_file     FILE : log file  (stderr)
    -log_level  STRING : log level [debug, info, warning, critical, error] (info)
    -h                 : this help
-'''.format(self.prog, self.shard_size, self.max_length, self.batch_size, self.batch_type, self.beam_size, self.n_best, self.max_size, self.format))
+'''.format(self.prog, self.shard_size, self.max_length, self.batch_size, self.batch_type, self.beam_size, self.n_best, self.max_size, self.alpha, self.format))
     sys.exit()
 
 ######################################################################

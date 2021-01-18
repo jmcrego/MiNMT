@@ -9,6 +9,8 @@ import torch
 from transformer.Model import prepare_source
 
 def norm_length(l, alpha):
+  if alpha == 0.0:
+    return 1.0
   return (5+l)**alpha / (5+1)**alpha
 
 ##############################################################################################################
@@ -177,6 +179,7 @@ class Inference():
     self.beam_size = oi.beam_size
     self.max_size = oi.max_size
     self.n_best = oi.n_best
+    self.alpha = oi.alpha
     self.format = oi.format
 
   def translate(self, testset, device):
