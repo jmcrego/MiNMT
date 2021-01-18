@@ -73,7 +73,7 @@ class Learning():
     super(Learning, self).__init__()
     self.model = model
     self.optScheduler = optScheduler
-    self.criter = criter #LabelSmoothing
+    self.criter = criter #LabelSmoothing+KLDivLoss or NLLLoss
     self.suffix = suffix
     self.max_steps = ol.max_steps
     self.max_epochs = ol.max_epochs
