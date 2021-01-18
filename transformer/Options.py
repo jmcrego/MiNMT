@@ -19,7 +19,7 @@ def create_logger(logfile, loglevel):
         logging.debug('Created Logger level={} file={}'.format(loglevel, logfile))
 
 def read_file_options(file, opts):
-  with open(file, 'r') as fyaml:      
+  with open(file, 'r') as fyaml:
     dopts = yaml.load(fyaml, Loader=yaml.SafeLoader) #Loader=yaml.FullLoader)
 
   for key, value in dopts.iteritems():
