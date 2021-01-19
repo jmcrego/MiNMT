@@ -59,7 +59,7 @@ class Beam():
 
     #set -Inf to all words in y_next except for <eos> if this is the last token (max_size - 1)      
     if lt == self.max_size - 1:
-      pad = torch.ones_like(y_next) * -float('Inf')
+      pad = torch.ones_like(y_next) * float('Inf')
       pad[:,self.idx_eos] = 1.0
       y_next[:,:] *= pad
 
