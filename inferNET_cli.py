@@ -95,10 +95,7 @@ class Options():
    -dnet          DIR : network directory [must exist]
    -i            FILE : input file to translate
 
-   -shard_size    INT : maximum shard size ({}) use 0 to consider all data in a single shard
-   -max_length    INT : max number of tokens for src/tgt sentences ({})
-   -batch_size    INT : maximum batch size ({})
-   -batch_type STRING : sentences or tokens ({})
+   [Inference]
    -beam_size     INT : size of beam ({})
    -n_best        INT : return n-best translation hypotheses ({})
    -max_size      INT : max hypothesis size ({})
@@ -112,11 +109,17 @@ class Options():
                           [h] hypothesis
                           [H] hypothesis (detokenised)
 
+   [Data]
+   -shard_size    INT : maximum shard size ({}) use 0 to consider all data in a single shard
+   -max_length    INT : max number of tokens for src/tgt sentences ({})
+   -batch_size    INT : maximum batch size ({})
+   -batch_type STRING : sentences or tokens ({})
+
    -cuda              : use cuda device instead of cpu (default {})
    -log_file     FILE : log file  (stderr)
    -log_level  STRING : log level [debug, info, warning, critical, error] (info)
    -h                 : this help
-'''.format(self.prog, self.shard_size, self.max_length, self.batch_size, self.batch_type, self.beam_size, self.n_best, self.max_size, self.alpha, self.format, self.cuda))
+'''.format(self.prog, self.beam_size, self.n_best, self.max_size, self.alpha, self.format, self.shard_size, self.max_length, self.batch_size, self.batch_type, self.cuda))
     sys.exit()
 
 ######################################################################
