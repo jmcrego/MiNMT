@@ -59,6 +59,9 @@ class Beam():
 
     # we keep the K-best choices for each hypothesis in y_next
     next_logP, next_wrds = torch.topk(y_next, k=self.K, dim=1) #both are [I,self.K]
+    #set -inf to all words in next_logP except for <eos> if this is the last token (max_size - 1)
+    if lt == self.max_size - 1:
+      next_logP[next_wrds!=self.idx_eos] = -float('Inf')
     next_wrds = next_wrds.contiguous().view(-1,1) #[I*self.K,1]
     next_logP = next_logP.contiguous().view(-1,1) #[I*self.K,1]
     logging.debug('***** EXTEND with {}-best next_wrds: {}'.format(self.K, [self.tgt_vocab[idx] for idx in next_wrds.view(-1).tolist()]))
