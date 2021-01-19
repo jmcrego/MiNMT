@@ -17,11 +17,11 @@ def norm_length(l, alpha):
 ### Beam #####################################################################################################
 ##############################################################################################################
 class Beam():
-  def __init__(self, bs, K, N, max_size, tgt_vocab, device):
+  def __init__(self, bs, K, N, max_size, alpha, tgt_vocab, device):
     self.bs = bs #batch size
     self.N = N #n-best
     self.K = K #beam size
-    self.alpha = 0.7
+    self.alpha = alpha
     self.max_size = max_size #max hyp length
     self.idx_bos = tgt_vocab.idx_bos
     self.idx_eos = tgt_vocab.idx_eos
