@@ -57,14 +57,14 @@ class Beam():
     assert y_next.shape[1] == len(self.tgt_vocab)
     #This function extends hypotheses in self.hyps with one word keeping the k-best [bs*K,lt+1]
 
+    #set -Inf to all words in y_next except for <eos> if this is the last token (max_size - 1)      
+    if lt == self.max_size - 1:
+      logP_eos = y_next[:,self.idx_eos]
+      y_next[:,:] = -float('Inf')
+      y_next[:,] = logP_eos
+
     # we keep the K-best choices for each hypothesis in y_next
     next_logP, next_wrds = torch.topk(y_next, k=self.K, dim=1) #both are [I,self.K]
-    #set -Inf to all words in next_logP except for <eos> if this is the last token (max_size - 1)
-    if lt == self.max_size - 1:
-      next_logP[next_wrds!=self.idx_eos] = -float('Inf')
-      print('force eos')
-      print(next_logP)
-      
     next_wrds = next_wrds.contiguous().view(-1,1) #[I*self.K,1]
     next_logP = next_logP.contiguous().view(-1,1) #[I*self.K,1]
     logging.debug('***** EXTEND with {}-best next_wrds: {}'.format(self.K, [self.tgt_vocab[idx] for idx in next_wrds.view(-1).tolist()]))
