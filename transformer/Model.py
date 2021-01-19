@@ -50,9 +50,9 @@ def load_checkpoint(suffix, model, device):
   logging.info('Loading checkpoint file={}'.format(file))
   checkpoint = torch.load(file, map_location=device)
   step = checkpoint['step']
-  logging.info('Checkpoint step={}'.format(step))
   ### assert checkpoint['model'] has same options than model
   model.load_state_dict(checkpoint['model'])
+  logging.info('Loaded model step={} from {}'.format(step,file))
   return model
 
 def load_checkpoint_or_initialise(suffix, model, optimizer, device):
@@ -134,7 +134,7 @@ class Encoder_Decoder(torch.nn.Module):
     z_src = self.stacked_encoder(src, msk_src) #[bs,ls,ed]
     return z_src
 
-  def decode(self, z_src, tgt, msk_src, msk_tgt=None): 
+  def decode(self, z_src, tgt, msk_src, msk_tgt=None):
     assert z_src.shape[0] == tgt.shape[0] ### src/tgt batch_sizes must be equal
     #this is used on inference
     #z_src are the embeddings of the source words (encoder) [bs, sl, ed]
