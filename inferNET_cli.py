@@ -75,6 +75,8 @@ class Options():
         self.batch_size = int(argv.pop(0))
       elif tok=='-batch_type' and len(argv):
         self.batch_type = argv.pop(0)
+      elif tok=="-cuda":
+        self.cuda = True
       elif tok=="-log_file" and len(argv):
         log_file = argv.pop(0)
       elif tok=="-log_level" and len(argv):
@@ -89,11 +91,10 @@ class Options():
       self.usage()
 
   def usage(self):
-    sys.stderr.write('''{} -dnet FILE -i FILE) [Options]
-   -dnet          DIR : network ouput directory [must exist]
+    sys.stderr.write('''{} -dnet DIR -i FILE [Options]
+   -dnet          DIR : network directory [must exist]
    -i            FILE : input file to translate
 
-   -cuda              : use cuda device instead of cpu
    -shard_size    INT : maximum shard size ({}) use 0 to consider all data in a single shard
    -max_length    INT : max number of tokens for src/tgt sentences ({})
    -batch_size    INT : maximum batch size ({})
@@ -111,10 +112,11 @@ class Options():
                           [h] hypothesis
                           [H] hypothesis (detokenised)
 
+   -cuda              : use cuda device instead of cpu (default {})
    -log_file     FILE : log file  (stderr)
    -log_level  STRING : log level [debug, info, warning, critical, error] (info)
    -h                 : this help
-'''.format(self.prog, self.shard_size, self.max_length, self.batch_size, self.batch_type, self.beam_size, self.n_best, self.max_size, self.alpha, self.format))
+'''.format(self.prog, self.shard_size, self.max_length, self.batch_size, self.batch_type, self.beam_size, self.n_best, self.max_size, self.alpha, self.format, self.cuda))
     sys.exit()
 
 ######################################################################
@@ -161,7 +163,6 @@ if __name__ == '__main__':
   model = Encoder_Decoder(n['n_layers'], n['ff_dim'], n['n_heads'], n['emb_dim'], n['qk_dim'], n['v_dim'], n['dropout'], len(src_vocab), len(tgt_vocab), src_vocab.idx_pad).to(device)
   logging.info('Built model (#params, size) = ({}) in device {}'.format(', '.join([str(f) for f in numparameters(model)]), next(model.parameters()).device ))
   model = load_checkpoint(o.dnet + '/network', model, device)
-  logging.info('Loaded model')
 
   ##################
   ### load test ####

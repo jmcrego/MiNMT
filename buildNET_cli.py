@@ -101,7 +101,7 @@ class Options():
       self.usage()
 
   def usage(self):
-    sys.stderr.write('''{} -dnet FILE -src_vocab FILE -tgt_vocab FILE -src_token FILE -tgt_token FILE [Options]
+    sys.stderr.write('''{} -dnet FILE [Options]
    -dnet         DIR : network ouput directory [must not exist]
    -src_vocab   FILE : source vocabulary file
    -tgt_vocab   FILE : target vocabulary file
