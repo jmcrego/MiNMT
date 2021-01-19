@@ -159,7 +159,7 @@ if __name__ == '__main__':
   assert src_vocab.idx_pad == tgt_vocab.idx_pad
   with open(o.dnet + '/network', 'r') as f:
     n = yaml.load(f, Loader=yaml.SafeLoader) #Loader=yaml.FullLoader)
-  logging.info("Network = {}".format(self.n.__dict__))
+  logging.info("Network = {}".format(n.__dict__))
 
   ##################
   ### load model ###
