@@ -236,16 +236,17 @@ if __name__ == '__main__':
 
   device = torch.device('cuda' if o.cuda and torch.cuda.is_available() else 'cpu')
 
-  ########################
-  ### load model/optim ###
-  ########################
+  #############################
+  ### load model/optim/loss ###
+  #############################
   model = Encoder_Decoder(n['n_layers'], n['ff_dim'], n['n_heads'], n['emb_dim'], n['qk_dim'], n['v_dim'], n['dropout'], len(src_vocab), len(tgt_vocab), src_vocab.idx_pad).to(device)
   logging.info('Built model (#params, size) = ({}) in device {}'.format(', '.join([str(f) for f in numparameters(model)]), next(model.parameters()).device ))
   optim = torch.optim.Adam(model.parameters(), lr=o.lr, betas=(o.beta1, o.beta2), eps=o.eps)
   last_step, model, optim = load_checkpoint_or_initialise(o.dnet + '/network', model, optim, device)
   optScheduler = OptScheduler(optim, n.emb_dim, o.noam_scale, o.noam_warmup, last_step)
   criter = LabelSmoothing(len(tgt_vocab), src_vocab.idx_pad, o.label_smoothing).to(device)
-  #criter = NLLLoss(len(tgt_vocab), src_vocab.idx_pad).to(device)
+  #criter = torch.nn.NLLLoss(len(tgt_vocab), src_vocab.idx_pad).to(device)
+  #criter = torch.nn.CrossEntropyLoss(reduction=sum, ignore_index=src_vocab.idx_pad).to(device)
 
   ##################
   ### load data ####
