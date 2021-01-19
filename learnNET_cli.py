@@ -17,15 +17,14 @@ from transformer.Learning import Learning
 
 def load_dataset(src_vocab, tgt_vocab, fset, fsrc, ftgt, shard_size, max_length, batch_size, batch_type):
   d = Dataset(src_vocab, tgt_vocab)
-  if fset is not None and os.path.exists(fset):
-    d.load_shards(fset)
-    d.split_in_batches(max_length, batch_size, batch_type)
-    return d
-
-  d.numberize(fsrc, ftgt)
-  d.split_in_shards(shard_size)
   if fset is not None:
-    d.dump_shards(fset)
+    d.load_shards(fset)
+  elif fsrc is not None and ftgt is not None:
+    d.numberize(fsrc, ftgt)
+    d.split_in_shards(shard_size)
+  else:
+    return None
+
   d.split_in_batches(max_length, batch_size, batch_type)
   return d
 
@@ -87,6 +86,7 @@ class Options():
       tok = argv.pop(0)
       if tok=="-h":
         self.usage()
+
       elif tok=='-dnet' and len(argv):
         self.dnet = argv.pop(0)
         self.dnet = self.dnet[:-1] if self.dnet[-1]=='/' else self.dnet ### remove trailing '/'
