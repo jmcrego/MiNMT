@@ -89,7 +89,7 @@ class Options():
         self.usage()
       elif tok=='-dnet' and len(argv):
         self.dnet = argv.pop(0)
-
+        self.dnet = self.dnet[:-1] if self.dnet[-1]=='/' else self.dnet ### remove trailing '/'
       elif tok=='-max_steps':
         self.max_steps = int(argv.pop(0))
       elif tok=='-max_epochs':
@@ -145,6 +145,8 @@ class Options():
 
       elif tok=="-cuda":
         self.cuda = True
+      elif tok=="-seed":
+        self.seed = int(argv.pop(0))
       elif tok=="-log_file" and len(argv):
         log_file = argv.pop(0)
       elif tok=="-log_level" and len(argv):
@@ -156,7 +158,7 @@ class Options():
     if self.train_set is None and (self.src_train is None or self.tgt_train is None):
       self.usage('missing EITHER -src_train/-tgt_train OR -train_set options')
     create_logger(log_file,log_level)
-    random.seed(seed)
+    random.seed(self.seed)
     logging.info("Options = {}".format(self.__dict__))
 
   def usage(self, messg=None):
