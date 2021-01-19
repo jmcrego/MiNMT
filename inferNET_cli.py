@@ -85,6 +85,9 @@ class Options():
     if self.input is None:
       self.usage('missing -i option')
     create_logger(log_file,log_level)
+    random.seed(seed)
+    logging.info("Options = {}".format(self.__dict__))
+
 
   def usage(self, messg=None):
     if messg is not None:
@@ -115,7 +118,7 @@ class Options():
    -batch_size    INT : maximum batch size ({})
    -batch_type STRING : sentences or tokens ({})
 
-   -cuda              : use cuda device instead of cpu (default {})
+   -cuda              : use cuda device instead of cpu ({})
    -log_file     FILE : log file  (stderr)
    -log_level  STRING : log level [debug, info, warning, critical, error] (info)
    -h                 : this help

@@ -3,6 +3,7 @@
 import sys
 import os
 import time
+import random
 import logging
 import torch
 import yaml
@@ -78,6 +79,7 @@ class Options():
     self.batch_type = 'tokens'
 
     self.cuda = False
+    self.seed = 12345
     log_file = 'stderr'
     log_level = 'info'
 
@@ -154,6 +156,8 @@ class Options():
     if self.train_set is None and (self.src_train is None or self.tgt_train is None):
       self.usage('missing EITHER -src_train/-tgt_train OR -train_set options')
     create_logger(log_file,log_level)
+    random.seed(seed)
+    logging.info("Options = {}".format(self.__dict__))
 
   def usage(self, messg=None):
     if messg is not None:
@@ -192,11 +196,12 @@ class Options():
    -batch_size        INT : maximum batch size ({})
    -batch_type     STRING : sentences or tokens ({})
 
-   -cuda                  : use cuda device instead of cpu (default {})
+   -cuda                  : use cuda device instead of cpu ({})
+   -seed              INT : seed for randomness ({})
    -log_file         FILE : log file  (stderr)
    -log_level      STRING : log level [debug, info, warning, critical, error] (info)
    -h                     : this help
-'''.format(self.prog, self.max_steps, self.max_epochs, self.validate_every, self.save_every, self.report_every, self.keep_last_n, self.clip_grad_norm, self.lr, self.min_lr, self.beta1, self.beta2, self.eps, self.noam_scale, self.noam_warmup, self.label_smoothing, self.shard_size, self.max_length, self.batch_size, self.batch_type, self.cuda))
+'''.format(self.prog, self.max_steps, self.max_epochs, self.validate_every, self.save_every, self.report_every, self.keep_last_n, self.clip_grad_norm, self.lr, self.min_lr, self.beta1, self.beta2, self.eps, self.noam_scale, self.noam_warmup, self.label_smoothing, self.shard_size, self.max_length, self.batch_size, self.batch_type, self.cuda, self.seed))
     sys.exit()
 
 ######################################################################
