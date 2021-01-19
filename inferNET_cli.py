@@ -59,10 +59,10 @@ class Options():
         self.n_best = int(argv.pop(0))
       elif tok=='-max_size' and len(argv):
         self.max_size = int(argv.pop(0))
-      elif tok=='-format' and len(argv):
-        self.format = argv.pop(0)
       elif tok=='-alpha' and len(argv):
         self.alpha = float(argv.pop(0))
+      elif tok=='-format' and len(argv):
+        self.format = argv.pop(0)
       elif tok=='-i' and len(argv):
         self.input = argv.pop(0)
       elif tok=='-shard_size' and len(argv):
@@ -104,8 +104,10 @@ class Options():
                           [c] global hypothesis cost
                           [s] source sentence
                           [S] source sentence (detokenised)
+                          [u] source indexes
                           [h] hypothesis
                           [H] hypothesis (detokenised)
+                          [v] hypothesis indexes
 
    [Data]
    -shard_size    INT : maximum shard size ({}) [use 0 to consider all data in a single shard]

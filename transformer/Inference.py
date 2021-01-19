@@ -212,10 +212,12 @@ class Inference():
                 out.append(' '.join(src))                   ### input sentence (tokenized)
               elif c=='S':
                 out.append(src_detok)                       ### input sentence (detokenized)
-                #out.append(' '.join(map(str,batch_src[b])))### input sentence (indexs)
+              elif c=='u':
+                out.append(' '.join(map(str,batch_src[b]))) ### input sentence (indexs)
               elif c=='h':
                 out.append(' '.join(tgt))                   ### output sentence (tokenized)
-                #out.append(' '.join(map(str,hyp)))         ### output sentence (indexs)
+              elif c=='v':
+                out.append(' '.join(map(str,hyp)))          ### output sentence (indexs)
               elif c=='H':
                 out.append(tgt_detok)                       ### output sentence (detokenized)
               else:
