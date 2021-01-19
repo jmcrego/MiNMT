@@ -49,8 +49,10 @@ class Options():
 
     while len(argv):
       tok = argv.pop(0)
+
       if tok=="-h":
         self.usage()
+
       elif tok=='-dnet' and len(argv):
         self.dnet = argv.pop(0)
       elif tok=='-beam_size' and len(argv):
@@ -73,6 +75,7 @@ class Options():
         self.batch_size = int(argv.pop(0))
       elif tok=='-batch_type' and len(argv):
         self.batch_type = argv.pop(0)
+
       elif tok=="-cuda":
         self.cuda = True
       elif tok=="-log_file" and len(argv):
