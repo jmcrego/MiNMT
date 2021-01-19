@@ -99,7 +99,7 @@ class Options():
    -beam_size     INT : size of beam ({})
    -n_best        INT : return n-best translation hypotheses ({})
    -max_size      INT : max hypothesis size ({})
-   -alpha       FLOAT : hypothesis length-normalization parameter ({}) [0.0 for unnormalized otherwise (5+len)**alpha / (5+1)**alpha]
+   -alpha       FLOAT : hypothesis length-normalization parameter ({}) [use 0.0 for unnormalized otherwise (5+len)**alpha / (5+1)**alpha]
    -format     STRING : format of output lines (default {})
                           [i] index in test set
                           [n] rank in n-best
