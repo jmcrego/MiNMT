@@ -59,9 +59,9 @@ class Beam():
 
     #set -Inf to all words in y_next except for <eos> if this is the last token (max_size - 1)      
     if lt == self.max_size - 1:
-      logP_eos = y_next[:,self.idx_eos]
-      y_next[:,:] = -float('Inf')
-      y_next[:,] = logP_eos
+      pad = torch.ones_like(y_next) * -float('Inf')
+      pad[:,self.idx_eos] = 1.0
+      y_next[:,:] *= pad
 
     # we keep the K-best choices for each hypothesis in y_next
     next_logP, next_wrds = torch.topk(y_next, k=self.K, dim=1) #both are [I,self.K]
