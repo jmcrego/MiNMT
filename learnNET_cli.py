@@ -251,7 +251,7 @@ if __name__ == '__main__':
   logging.info('Built model (#params, size) = ({}) in device {}'.format(', '.join([str(f) for f in numparameters(model)]), next(model.parameters()).device ))
   optim = torch.optim.Adam(model.parameters(), lr=o.lr, betas=(o.beta1, o.beta2), eps=o.eps)
   last_step, model, optim = load_checkpoint_or_initialise(o.dnet + '/network', model, optim, device)
-  optScheduler = OptScheduler(optim, n.emb_dim, o.noam_scale, o.noam_warmup, last_step)
+  optScheduler = OptScheduler(optim, n['emb_dim'], o.noam_scale, o.noam_warmup, last_step)
   criter = LabelSmoothing(len(tgt_vocab), src_vocab.idx_pad, o.label_smoothing).to(device)
   #criter = torch.nn.NLLLoss(len(tgt_vocab), src_vocab.idx_pad).to(device)
   #criter = torch.nn.CrossEntropyLoss(reduction=sum, ignore_index=src_vocab.idx_pad).to(device)
