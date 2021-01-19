@@ -3,19 +3,16 @@
 import sys
 import os
 import time
-import pickle
 import logging
 import torch
-import math
-from transformer.Options import Options
+import yaml
 from transformer.Data import Dataset
 from transformer.Vocab import Vocab
 from transformer.ONMTTokenizer import ONMTTokenizer
 from transformer.Model import Encoder_Decoder, load_checkpoint_or_initialise, save_checkpoint, load_checkpoint, numparameters
 from transformer.Optimizer import OptScheduler, LabelSmoothing, NLLLoss
 from transformer.Learning import Learning
-from transformer.Inference import Inference
-import numpy as np
+#import numpy as np
 
 def load_dataset(src_vocab, tgt_vocab, fset, fsrc, ftgt, shard_size, max_length, batch_size, batch_type):
   d = Dataset(src_vocab, tgt_vocab)
@@ -32,16 +29,16 @@ def load_dataset(src_vocab, tgt_vocab, fset, fsrc, ftgt, shard_size, max_length,
   return d
 
 def create_logger(logfile, loglevel):
-    numeric_level = getattr(logging, loglevel.upper(), None)
-    if not isinstance(numeric_level, int):
-        logging.error("Invalid log level={}".format(loglevel))
-        sys.exit()
-    if logfile is None or logfile == 'stderr':
-        logging.basicConfig(format='[%(asctime)s.%(msecs)03d] %(levelname)s %(message)s', datefmt='%Y-%m-%d_%H:%M:%S', level=numeric_level)
-        logging.debug('Created Logger level={}'.format(loglevel))
-    else:
-        logging.basicConfig(filename=logfile, format='[%(asctime)s.%(msecs)03d] %(levelname)s %(message)s', datefmt='%Y-%m-%d_%H:%M:%S', level=numeric_level)
-        logging.debug('Created Logger level={} file={}'.format(loglevel, logfile))
+  numeric_level = getattr(logging, loglevel.upper(), None)
+  if not isinstance(numeric_level, int):
+    logging.error("Invalid log level={}".format(loglevel))
+    sys.exit()
+  if logfile is None or logfile == 'stderr':
+    logging.basicConfig(format='[%(asctime)s.%(msecs)03d] %(levelname)s %(message)s', datefmt='%Y-%m-%d_%H:%M:%S', level=numeric_level)
+    logging.debug('Created Logger level={}'.format(loglevel))
+  else:
+    logging.basicConfig(filename=logfile, format='[%(asctime)s.%(msecs)03d] %(levelname)s %(message)s', datefmt='%Y-%m-%d_%H:%M:%S', level=numeric_level)
+    logging.debug('Created Logger level={} file={}'.format(loglevel, logfile))
 
 ######################################################################
 ### Options ##########################################################
@@ -76,7 +73,7 @@ class Options():
     self.label_smoothing = 0.1
     ### data
     self.shard_size = 100000
-    self.max_length = 0
+    self.max_length = 100
     self.batch_size = 4096
     self.batch_type = 'tokens'
 
@@ -190,7 +187,7 @@ class Options():
 
    [Data]
    -shard_size        INT : maximum shard size ({}) use 0 to consider all data in a single shard
-   -max_length        INT : maximum number of tokens (src or tgt) per sentence ({})
+   -max_length        INT : maximum number of tokens (src or tgt) per example ({})
    -batch_size        INT : maximum batch size ({})
    -batch_type     STRING : sentences or tokens ({})
 

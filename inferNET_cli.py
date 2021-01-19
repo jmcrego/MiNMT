@@ -3,29 +3,27 @@
 import sys
 import os
 import time
-#import pickle
 import logging
-import yaml
 import torch
-#import math
+import yaml
 from transformer.Data import Dataset
 from transformer.Vocab import Vocab
 from transformer.ONMTTokenizer import ONMTTokenizer
 from transformer.Model import Encoder_Decoder, load_checkpoint_or_initialise, save_checkpoint, load_checkpoint, numparameters
 from transformer.Inference import Inference
-import numpy as np
+#import numpy as np
 
 def create_logger(logfile, loglevel):
-    numeric_level = getattr(logging, loglevel.upper(), None)
-    if not isinstance(numeric_level, int):
-        logging.error("Invalid log level={}".format(loglevel))
-        sys.exit()
-    if logfile is None or logfile == 'stderr':
-        logging.basicConfig(format='[%(asctime)s.%(msecs)03d] %(levelname)s %(message)s', datefmt='%Y-%m-%d_%H:%M:%S', level=numeric_level)
-        logging.debug('Created Logger level={}'.format(loglevel))
-    else:
-        logging.basicConfig(filename=logfile, format='[%(asctime)s.%(msecs)03d] %(levelname)s %(message)s', datefmt='%Y-%m-%d_%H:%M:%S', level=numeric_level)
-        logging.debug('Created Logger level={} file={}'.format(loglevel, logfile))
+  numeric_level = getattr(logging, loglevel.upper(), None)
+  if not isinstance(numeric_level, int):
+    logging.error("Invalid log level={}".format(loglevel))
+    sys.exit()
+  if logfile is None or logfile == 'stderr':
+    logging.basicConfig(format='[%(asctime)s.%(msecs)03d] %(levelname)s %(message)s', datefmt='%Y-%m-%d_%H:%M:%S', level=numeric_level)
+    logging.debug('Created Logger level={}'.format(loglevel))
+  else:
+    logging.basicConfig(filename=logfile, format='[%(asctime)s.%(msecs)03d] %(levelname)s %(message)s', datefmt='%Y-%m-%d_%H:%M:%S', level=numeric_level)
+    logging.debug('Created Logger level={} file={}'.format(loglevel, logfile))
 
 ######################################################################
 ### Options ##########################################################
@@ -42,7 +40,7 @@ class Options():
     self.alpha = 0.0
     self.format = 'iH'
     self.shard_size = 0
-    self.max_length = 250
+    self.max_length = 0
     self.batch_size = 30
     self.batch_type = 'sentences'    
     self.cuda = False
@@ -111,7 +109,7 @@ class Options():
 
    [Data]
    -shard_size    INT : maximum shard size ({}) [use 0 to consider all data in a single shard]
-   -max_length    INT : maximum number of tokens (src or tgt) per sentence ({})
+   -max_length    INT : maximum number of tokens (src or tgt) per example ({})
    -batch_size    INT : maximum batch size ({})
    -batch_type STRING : sentences or tokens ({})
 
