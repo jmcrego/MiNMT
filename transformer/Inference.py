@@ -33,6 +33,10 @@ class Beam():
     ### next are hyps reaching <eos>
     self.final = [defaultdict() for i in range(self.bs)] #list with hyps reaching <eos> and overall score
     self.debug = False
+
+    self.mask_eos = torch.ones(len(tgt_vocab)) * float('Inf')
+    self.mask_eos[self.idx_eos] = 1.0
+
     if self.debug:
       self.print_beam('INITIAL')
 
@@ -59,9 +63,7 @@ class Beam():
 
     #set -Inf to all words in y_next except for <eos> if this is the last token (max_size - 1)      
     if lt == self.max_size - 1:
-      pad = torch.ones_like(y_next) * float('Inf')
-      pad[:,self.idx_eos] = 1.0
-      y_next[:,:] *= pad
+      y_next[:,] *= self.mask_eos
 
     # we keep the K-best choices for each hypothesis in y_next
     next_logP, next_wrds = torch.topk(y_next, k=self.K, dim=1) #both are [I,self.K]
