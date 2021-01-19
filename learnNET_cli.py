@@ -150,7 +150,8 @@ class Options():
 
     if self.dnet is None:
       self.usage('missing -dnet option')
-    if self.train_set is None or (self.src_train is None and self.tgt_train is None):
+
+    if self.train_set is None and (self.src_train is None or self.tgt_train is None):
       self.usage('missing EITHER -src_train/-tgt_train OR -train_set options')
     create_logger(log_file,log_level)
 
