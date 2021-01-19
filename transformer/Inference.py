@@ -13,7 +13,6 @@ def norm_length(l, alpha):
     return 1.0
   return (5+l)**alpha / (5+1)**alpha
 
-
 ##############################################################################################################
 ### Beam #####################################################################################################
 ##############################################################################################################
@@ -132,7 +131,7 @@ class Beam():
 ### BeamSearch ###############################################################################################
 ##############################################################################################################
 class BeamSearch():
-  def __init__(self, model, tgt_vocab, beam_size, n_best, max_size, device):
+  def __init__(self, model, tgt_vocab, beam_size, n_best, max_size, alpha, device):
     assert tgt_vocab.idx_pad == model.idx_pad
     self.model = model
     self.tgt_vocab = tgt_vocab
@@ -140,6 +139,7 @@ class BeamSearch():
     self.device = device
     self.beam_size = beam_size
     self.n_best = n_best
+    self.alpha = alpha
     #logging.info('Beam Search [init]: beam_size={} n_best={}'.format(self.beam_size,self.n_best))
 
   def traverse(self, batch_src):
@@ -154,7 +154,7 @@ class BeamSearch():
     ###
     ### decode step-by-step (produce one tgt token at each time step for each hyp in beam)
     ###
-    beam = Beam(bs, self.beam_size, self.n_best, self.max_size, self.tgt_vocab, self.device)
+    beam = Beam(bs, self.beam_size, self.n_best, self.max_size, self.alpha, self.tgt_vocab, self.device)
     while not beam.done():
       y_next = self.model.decode(z_src, beam.hyps, msk_src, msk_tgt=None)[:,-1,:] #[bs*K,lt,Vt] => [bs*K,Vt]
       beam.advance(y_next)
@@ -188,7 +188,7 @@ class Inference():
 
     with torch.no_grad():
       self.model.eval()
-      beamsearch = BeamSearch(self.model, self.tgt_vocab, self.beam_size, self.n_best, self.max_size, device)
+      beamsearch = BeamSearch(self.model, self.tgt_vocab, self.beam_size, self.n_best, self.max_size, self.alpha, device)
       for pos, batch_src, _ in testset:
         beam = beamsearch.traverse(batch_src)
         logp, hyps = beam.get_hyps()
