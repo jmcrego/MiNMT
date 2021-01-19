@@ -135,7 +135,7 @@ class Dataset():
     np.random.shuffle(pos_lens)
     if shard_size == 0:
       shard_size = len(pos_lens)
-    logging.debug('Shuffled Dataset {}'.format(pos_lens.shape))
+    logging.info('Shuffled Dataset {}'.format(pos_lens.shape))
     #pos_lens_lent is [n_examples, 3] or [n_examples, 2]
     #pos is the position of the example in idx_src and idx_tgt
     #len_src/len_tgt are the respective sentence lenghts
@@ -151,7 +151,7 @@ class Dataset():
           shard_sorted = np.argsort(shard[:,1]) # sort by lsrc (lower to higher lenghts)
         shard = shard[:,0] #keep only pos
         self.shards.append(shard[shard_sorted]) #sort 
-        logging.debug('Sorted shard #{} {}'.format(len(self.shards),self.shards[-1].shape))
+        logging.info('Sorted shard #{} {}'.format(len(self.shards),self.shards[-1].shape))
         shard = []
 
   def split_in_batches(self, max_length=100, batch_size=64, batch_type='sentences'):
@@ -212,7 +212,7 @@ class Dataset():
 
   def shuffle(self):
     np.random.shuffle(self.batches)
-    logging.debug('Shuffled {} batches'.format(len(self.batches)))
+    logging.info('Shuffled {} batches'.format(len(self.batches)))
 
   def __len__(self):
     return len(self.batches)
