@@ -80,15 +80,15 @@ class Options():
       elif tok=="-log_level" and len(argv):
         log_level = argv.pop(0)
 
-    create_logger(log_file,log_level)
     if self.dnet is None:
-      logging.error('missing -dnet option')
-      self.usage()
+      self.usage('missing -dnet option')
     if self.input is None:
-      logging.error('missing -i option')
-      self.usage()
+      self.usage('missing -i option')
+    create_logger(log_file,log_level)
 
-  def usage(self):
+  def usage(self, messg=None):
+    if messg is not None:
+      sys.stderr.write(messg + '\n')
     sys.stderr.write('''{} -dnet DIR -i FILE [Options]
    -dnet          DIR : network directory [must exist]
    -i            FILE : input file to translate

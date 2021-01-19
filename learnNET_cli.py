@@ -148,15 +148,15 @@ class Options():
       elif tok=="-log_level" and len(argv):
         log_level = argv.pop(0)
 
-    create_logger(log_file,log_level)
     if self.dnet is None:
-      logging.error('missing -dnet option')
-      self.usage()
+      self.usage('missing -dnet option')
     if self.train_set is None or (self.src_train is None and self.tgt_train is None):
-      logging.error('missing EITHER -src_train/-tgt_train OR -train_set options')
-      self.usage()
+      self.usage('missing EITHER -src_train/-tgt_train OR -train_set options')
+    create_logger(log_file,log_level)
 
-  def usage(self):
+  def usage(self, messg=None):
+    if messg is not None:
+      sys.stderr.write(messg + '\n')
     sys.stderr.write('''{} -dnet DIR -src_train FILE -tgt_train FILE -train_set FILE [-src_valid FILE -tgt_valid FILE -valid_set FILE] [Options]
    -dnet              DIR : network directory [must exist]
    -src_train        FILE : source-side training file
