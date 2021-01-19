@@ -109,7 +109,7 @@ class Options():
 
    [Data]
    -shard_size    INT : maximum shard size ({}) [use 0 to consider all data in a single shard]
-   -max_length    INT : maximum number of tokens (src or tgt) per example ({})
+   -max_length    INT : skip example if number of (src/tgt) tokens exceeds this ({})
    -batch_size    INT : maximum batch size ({})
    -batch_type STRING : sentences or tokens ({})
 
