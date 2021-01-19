@@ -242,11 +242,10 @@ if __name__ == '__main__':
   with open(o.dnet + '/network', 'r') as f:
     n = yaml.load(f, Loader=yaml.SafeLoader) #Loader=yaml.FullLoader)
 
-  device = torch.device('cuda' if o.cuda and torch.cuda.is_available() else 'cpu')
-
   #############################
   ### load model/optim/loss ###
   #############################
+  device = torch.device('cuda' if o.cuda and torch.cuda.is_available() else 'cpu')
   model = Encoder_Decoder(n['n_layers'], n['ff_dim'], n['n_heads'], n['emb_dim'], n['qk_dim'], n['v_dim'], n['dropout'], len(src_vocab), len(tgt_vocab), src_vocab.idx_pad).to(device)
   logging.info('Built model (#params, size) = ({}) in device {}'.format(', '.join([str(f) for f in numparameters(model)]), next(model.parameters()).device ))
   optim = torch.optim.Adam(model.parameters(), lr=o.lr, betas=(o.beta1, o.beta2), eps=o.eps)

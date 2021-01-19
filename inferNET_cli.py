@@ -85,7 +85,6 @@ class Options():
     if self.input is None:
       self.usage('missing -i option')
     create_logger(log_file,log_level)
-    random.seed(seed)
     logging.info("Options = {}".format(self.__dict__))
 
 
@@ -161,11 +160,10 @@ if __name__ == '__main__':
   with open(o.dnet + '/network', 'r') as f:
     n = yaml.load(f, Loader=yaml.SafeLoader) #Loader=yaml.FullLoader)
 
-  device = torch.device('cuda' if o.cuda and torch.cuda.is_available() else 'cpu')
-
   ##################
   ### load model ###
   ##################
+  device = torch.device('cuda' if o.cuda and torch.cuda.is_available() else 'cpu')
   model = Encoder_Decoder(n['n_layers'], n['ff_dim'], n['n_heads'], n['emb_dim'], n['qk_dim'], n['v_dim'], n['dropout'], len(src_vocab), len(tgt_vocab), src_vocab.idx_pad).to(device)
   logging.info('Built model (#params, size) = ({}) in device {}'.format(', '.join([str(f) for f in numparameters(model)]), next(model.parameters()).device ))
   model = load_checkpoint(o.dnet + '/network', model, device)
