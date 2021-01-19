@@ -34,7 +34,7 @@ class Beam():
     self.final = [defaultdict() for i in range(self.bs)] #list with hyps reaching <eos> and overall score
     self.debug = False
 
-    self.mask_eos = torch.ones(len(tgt_vocab)) * float('Inf')
+    self.mask_eos = torch.ones(len(tgt_vocab)).to(self.device) * float('Inf')
     self.mask_eos[self.idx_eos] = 1.0
 
     if self.debug:
