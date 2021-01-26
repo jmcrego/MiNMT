@@ -14,7 +14,7 @@ def file2idx(ftxt=None, vocab=None):
   if vocab is None or ftxt is None:
     return None, None, None
 
-  txts = []
+  toks = []
   idxs = []
   lens = []
   ntokens = 0
