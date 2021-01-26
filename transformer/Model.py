@@ -159,6 +159,27 @@ class Embedding(torch.nn.Module):
         return self.emb(x) * self.sqrt_emb_dim
 
 ##############################################################################################################
+### PositionalEncoding #######################################################################################
+##############################################################################################################
+class AddPositionalEncoding(torch.nn.Module):
+  def __init__(self, emb_dim, dropout, max_len=5000):
+    super(AddPositionalEncoding, self).__init__()
+    assert emb_dim%2 == 0 #emb_dim must be pair
+    self.dropout = torch.nn.Dropout(dropout)
+    pe = torch.zeros(max_len, emb_dim) #[max_len=5000, ed]
+    position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1) #[max_len, 1]
+    div_term = torch.exp(torch.arange(0, emb_dim, 2).float() * (-math.log(10000.0) / emb_dim)) #[ed/2]
+    pe[:, 0::2] = torch.sin(position*div_term) #[max_len, 1] * [1, ed/2] => [max_len, ed] (pairs of pe)
+    pe[:, 1::2] = torch.cos(position*div_term) #[max_len, 1] * [1, ed/2] => [max_len, ed] (odds of pe)
+    pe = pe.unsqueeze(0) #[1, max_len=5000, ed]
+    self.register_buffer('pe', pe) #register_buffer is for params which are saved&restored in state_dict but not trained 
+
+  def forward(self, x):
+    bs, l, ed = x.shape
+    x = x + self.pe[:, :l] #[bs, l, ed] + [1, l, ed] => [bs, l, ed]
+    return self.dropout(x)
+
+##############################################################################################################
 ### Stacked_Encoder ##########################################################################################
 ##############################################################################################################
 class Stacked_Encoder(torch.nn.Module):
@@ -211,7 +232,8 @@ class Decoder(torch.nn.Module):
   def __init__(self, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout):
     super(Decoder, self).__init__()
     self.feedforward = FeedForward(emb_dim, ff_dim, dropout)
-    self.multihead_attn = MultiHead_Attn(n_heads, emb_dim, qk_dim, v_dim, dropout)
+    self.multihead_attn_self = MultiHead_Attn(n_heads, emb_dim, qk_dim, v_dim, dropout)
+    self.multihead_attn_enc = MultiHead_Attn(n_heads, emb_dim, qk_dim, v_dim, dropout)
     self.norm_att1 = torch.nn.LayerNorm(emb_dim, eps=1e-6) 
     self.norm_att2 = torch.nn.LayerNorm(emb_dim, eps=1e-6) 
     self.norm_ff = torch.nn.LayerNorm(emb_dim, eps=1e-6) 
@@ -219,10 +241,10 @@ class Decoder(torch.nn.Module):
   def forward(self, z_src, tgt, msk_src, msk_tgt):
     tgt_norm = self.norm_att1(tgt)
     #attention over tgt (previous) words : q, k, v are tgt words
-    tmp = self.multihead_attn(q=tgt_norm, k=tgt_norm, v=tgt_norm, msk=msk_tgt) + tgt #[bs, lt, ed] contains dropout
+    tmp = self.multihead_attn_self(q=tgt_norm, k=tgt_norm, v=tgt_norm, msk=msk_tgt) + tgt #[bs, lt, ed] contains dropout
     tmp_norm = self.norm_att2(tmp)
     #attention over src words : q are tgt words, k, v are src words
-    tmp = self.multihead_attn(q=tmp_norm, k=z_src,    v=z_src,    msk=msk_src) + tmp #[bs, lt, ed] contains dropout
+    tmp = self.multihead_attn_enc(q=tmp_norm, k=z_src,    v=z_src,    msk=msk_src) + tmp #[bs, lt, ed] contains dropout
     tmp_norm = self.norm_ff(tmp)
     z = self.feedforward(tmp_norm) + tmp #[bs, lt, ed] contains dropout
     return z
@@ -289,27 +311,6 @@ class FeedForward(torch.nn.Module):
     tmp = self.FF_out(tmp)
     tmp = self.dropout(tmp)
     return tmp
-
-##############################################################################################################
-### PositionalEncoding #######################################################################################
-##############################################################################################################
-class AddPositionalEncoding(torch.nn.Module):
-  def __init__(self, emb_dim, dropout, max_len=5000):
-    super(AddPositionalEncoding, self).__init__()
-    assert emb_dim%2 == 0 #emb_dim must be pair
-    self.dropout = torch.nn.Dropout(dropout)
-    pe = torch.zeros(max_len, emb_dim) #[max_len=5000, ed]
-    position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1) #[max_len, 1]
-    div_term = torch.exp(torch.arange(0, emb_dim, 2).float() * (-math.log(10000.0) / emb_dim)) #[ed/2]
-    pe[:, 0::2] = torch.sin(position*div_term) #[max_len, 1] * [1, ed/2] => [max_len, ed] (pairs of pe)
-    pe[:, 1::2] = torch.cos(position*div_term) #[max_len, 1] * [1, ed/2] => [max_len, ed] (odds of pe)
-    pe = pe.unsqueeze(0) #[1, max_len=5000, ed]
-    self.register_buffer('pe', pe) #register_buffer is for params which are saved&restored in state_dict but not trained 
-
-  def forward(self, x):
-    bs, l, ed = x.shape
-    x = x + self.pe[:, :l] #[bs, l, ed] + [1, l, ed] => [bs, l, ed]
-    return self.dropout(x)
 
 ##############################################################################################################
 ### Generator ################################################################################################
