@@ -33,9 +33,7 @@ class Beam():
     ### next are hyps reaching <eos>
     self.final = [defaultdict() for i in range(self.bs)] #list with hyps reaching <eos> and overall score
     self.debug = False
-
-    self.keep_eos = torch.ones(len(tgt_vocab)).to(self.device) * float('Inf') #[Vt]
-    self.keep_eos[self.idx_eos] = 1.0
+    self.prefix_next = torch.ones(len(tgt_vocab)).to(self.device) * float('Inf') #[Vt]
 
     if self.debug:
       self.print_beam('INITIAL')
@@ -63,7 +61,9 @@ class Beam():
 
     #set -Inf to all words in y_next except for <eos> if this is the last token (max_size - 1)      
     if lt == self.max_size - 1:
-      y_next[:,] *= self.keep_eos
+      self.prefix_next[self.idx_eos] = 1.0
+      y_next[:,] *= self.prefix_next
+      self.prefix_next[self.idx_eos] = float('Inf')
 
     # we keep the K-best choices for each hypothesis in y_next
     next_logP, next_wrds = torch.topk(y_next, k=self.K, dim=1) #both are [I,self.K]
@@ -201,12 +201,12 @@ class Inference():
         beam = beamsearch.traverse(batch_src)
         logp, hyps = beam.get_hyps()
         assert len(pos) == len(batch_src) == len(logp) == len(hyps)
-        for b in range(len(logp)):
-          for n in range(len(logp[b])):
+        for b in range(len(logp)): #each batch example
+          for n in range(len(logp[b])): #each n-best
             hyp = hyps[b][n] #list of ints
-            src = testset.get_input(pos[b])[1:-1] #list of strings
+            src = testset.get_input(pos[b])[1:-1] #list of strings (discard <bos> and <eos>)
             src_detok = self.src_token.detokenize(src) #string
-            tgt = [self.tgt_vocab[idx] for idx in hyp[1:-1]] #list
+            tgt = [self.tgt_vocab[idx] for idx in hyp[1:-1]] #list o strings (discard <bos> and <eos>)
             tgt_detok = self.tgt_token.detokenize(tgt) #string
             out = []
             for c in self.format:
