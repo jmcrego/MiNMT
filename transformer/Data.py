@@ -25,21 +25,21 @@ def file2idx(ftxt=None, vocab=None):
 
   for l in lines:
     idx = []
-    txt = vocab.token.tokenize(l)
-    for t in txt:
+    tok = vocab.token.tokenize(l)
+    for t in tok:
       idx.append(vocab[t])
       ntokens += 1
       if t == vocab.idx_unk:
         nunks += 1
     idx.insert(0,vocab.idx_bos)
     idx.append(vocab.idx_eos)
-    txt.insert(0,vocab.str_bos)
-    txt.append(vocab.str_eos)
-    txts.append(txt)
+    tok.insert(0,vocab.str_bos)
+    tok.append(vocab.str_eos)
+    toks.append(tok)
     idxs.append(idx)
     lens.append(len(idx))
   logging.info('Found {} <unk> in {} tokens [{:.1f}%]'.format(nunks, ntokens, 100.0*nunks/ntokens))
-  return txts, idxs, lens
+  return toks, idxs, lens
 
 ##############################################################################################################
 ### Batch ####################################################################################################
