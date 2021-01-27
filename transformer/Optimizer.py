@@ -80,3 +80,32 @@ class LabelSmoothing_NLL(torch.nn.Module):
     return loss
 
 
+class LabelSmoothing_KLDiv(torch.nn.Module):
+  def __init__(self, nclasses, padding_idx, smoothing=0.0):
+    super(LabelSmoothing_KLDiv, self).__init__()
+    assert nclasses > 0
+    assert 0.0 < smoothing <= 1.0
+    assert 0 <= padding_idx <= nclasses
+    self.confidence = 1.0 - smoothing
+    self.padding_idx = padding_idx
+
+    smoothing_value = smoothing / (nclasses - 2) #smoothing value
+    one_hot = torch.full((nclasses,), smoothing_value) #[Vt, 1] filled with smoothing_value
+    one_hot[padding_idx] = 0.0
+    logging.info('one_hot = {}'.format(one_hot.shape))
+    self.register_buffer('one_hot', one_hot.unsqueeze(0))
+
+  def forward(self, pred, gold):
+    #pred is [bs, lt, Vt] (after softmax)
+    #gold is [bs, lt]
+    pred = pred.view(-1,pred.size(2)) #[bs*lt, Vt]
+    gold = gold.view(-1) #[bs*lt]
+
+    smooth_gold_prob = self.one_hot.repeat(gold.size(0), 1) #[bs*lt, Vt]
+    smooth_gold_prob.scatter_(1, gold.unsqueeze(1), self.confidence) #replaces smooth_value by confidence in gold tokens
+    smooth_gold_prob.masked_fill_((gold == self.padding_idx).unsqueeze(1), 0) #replaces smooth_value by 0.0 in padded tokens
+
+    loss = F.kl_div(pred, smooth_gold_prob, reduction='sum')
+    return loss
+
+
