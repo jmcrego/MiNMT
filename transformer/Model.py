@@ -347,7 +347,8 @@ class Generator(torch.nn.Module):
     self.proj = torch.nn.Linear(emb_dim, voc_size) #[bs, Vt]
 
   def forward(self, x):
-    y = torch.nn.functional.log_softmax(self.proj(x), dim=-1)
+    y = self.proj(x)
+    #y = torch.nn.functional.log_softmax(y, dim=-1)
     return y
 
 

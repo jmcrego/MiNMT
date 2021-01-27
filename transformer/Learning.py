@@ -99,7 +99,7 @@ class Learning():
         ### forward
         src, msk_src = prepare_source(batch_src, self.idx_pad, device)
         tgt, ref, msk_tgt = prepare_target(batch_tgt, self.idx_pad, device)
-        pred = self.model.forward(src, tgt, msk_src, msk_tgt)
+        pred = self.model.forward(src, tgt, msk_src, msk_tgt) #no log_softmax is applied
         ### compute loss
         loss_batch = self.criter(pred, ref) #sum of losses in batch
         loss_token = loss_batch / torch.sum(ref != self.idx_pad)
@@ -151,7 +151,7 @@ class Learning():
         n_batch += 1
         src, msk_src = prepare_source(batch_src, self.idx_pad, device)
         tgt, ref, msk_tgt = prepare_target(batch_tgt, self.idx_pad, device)
-        pred = self.model.forward(src, tgt, msk_src, msk_tgt)
+        pred = self.model.forward(src, tgt, msk_src, msk_tgt) #no log_softmax is applied
         loss = self.criter(pred, ref) ### batch loss
         valid_loss += loss.item() / torch.sum(ref != self.idx_pad)
 

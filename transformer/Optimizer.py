@@ -54,9 +54,9 @@ class LabelSmoothing(torch.nn.Module):
     return self.criterion(pred, Variable(true_dist, requires_grad=False)) ### sum of loss of all words (other than <pad> in reference)
 
 
-class LabelSmoothing_NLL(torch.nn.Module):
+class LabelSmoothing_NLL2(torch.nn.Module):
   def __init__(self, nclasses, padding_idx, smoothing=0.0):
-    super(LabelSmoothing_NLL, self).__init__()
+    super(LabelSmoothing_NLL2, self).__init__()
     self.padding_idx = padding_idx
     self.nclasses = nclasses #size of tgt vocab
     self.smoothing = smoothing
@@ -80,6 +80,27 @@ class LabelSmoothing_NLL(torch.nn.Module):
     return loss
 
 
+class LabelSmoothing_NLL(torch.nn.Module):
+  def __init__(self, nclasses, padding_idx, smoothing=0.0):
+    super(LabelSmoothing_NLL, self).__init__()
+    self.padding_idx = padding_idx
+    self.nclasses = nclasses #size of tgt vocab
+    self.smoothing = smoothing
+
+  def forward(self, pred, gold):
+    pred = pred.contiguous().view(-1,pred.size(2)) #[bs*lt, Vt]
+    gold = gold.contiguous().view(-1) #[bs*lt]
+
+    one_hot = torch.zeros_like(pred).scatter(1, gold.view(-1, 1), 1)
+    one_hot = one_hot * (1 - self.smoothing) + (1 - one_hot) * self.smoothing / (self.nclasses - 1)
+    log_prb = F.log_softmax(pred, dim=1)
+
+    non_pad_mask = gold.ne(self.padding_idx)
+    loss = -(one_hot * log_prb).sum(dim=1)
+    loss = loss.masked_select(non_pad_mask).sum()
+    return loss
+
+
 class LabelSmoothing_KLDiv(torch.nn.Module):
   def __init__(self, nclasses, padding_idx, smoothing=0.0):
     super(LabelSmoothing_KLDiv, self).__init__()
@@ -96,16 +117,19 @@ class LabelSmoothing_KLDiv(torch.nn.Module):
     self.register_buffer('one_hot', one_hot.unsqueeze(0))
 
   def forward(self, pred, gold):
+    pred = F.log_softmax(pred, dim=-1)
     #pred is [bs, lt, Vt] (after softmax)
     #gold is [bs, lt]
-    pred = pred.view(-1,pred.size(2)) #[bs*lt, Vt]
-    gold = gold.view(-1) #[bs*lt]
+    pred = pred.contiguous().view(-1,pred.size(2)) #[bs*lt, Vt]
+    gold = gold.contiguous().view(-1) #[bs*lt]
 
     smooth_gold_prob = self.one_hot.repeat(gold.size(0), 1) #[bs*lt, Vt]
     smooth_gold_prob.scatter_(1, gold.unsqueeze(1), self.confidence) #replaces smooth_value by confidence in gold tokens
-    smooth_gold_prob.masked_fill_((gold == self.padding_idx).unsqueeze(1), 0) #replaces smooth_value by 0.0 in padded tokens
+    smooth_gold_prob.masked_fill_((gold == self.padding_idx).unsqueeze(1), 0.0) #replaces smooth_value by 0.0 in padded tokens
 
     loss = F.kl_div(pred, smooth_gold_prob, reduction='sum')
     return loss
+
+
 
 
