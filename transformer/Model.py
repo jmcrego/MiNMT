@@ -97,6 +97,7 @@ def prepare_target(batch_tgt, idx_pad, device):
 ### Endcoder_Decoder #########################################################################################
 ##############################################################################################################
 class Encoder_Decoder(torch.nn.Module):
+  #https://www.linzehui.me/images/16005200579239.jpg
   def __init__(self, n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout, share_embeddings, src_voc_size, tgt_voc_size, idx_pad):
     super(Encoder_Decoder, self).__init__()
     self.idx_pad = idx_pad
@@ -223,10 +224,19 @@ class Encoder(torch.nn.Module):
     self.norm_ff = torch.nn.LayerNorm(emb_dim, eps=1e-6) 
 
   def forward(self, src, msk):
-    src_norm = self.norm_att(src)
-    tmp = self.multihead_attn(q=src_norm, k=src_norm, v=src_norm, msk=msk) + src #[bs, ls, ed] contains dropout
-    tmp_norm = self.norm_ff(tmp)
-    z = self.feedforward(tmp_norm) + tmp #[bs, ls, ed] contains dropout
+    #NORM
+    tmp1 = self.norm_att(src)
+    #ATTN over source words 
+    tmp2 = self.multihead_attn(q=tmp1, k=tmp1, v=tmp1, msk=msk) #[bs, ls, ed] contains dropout
+    #ADD
+    tmp = tmp2 + src
+
+    #NORM
+    tmp1 = self.norm_ff(tmp)
+    #FF
+    tmp2 = self.feedforward(tmp1) #[bs, ls, ed] contains dropout
+    #ADD
+    z = tmp2 + tmp
     return z
 
 ##############################################################################################################
@@ -235,22 +245,34 @@ class Encoder(torch.nn.Module):
 class Decoder(torch.nn.Module):
   def __init__(self, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout):
     super(Decoder, self).__init__()
-    self.feedforward = FeedForward(emb_dim, ff_dim, dropout)
     self.multihead_attn_self = MultiHead_Attn(n_heads, emb_dim, qk_dim, v_dim, dropout)
     self.multihead_attn_enc = MultiHead_Attn(n_heads, emb_dim, qk_dim, v_dim, dropout)
-    self.norm_att1 = torch.nn.LayerNorm(emb_dim, eps=1e-6) 
-    self.norm_att2 = torch.nn.LayerNorm(emb_dim, eps=1e-6) 
+    self.feedforward = FeedForward(emb_dim, ff_dim, dropout)
+    self.norm_att_self = torch.nn.LayerNorm(emb_dim, eps=1e-6) 
+    self.norm_att_enc = torch.nn.LayerNorm(emb_dim, eps=1e-6) 
     self.norm_ff = torch.nn.LayerNorm(emb_dim, eps=1e-6) 
 
   def forward(self, z_src, tgt, msk_src, msk_tgt):
-    tgt_norm = self.norm_att1(tgt)
-    #attention over tgt (previous) words : q, k, v are tgt words
-    tmp = self.multihead_attn_self(q=tgt_norm, k=tgt_norm, v=tgt_norm, msk=msk_tgt) + tgt #[bs, lt, ed] contains dropout
-    tmp_norm = self.norm_att2(tmp)
-    #attention over src words : q are tgt words, k, v are src words
-    tmp = self.multihead_attn_enc(q=tmp_norm, k=z_src,    v=z_src,    msk=msk_src) + tmp #[bs, lt, ed] contains dropout
-    tmp_norm = self.norm_ff(tmp)
-    z = self.feedforward(tmp_norm) + tmp #[bs, lt, ed] contains dropout
+    #NORM
+    tmp1 = self.norm_att_self(tgt)
+    #ATTN over tgt (previous) words : q, k, v are tgt words
+    tmp2 = self.multihead_attn_self(q=tmp1, k=tmp1, v=tmp1, msk=msk_tgt) #[bs, lt, ed] contains dropout
+    #ADD
+    tmp = tmp2 + tgt 
+
+    #NORM
+    tmp1 = self.norm_att_enc(tmp)
+    #ATTN over src words : q are tgt words, k, v are src words
+    tmp2 = self.multihead_attn_enc(q=tmp1, k=z_src,    v=z_src,    msk=msk_src) #[bs, lt, ed] contains dropout
+    #ADD
+    tmp = tmp2 + tmp
+
+    #NORM
+    tmp1 = self.norm_ff(tmp)
+    #FF
+    tmp2 = self.feedforward(tmp1) #[bs, lt, ed] contains dropout
+    #ADD
+    z = tmp2 + tmp
     return z
 
 ##############################################################################################################
