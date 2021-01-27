@@ -11,7 +11,7 @@ from transformer.Data import Dataset
 from transformer.Vocab import Vocab
 from transformer.ONMTTokenizer import ONMTTokenizer
 from transformer.Model import Encoder_Decoder, load_checkpoint_or_initialise, save_checkpoint, load_checkpoint, numparameters
-from transformer.Optimizer import OptScheduler, LabelSmoothing, NLLLoss
+from transformer.Optimizer import OptScheduler, LabelSmoothing, LabelSmoothing_NLL
 from transformer.Learning import Learning
 #import numpy as np
 
@@ -252,7 +252,7 @@ if __name__ == '__main__':
   optim = torch.optim.Adam(model.parameters(), lr=o.lr, betas=(o.beta1, o.beta2), eps=o.eps)
   last_step, model, optim = load_checkpoint_or_initialise(o.dnet + '/network', model, optim, device)
   optScheduler = OptScheduler(optim, n['emb_dim'], o.noam_scale, o.noam_warmup, last_step)
-  criter = LabelSmoothing(len(tgt_vocab), src_vocab.idx_pad, o.label_smoothing).to(device)
+  criter = LabelSmoothing_NLL(len(tgt_vocab), src_vocab.idx_pad, o.label_smoothing).to(device)
   #criter = torch.nn.NLLLoss(len(tgt_vocab), src_vocab.idx_pad).to(device)
   #criter = torch.nn.CrossEntropyLoss(reduction=sum, ignore_index=src_vocab.idx_pad).to(device)
 
