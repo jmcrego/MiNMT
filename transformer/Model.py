@@ -218,8 +218,8 @@ class Stacked_Decoder(torch.nn.Module):
 class Encoder(torch.nn.Module):
   def __init__(self, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout):
     super(Encoder, self).__init__()
-    self.feedforward = FeedForward(emb_dim, ff_dim, dropout)
     self.multihead_attn = MultiHead_Attn(n_heads, emb_dim, qk_dim, v_dim, dropout)
+    self.feedforward = FeedForward(emb_dim, ff_dim, dropout)
     self.norm_att = torch.nn.LayerNorm(emb_dim, eps=1e-6) 
     self.norm_ff = torch.nn.LayerNorm(emb_dim, eps=1e-6) 
 
