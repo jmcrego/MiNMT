@@ -97,11 +97,14 @@ def prepare_target(batch_tgt, idx_pad, device):
 ### Endcoder_Decoder #########################################################################################
 ##############################################################################################################
 class Encoder_Decoder(torch.nn.Module):
-  def __init__(self, n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout, src_voc_size, tgt_voc_size, idx_pad): 
+  def __init__(self, n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout, share_embeddings, src_voc_size, tgt_voc_size, idx_pad):
     super(Encoder_Decoder, self).__init__()
     self.idx_pad = idx_pad
     self.src_emb = Embedding(src_voc_size, emb_dim, idx_pad) 
     self.tgt_emb = Embedding(tgt_voc_size, emb_dim, idx_pad) 
+    if share_embeddings:
+      self.tgt_emb.emb.weight = self.src_emb.emb.weight
+
     self.add_pos_enc = AddPositionalEncoding(emb_dim, dropout, max_len=5000)
     self.stacked_encoder = Stacked_Encoder(n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout)
     self.stacked_decoder = Stacked_Decoder(n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout)
@@ -114,7 +117,8 @@ class Encoder_Decoder(torch.nn.Module):
     logging.debug('v_dim={}'.format(v_dim))
     logging.debug('Vs={}'.format(src_voc_size))
     logging.debug('Vt={}'.format(tgt_voc_size))
-    ### share src/tgt embeddings if required
+    logging.debug('dropout={}'.format(dropout))
+    logging.debug('share_embeddings={}'.format(share_embeddings))
 
   def forward(self, src, tgt, msk_src, msk_tgt):
     #src is [bs,ls]
@@ -234,15 +238,15 @@ class Decoder(torch.nn.Module):
     self.feedforward = FeedForward(emb_dim, ff_dim, dropout)
     self.multihead_attn_self = MultiHead_Attn(n_heads, emb_dim, qk_dim, v_dim, dropout)
     self.multihead_attn_enc = MultiHead_Attn(n_heads, emb_dim, qk_dim, v_dim, dropout)
-    self.norm_att1 = torch.nn.LayerNorm(emb_dim, eps=1e-6) 
-    self.norm_att2 = torch.nn.LayerNorm(emb_dim, eps=1e-6) 
+    self.norm_in = torch.nn.LayerNorm(emb_dim, eps=1e-6) 
+    self.norm_self = torch.nn.LayerNorm(emb_dim, eps=1e-6) 
     self.norm_ff = torch.nn.LayerNorm(emb_dim, eps=1e-6) 
 
   def forward(self, z_src, tgt, msk_src, msk_tgt):
-    tgt_norm = self.norm_att1(tgt)
+    tgt_norm = self.norm_in(tgt)
     #attention over tgt (previous) words : q, k, v are tgt words
     tmp = self.multihead_attn_self(q=tgt_norm, k=tgt_norm, v=tgt_norm, msk=msk_tgt) + tgt #[bs, lt, ed] contains dropout
-    tmp_norm = self.norm_att2(tmp)
+    tmp_norm = self.norm_self(tmp)
     #attention over src words : q are tgt words, k, v are src words
     tmp = self.multihead_attn_enc(q=tmp_norm, k=z_src,    v=z_src,    msk=msk_src) + tmp #[bs, lt, ed] contains dropout
     tmp_norm = self.norm_ff(tmp)

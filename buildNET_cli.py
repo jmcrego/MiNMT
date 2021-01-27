@@ -40,6 +40,7 @@ class Options():
     self.n_heads = 8
     self.n_layers = 6
     self.dropout = 0.1
+    self.share_embeddings = False
 
     self.dnet = None
     self.src_vocab = None
@@ -68,6 +69,8 @@ class Options():
         self.n_layers = int(argv.pop(0))
       elif tok=="-dropout" and len(argv):
         self.dropout = float(argv.pop(0))
+      elif tok=="-share_embeddings":
+        self.share_embeddings = True
       elif tok=="-dnet" and len(argv):
         self.dnet = argv.pop(0)
       elif tok=="-src_vocab" and len(argv):
@@ -115,11 +118,12 @@ class Options():
    -n_heads      INT : number of attention heads ({})
    -n_layers     INT : number of encoder layers ({})
    -dropout    FLOAT : dropout value ({})
+   -share_embeddings : share source/target embeddings ({})
 
    -log_file    FILE : log file  (stderr)
    -log_level STRING : log level [debug, info, warning, critical, error] (info)
    -h                : this help
-'''.format(self.prog, self.emb_dim, self.qk_dim, self.v_dim, self.ff_dim, self.n_heads, self.n_layers, self.dropout))
+'''.format(self.prog, self.emb_dim, self.qk_dim, self.v_dim, self.ff_dim, self.n_heads, self.n_layers, self.dropout, self.share_embeddings))
     sys.exit()
 
 ######################################################################
@@ -157,6 +161,7 @@ if __name__ == '__main__':
     f.write('n_heads: {}'.format(opts.n_heads))
     f.write('n_layers: {}'.format(opts.n_layers))
     f.write('dropout: {}'.format(opts.dropout))
+    f.write('share_embeddings: {}'.format(opts.share_embeddings))
 
   shutil.copy(opts.src_vocab, opts.dnet+'/src_voc')
   logging.info('copied source vocab {} into {}/src_voc'.format(opts.src_vocab, opts.dnet))
