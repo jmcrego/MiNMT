@@ -54,25 +54,29 @@ class LabelSmoothing(torch.nn.Module):
     return self.criterion(pred, Variable(true_dist, requires_grad=False)) ### sum of loss of all words (other than <pad> in reference)
 
 
-class NLLLoss(torch.nn.Module):
-  def __init__(self, nclasses, padding_idx):
-    super(NLLLoss, self).__init__()
-    self.criterion = torch.nn.NLLLoss(ignore_index=padding_idx, reduction='sum')
+class LabelSmoothing_NLL(torch.nn.Module):
+  def __init__(self, nclasses, padding_idx, smoothing=0.0):
+    super(LabelSmoothing_NLL, self).__init__()
     self.padding_idx = padding_idx
     self.nclasses = nclasses #size of tgt vocab
+    self.smoothing = smoothing
+    self.eps_i = self.smoothing / self.nclasses 
 
   def forward(self, pred, gold):
     #pred is [bs, lt, Vt] (after softmax)
     #gold is [bs, lt]
-    assert pred.size(0) == gold.size(0)
-    assert pred.size(1) == gold.size(1)
-    assert pred.size(2) == self.nclasses
+    gold = gold.unsqueeze(-1) #[bs, lt, 1]
+    pad_mask = gold.eq(self.padding_idx) #[bs, lt, 1]
 
-    pred = pred.contiguous().view(-1, pred.size(-1)) #[bs*lt, Vt]
-    gold = gold.contiguous().view(-1).long() #gold is [bs*lt]
-    return self.criterion(pred, Variable(gold, requires_grad=False)) ### sum of loss of all words (other than <pad> in reference)
+    nll_loss = -pred.gather(dim=-1, index=gold) #[bs, lt, 1] (takes the -logprob of gold tokens)
+    nll_loss.masked_fill_(pad_mask, 0.0) #[bs, lt, 1] 
+    nll_loss = nll_loss.sum() #reduce loss 
 
+    smooth_loss = -pred.sum(dim=-1, keepdim=True)
+    smooth_loss.masked_fill_(pad_mask, 0.0)
+    smooth_loss = smooth_loss.sum()
 
-
+    loss = (1.0 - self.smoothing) * nll_loss + self.eps_i * smooth_loss
+    return loss
 
 
