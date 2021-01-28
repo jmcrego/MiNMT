@@ -6,6 +6,7 @@ import logging
 import numpy as np
 import torch
 import time
+from torch.utils.tensorboard import SummaryWriter
 from transformer.Model import save_checkpoint, prepare_source, prepare_target
 
 ##############################################################################################################
@@ -83,6 +84,7 @@ class Learning():
     self.keep_last_n = ol.keep_last_n
     self.clip_grad_norm = ol.clip_grad_norm
     self.idx_pad = idx_pad
+    self.writer = SummaryWriter(log_dir=ol.dnet, comment='', purge_step=None, max_queue=10, flush_secs=60, filename_suffix='')
 
   def learn(self, trainset, validset, device):
     logging.info('Running: learning')
@@ -115,6 +117,7 @@ class Learning():
         if self.report_every and self.optScheduler._step % self.report_every == 0: ### report
           loss_per_tok, ms_per_step = score.report()
           logging.info('LearningStep: {} epoch: {} batch: {} of {} steps/sec: {:.2f} lr: {:.6f} loss: {:.3f}'.format(self.optScheduler._step, n_epoch, n_batch, len(trainset), 1000.0/ms_per_step, self.optScheduler._rate, loss_per_tok))
+          self.writer.add_scalar('Loss/train', loss_per_tok, self.optScheduler._step)
 
         if self.validate_every and self.optScheduler._step % self.validate_every == 0: ### validate
           if validset is not None:
@@ -158,6 +161,7 @@ class Learning():
     toc = time.time()
     loss = 1.0*valid_loss/n_batch if n_batch else 0.0
     logging.info('Validation LearningStep: {} #batchs: {} sec: {:.2f} loss: {:.3f}'.format(self.optScheduler._step, n_batch, toc-tic, loss))
+    self.writer.add_scalar('Loss/valid', loss, self.optScheduler._step)
     return loss
 
 
