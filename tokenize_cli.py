@@ -5,7 +5,7 @@ import sys
 prog = sys.argv.pop(0)
 if len(sys.argv) == 0:
     sys.stderr.write('usage: {} bpe_model < raw > tokenized\n'.format(prog))
-    sys.stderr.write('Tokenizes raw text using bpe_model\n'.format(prog))
+    sys.stderr.write('Tokenizes raw text using onmt mode aggressive joiner_annotate segment_numbers and the given bpe_model\n'.format(prog))
     sys.exit()
 
 bpe_model = sys.argv.pop(0)
