@@ -92,7 +92,7 @@ class Learning():
     while True: #repeat epochs
       n_epoch += 1
       logging.info('Epoch {}'.format(n_epoch))
-      trainset.shuffle()
+#      trainset.shuffle()
       n_batch = 0
       score = Score()
       for _, batch_src, batch_tgt in trainset:
