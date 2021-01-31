@@ -110,27 +110,20 @@ class Encoder_Decoder(torch.nn.Module):
     self.stacked_encoder = Stacked_Encoder(n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout)
     self.stacked_decoder = Stacked_Decoder(n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout)
     self.generator = Generator(emb_dim, tgt_voc_size)
-    logging.debug('n_layers={}'.format(n_layers))
-    logging.debug('ff_dim={}'.format(ff_dim))
-    logging.debug('n_heads={}'.format(n_heads))
-    logging.debug('emb_dim={}'.format(emb_dim))
-    logging.debug('qk_dim={}'.format(qk_dim))
-    logging.debug('v_dim={}'.format(v_dim))
-    logging.debug('Vs={}'.format(src_voc_size))
-    logging.debug('Vt={}'.format(tgt_voc_size))
-    logging.debug('dropout={}'.format(dropout))
-    logging.debug('share_embeddings={}'.format(share_embeddings))
 
   def forward(self, src, tgt, msk_src, msk_tgt):
     #src is [bs,ls]
     #tgt is [bs,lt]
     #msk_src is [bs,1,ls] (False where <pad> True otherwise)
     #mst_tgt is [bs,lt,lt]
+
+    ### encoder #####
     src = self.add_pos_enc(self.src_emb(src)) #[bs,ls,ed]
-    tgt = self.add_pos_enc(self.tgt_emb(tgt)) #[bs,lt,ed]
-    assert src.shape[0] == tgt.shape[0] ### src/tgt batch_sizes must be equal
     z_src = self.stacked_encoder(src, msk_src) #[bs,ls,ed]
+    ### decoder #####
+    tgt = self.add_pos_enc(self.tgt_emb(tgt)) #[bs,lt,ed]
     z_tgt = self.stacked_decoder(z_src, tgt, msk_src, msk_tgt) #[bs,lt,ed]
+    ### generator ###
     y = self.generator(z_tgt) #[bs, lt, Vt]
     return y
 
