@@ -210,15 +210,21 @@ class Dataset():
   def get_input(self, pos):
     return self.txts_src[pos]
 
-  def shuffle(self):
-    np.random.shuffle(self.batches)
-    logging.info('Shuffled {} batches'.format(len(self.batches)))
+#  def shuffle(self):
+#    np.random.shuffle(self.batches)
+#    logging.info('Shuffled {} batches'.format(len(self.batches)))
 
   def __len__(self):
     return len(self.batches)
 
   def __iter__(self):
-    for batch in self.batches:
-      yield batch
+    idx_batch = [i for i in range(len(self.batches))]
+    np.random.shuffle(idx_batch)
+    logging.info('batches shuffled')
+    for idx in idx_batch:
+      yield self.batches[idx]
+
+#    for batch in self.batches:
+#      yield batch
 
 
