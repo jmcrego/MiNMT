@@ -149,13 +149,13 @@ class Encoder_Decoder(torch.nn.Module):
 ### Embedding ################################################################################################
 ##############################################################################################################
 class Embedding(torch.nn.Module):
-    def __init__(self, vocab_size, emb_dim, idx_pad):
-        super(Embedding, self).__init__()
-        self.emb = torch.nn.Embedding(vocab_size, emb_dim, padding_idx=idx_pad)
-        self.sqrt_emb_dim = math.sqrt(emb_dim)
+  def __init__(self, vocab_size, emb_dim, idx_pad):
+    super(Embedding, self).__init__()
+    self.emb = torch.nn.Embedding(vocab_size, emb_dim, padding_idx=idx_pad)
+    self.sqrt_emb_dim = math.sqrt(emb_dim)
 
-    def forward(self, x):
-        return self.emb(x) * self.sqrt_emb_dim
+  def forward(self, x):
+    return self.emb(x) * self.sqrt_emb_dim
 
 ##############################################################################################################
 ### PositionalEncoding #######################################################################################
@@ -300,7 +300,6 @@ class MultiHead_Attn(torch.nn.Module):
     ed = q.shape[2]
     assert self.ed == q.shape[2] == k.shape[2] == v.shape[2]
     assert lk == lv #when applied in decoder both refer the source-side (lq refers the target-side)
-
     Q = self.WQ(q).contiguous().view([bs,lq,self.nh,self.qd]).permute(0,2,1,3) #=> [bs,lq,nh*qd] => [bs,lq,nh,qd] => [bs,nh,lq,qd]
     K = self.WK(k).contiguous().view([bs,lk,self.nh,self.kd]).permute(0,2,1,3) #=> [bs,lk,nh*kd] => [bs,lk,nh,kd] => [bs,nh,lk,kd]
     V = self.WV(v).contiguous().view([bs,lv,self.nh,self.vd]).permute(0,2,1,3) #=> [bs,lv,nh*vd] => [bs,lv,nh,vd] => [bs,nh,lv,vd]

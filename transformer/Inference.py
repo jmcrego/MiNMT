@@ -14,51 +14,6 @@ def norm_length(l, alpha):
     return 1.0
   return (5+l)**alpha / (5+1)**alpha
 
-def print_hyp(i, n, c, hyp_idx, src_idx, oformat, src_vocab, tgt_vocab, src_token, tgt_token):
-  #i is the position in the input sentence
-  #n is the position in the nbest 
-  #c is the hypothesis sum_logp (cost)
-  #hyp_idx is the the hypothesis (list of idxs)
-  #src_str is a list ot strings
-  #src_idx is a list of idx's
-  ### eliminate <pad> tokens from src_idx:
-  while src_idx[-1] == src_vocab.idx_pad: 
-    src_idx = src_idx[:-1]
-  hyp_str = [tgt_vocab[idx] for idx in hyp_idx[1:-1]]
-  src_str = [src_vocab[idx] for idx in src_idx[1:-1]]
-
-  out = []
-  for ch in oformat:
-    if ch=='i':
-      out.append("{}".format(i+1))              ### position in input file
-    elif ch=='n':
-      out.append("{}".format(n+1))              ### position in n-best order
-    elif ch=='c':
-      out.append("{:.6f}".format(c))            ### overall cost: sum(logP)
-    ######################
-    ### input sentence ###
-    ######################
-    elif ch=='s':
-      out.append(' '.join(src_str))             ### input sentence (tokenized)
-    elif ch=='S':
-      out.append(src_token.detokenize(src_str)) ### input sentence (detokenized)
-    elif ch=='u':
-      out.append(' '.join(map(str,src_idx)))    ### input sentence (indexs)
-    ##################
-    ### hypothesis ###
-    ##################
-    elif ch=='h':
-      out.append(' '.join(hyp_str))             ### output sentence (tokenized)
-    elif ch=='H':
-      out.append(tgt_token.detokenize(hyp_str)) ### output sentence (detokenized)
-    elif ch=='v':
-      out.append(' '.join(map(str,hyp_idx)))    ### output sentence (indexs)
-
-    else:
-      logging.error('invalid format option {} in {}'.format(ch,oformat))
-      sys.exit()
-  print('\t'.join(out), flush=True)
-
 ##############################################################################################################
 ### Inference ################################################################################################
 ##############################################################################################################
@@ -86,6 +41,7 @@ class Inference():
     self.force_eos[self.idx_eos] = 1.0
     self.next_wrds = torch.tensor([i for i in range(self.Vt)], dtype=int, device=self.device).view(1,-1) #[1,Vt]
 
+
   def translate(self, testset):
     logging.info('Running: inference')
 
@@ -103,7 +59,7 @@ class Inference():
         for b in range(len(finals)):
           for n, (hyp, logp) in enumerate(sorted(finals[b].items(), key=lambda kv: kv[1], reverse=True)):
             hyp = list(map(int,hyp.split(' ')))
-            print_hyp(pos[b],n,logp,hyp,batch_src[b],self.format,self.src_vocab,self.tgt_vocab,self.src_token,self.tgt_token)
+            self.print_hyp(pos[b],n,logp,hyp,batch_src[b])
             if n+1 >= self.N:
               break
 
@@ -231,6 +187,48 @@ class Inference():
       if sum([len(d) for d in finals]) == bs*self.K:
         return finals
 
+
+  def print_hyp(self, i, n, c, hyp_idx, src_idx): 
+    #i is the position in the input sentence
+    #n is the position in the nbest 
+    #c is the hypothesis overall cost (sum_logP_norm)
+    #hyp_idx hypothesis (list of idxs)
+    #src_idx source (list of idxs)
+    while src_idx[-1] == self.src_vocab.idx_pad: # eliminate <pad> tokens from src_idx
+      src_idx = src_idx[:-1]
+    hyp_str = [self.tgt_vocab[idx] for idx in hyp_idx[1:-1]]
+    src_str = [self.src_vocab[idx] for idx in src_idx[1:-1]]
+    out = []
+    for ch in self.format:
+      if ch=='i':
+        out.append("{}".format(i+1)) ### position in input file
+      elif ch=='n':
+        out.append("{}".format(n+1)) ### position in n-best order
+      elif ch=='c':
+        out.append("{:.6f}".format(c)) ### overall cost: sum(logP)
+      ######################
+      ### input sentence ###
+      ######################
+      elif ch=='s':
+        out.append(' '.join(src_str)) ### input sentence (tokenized)
+      elif ch=='S':
+        out.append(self.src_token.detokenize(src_str)) ### input sentence (detokenized)
+      elif ch=='u':
+        out.append(' '.join(map(str,src_idx))) ### input sentence (idxs)
+      ##################
+      ### hypothesis ###
+      ##################
+      elif ch=='h':
+        out.append(' '.join(hyp_str)) ### output sentence (tokenized)
+      elif ch=='H':
+        out.append(self.tgt_token.detokenize(hyp_str)) ### output sentence (detokenized)
+      elif ch=='v':
+        out.append(' '.join(map(str,hyp_idx))) ### output sentence (idxs)
+
+      else:
+        logging.error('invalid format option {} in {}'.format(ch,self.format))
+        sys.exit()
+    print('\t'.join(out), flush=True)
 
 
 
