@@ -183,8 +183,8 @@ if __name__ == '__main__':
   ##################
   ### Inference ####
   ##################
-  inference = Inference(model, tgt_vocab, src_token, tgt_token, o)
-  inference.translate(test, device)
+  inference = Inference(model, src_vocab, tgt_vocab, src_token, tgt_token, o, device)
+  inference.translate(test)
 
   toc = time.time()
   logging.info('Done ({:.2f} seconds)'.format(toc-tic))
