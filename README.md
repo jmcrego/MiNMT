@@ -1,4 +1,4 @@
-# Basic Transformer implementation for NMT
+# Basic Transformer implementation for Machine Translation
 
 Clients:
 * `learnBPE_cli` : Learns BPE model after applying tokenization ("aggressive", joiner_annotate=True, segment_numbers=True)
