@@ -97,34 +97,23 @@ class Dataset():
     self.batch_type = batch_type
     self.batch_size = batch_size
     self.max_length = max_length
-    self.vocab_src = vocab_src
-    self.txts_src, self.idxs_src, self.lens_src = file2idx(ftxt_src, self.vocab_src)
+    self.idx_pad = vocab_src.idx_pad
+    self.txts_src, self.idxs_src, self.lens_src = file2idx(ftxt_src, vocab_src)
     self.pos_lens = [i for i in range(len(self.txts_src))]
     self.pos_lens = np.column_stack((self.pos_lens,self.lens_src)) #[nsents, 2]
     if vocab_tgt is None:
-      self.vocab_tgt = None
       self.txts_tgt = None
       self.idxs_tgt = None
       self.lens_tgt = None
       return
-    self.vocab_tgt = vocab_tgt
     assert vocab_src.idx_pad == vocab_tgt.idx_pad
     assert vocab_src.idx_bos == vocab_tgt.idx_bos
     assert vocab_src.idx_eos == vocab_tgt.idx_eos
-    self.txts_tgt, self.idxs_tgt, self.lens_tgt = file2idx(ftxt_tgt, self.vocab_tgt)
+    self.txts_tgt, self.idxs_tgt, self.lens_tgt = file2idx(ftxt_tgt, vocab_tgt)
     if len(self.lens_src) != len(self.lens_tgt):
       logging.error('Different number of lines in parallel dataset {}-{}'.format(len(self.lens_src),len(self.lens_tgt)))
       sys.exit()
     self.pos_lens = np.column_stack((self.pos_lens,self.lens_tgt)) #[nsents, 3]
-
-  def sort_shard(self, shard):
-    shard = np.asarray(shard)
-    if self.vocab_tgt is not None:
-      shard_sorted = np.lexsort((shard[:,2], shard[:,1])) # sort by len_src then len_tgt (lower to higer lengths)
-    else:
-      shard_sorted = np.argsort(shard[:,1]) # sort by lsrc (lower to higher lenghts)
-    shard = shard[:,0] #keep only pos
-    return shard[shard_sorted]
 
   def build_shards_batchs(self):
     ######################
@@ -151,28 +140,37 @@ class Dataset():
       if len(shard) == self.shard_size or i==len(self.pos_lens)-1: ### filled shard
         shards.append(self.sort_shard(shard)) ### examples are sorted by length
         shard = []
-    logging.info('Built {} shards ~ {} examples ~ {} filtered'.format(len(shards),n_examples,n_filtered))
+    logging.info('Built {} shards ~ {} examples ~ {} filtered [length > {}]'.format(len(shards),n_examples,n_filtered, self.max_length))
     #############################################
     ### build batchs sized of batch_size examples
     #############################################
     self.batchs = []
     for shard in shards:
-      b = Batch(self.batch_size, self.batch_type, self.vocab_src.idx_pad) #new empty batch
+      b = Batch(self.batch_size, self.batch_type, self.idx_pad) #new empty batch
       for i in range(shard.shape[0]):
         pos = shard[i] 
         idx_src = self.idxs_src[pos]
-        idx_tgt = self.idxs_tgt[pos] if self.vocab_tgt is not None else []
+        idx_tgt = self.idxs_tgt[pos] if self.idxs_tgt is not None else []
         if not b.add(pos, idx_src, idx_tgt): #cannot continue adding in current batch b
           self.batchs.append(b.pad_batch()) #[posses, padded_src, padded_tgt]
           #new empty batch
-          b = Batch(self.batch_size, self.batch_type, self.vocab_src.idx_pad) 
+          b = Batch(self.batch_size, self.batch_type, self.idx_pad) 
           b.add(pos, idx_src, idx_tgt)
       if len(b):
         self.batchs.append(b.pad_batch()) #[posses, padded_src, padded_tgt]
     self.batchs = np.asarray(self.batchs)
     np.random.shuffle(self.batchs)
     #each batch contains up to batch_size examples with 3 items (pos, list(idx_src) and list(idx_tgt))
-    logging.info('Shuffled {} batchs [size={},type={}] with {} examples - {} filtered by [length > {}]'.format(self.batchs.shape[0], self.batch_size, self.batch_type, n_examples, n_filtered, self.max_length))
+    logging.info('Shuffled {} batchs [size={},type={}]'.format(self.batchs.shape[0], self.batch_size, self.batch_type))
+
+  def sort_shard(self, shard):
+    shard = np.asarray(shard)
+    if self.idxs_tgt is not None:
+      shard_sorted = np.lexsort((shard[:,2], shard[:,1])) # sort by shard[:,2] (len_src) then by shard[:,1] (len_tgt) (lower to higer lengths)
+    else:
+      shard_sorted = np.argsort(shard[:,1]) # sort by lsrc (lower to higher lenghts)
+    shard = shard[shard_sorted]
+    return shard[:,0] #keep only pos
 
   def pos2txts_src(self, pos):
     return self.txts_src[pos]
