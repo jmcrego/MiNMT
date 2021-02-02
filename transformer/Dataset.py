@@ -180,6 +180,6 @@ class Dataset():
     idx_batch = [i for i in range(len(self.batchs))]
     np.random.shuffle(idx_batch)
     for idx in idx_batch:
-      yield self.batches[idx]
+      yield self.batchs[idx]
 
 
