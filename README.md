@@ -20,7 +20,10 @@ Given training/validation/test datasets:
 ### 1 Preprocess
 
 Build `$fBPE` Model:
-```cat $TRAINING.{$SS,$TT} | python3 learnBPE_cli.py $fBPE```
+
+```
+cat $TRAINING.{$SS,$TT} | python3 learnBPE_cli.py $fBPE
+```
 
 Create tokenization config file `$fTOK`:
 
@@ -32,7 +35,10 @@ bpe_model_path: $fBPE
 ```
 
 Build Vocabularies:
-`cat $TRAINING.$SS | python3 buildVOC_cli.py -tokenizer_config $fTOK -max_size 32768 > $VOC.$SS`
-`cat $TRAINING.$TT | python3 buildVOC_cli.py -tokenizer_config $fTOK -max_size 32768 > $VOC.$TT`
+
+```
+cat $TRAINING.$SS | python3 buildVOC_cli.py -tokenizer_config $fTOK -max_size 32768 > $VOC.$SS
+cat $TRAINING.$TT | python3 buildVOC_cli.py -tokenizer_config $fTOK -max_size 32768 > $VOC.$TT
+```
 
 
