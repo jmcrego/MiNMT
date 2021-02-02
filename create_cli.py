@@ -174,7 +174,7 @@ if __name__ == '__main__':
     if 'bpe_model_path' in tokopts:
       shutil.copy(tokopts['bpe_model_path'], opts.dnet+'/src_bpe')
       logging.info('copied source bpe {} into {}/src_bpe'.format(tokopts['bpe_model_path'], opts.dnet))
-      tokopts['bpe_model_path'] = 'src_bpe'
+      tokopts['bpe_model_path'] = '{}/src_bpe'.format(opts.dnet)
       with open("{}/src_tok".format(opts.dnet), 'w') as fyaml:    
         yaml.dump(tokopts, fyaml)
       logging.info('copied source tok {} into {}/src_tok'.format(opts.src_token, opts.dnet))
@@ -184,7 +184,7 @@ if __name__ == '__main__':
     if 'bpe_model_path' in tokopts:
       shutil.copy(tokopts['bpe_model_path'], opts.dnet+'/tgt_bpe')
       logging.info('copied target bpe {} into {}/tgt_bpe'.format(tokopts['bpe_model_path'], opts.dnet))
-      tokopts['bpe_model_path'] = 'tgt_bpe'
+      tokopts['bpe_model_path'] = '{}/tgt_bpe'.format(opts.dnet)
       with open("{}/tgt_tok".format(opts.dnet), 'w') as fyaml:
         yaml.dump(tokopts, fyaml)
       logging.info('copied target tok {} into {}/tgt_tok'.format(opts.tgt_token, opts.dnet))
