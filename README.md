@@ -19,32 +19,32 @@ Given train/valid/test datasets:
 
 ### (1) Preprocess
 
-Build `$fBPE` Model:
+Build `$BPE` Model:
 
 ```
-cat $TRAINING.{$SS,$TT} | python3 learnBPE_cli.py $fBPE
+cat $TRAIN.{$SS,$TT} | python3 learnBPE_cli.py $BPE
 ```
 
-Create tokenization config file `$fTOK`:
+Create tokenization config file `$TOK`:
 
 ```
 mode: aggressive
 joiner_annotate: True
 segment_numbers: True
-bpe_model_path: $fBPE
+bpe_model_path: $BPE
 ```
 
 Build Vocabularies:
 
 ```
-cat $TRAIN.$SS | python3 buildVOC_cli.py -tokenizer_config $fTOK -max_size 32768 > $fVOC.$SS
-cat $TRAIN.$TT | python3 buildVOC_cli.py -tokenizer_config $fTOK -max_size 32768 > $fVOC.$TT
+cat $TRAIN.$SS | python3 buildVOC_cli.py -tokenizer_config $TOK -max_size 32768 > $VOC.$SS
+cat $TRAIN.$TT | python3 buildVOC_cli.py -tokenizer_config $TOK -max_size 32768 > $VOC.$TT
 ```
 
 ### (2) Create network
 
 ```
-python3 ./create_cli.py -dnet $DNET -src_vocab $fVOC.$SS -tgt_vocab $fVOC.$TT -src_token $fTOK -tgt_token $fTOK
+python3 ./create_cli.py -dnet $DNET -src_vocab $VOC.$SS -tgt_vocab $VOC.$TT -src_token $TOK -tgt_token $TOK
 ```
 
 ### (3) Learning
