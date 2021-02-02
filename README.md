@@ -20,9 +20,10 @@ Given training/validation/test datasets:
 ### 1 Preprocess
 
 Build `$fBPE` Model:
-`cat $TRAINING.{$SS,$TT} | python3 learnBPE_cli.py $fBPE`
+```cat $TRAINING.{$SS,$TT} | python3 learnBPE_cli.py $fBPE```
 
 Create tokenization config file `$fTOK`:
+
 ```
 mode: aggressive
 joiner_annotate: True
