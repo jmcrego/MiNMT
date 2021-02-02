@@ -9,7 +9,7 @@ Preprocess:
 * `buildIDX_cli` : Builds batches from raw data given tokenization and vocabularies
 
 Network:
-* `create_cli` : Creates new network from scratch
+* `create_cli` : Creates network
 * `learn_cli` : Runs learning 
 * `translate_cli`: Runs inference
 
@@ -17,11 +17,21 @@ Network:
 
 Given training/validation/test datasets:
 
-tokconf:
+### 1 Preprocess
 
+Build `$fBPE` Model:
+`cat $TRAINING.{$SS,$TT} | python3 learnBPE_cli.py $fBPE`
+
+Create tokenization config file `$fTOK`:
 ```
 mode: aggressive
 joiner_annotate: True
 segment_numbers: True
-bpe_model_path: $fbpe
+bpe_model_path: $fBPE
 ```
+
+Build Vocabularies:
+`cat $TRAINING.$SS | python3 buildVOC_cli.py -tokenizer_config $fTOK -max_size 32768 > $VOC.$SS`
+`cat $TRAINING.$TT | python3 buildVOC_cli.py -tokenizer_config $fTOK -max_size 32768 > $VOC.$TT`
+
+
