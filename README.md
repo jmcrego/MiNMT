@@ -27,7 +27,7 @@ Build `$BPE` Model:
 ```
 cat $TRAIN.{$SS,$TT} | python3 learnBPE_cli.py $BPE
 ```
-(A single BPE model is built for source and target language sides of parallel data)
+(A single BPE model is built for source and target sides of parallel data)
 
 
 Create tokenization config file `$TOK` containing:
