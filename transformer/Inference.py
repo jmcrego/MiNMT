@@ -157,7 +157,6 @@ class Inference():
       next_wrds = self.next_wrds.repeat_interleave(repeats=I, dim=0).view(-1,1) #[1,Vt] => [I*1,Vt] => [bs*Vt,1]
       #logging.info('next_wrds = {}'.format(next_wrds.shape))
 
-
       ### EXPAND ###
       hyps_extended = hyps.repeat_interleave(repeats=self.Vt, dim=0) #[I,lt] => [I*Vt,lt]
       logP_extended = logP.repeat_interleave(repeats=self.Vt, dim=0) #[I,lt] => [I*Vt,lt]

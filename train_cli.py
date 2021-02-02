@@ -7,7 +7,7 @@ import random
 import logging
 import torch
 import yaml
-from transformer.Data import Dataset
+from transformer.Dataset import Dataset
 from transformer.Vocab import Vocab
 from transformer.ONMTTokenizer import ONMTTokenizer
 from transformer.Model import Encoder_Decoder, load_checkpoint_or_initialise, save_checkpoint, load_checkpoint, numparameters
@@ -52,8 +52,6 @@ class Options():
     self.tgt_train = None 
     self.src_valid = None 
     self.tgt_valid = None 
-    self.train_set = None
-    self.valid_set = None
     ### learning 
     self.max_steps = 0
     self.max_epochs = 0
@@ -133,10 +131,6 @@ class Options():
         self.src_valid = argv.pop(0)
       elif tok=='-tgt_valid':
         self.tgt_valid = argv.pop(0)
-      elif tok=='-train_set':
-        self.train_set = argv.pop(0)
-      elif tok=='-valid_set':
-        self.valid_set = argv.pop(0)
       elif tok=='-shard_size':
         self.shard_size = int(argv.pop(0))
       elif tok=='-max_length':
@@ -158,8 +152,8 @@ class Options():
     if self.dnet is None:
       self.usage('missing -dnet option')
 
-    if self.train_set is None and (self.src_train is None or self.tgt_train is None):
-      self.usage('missing EITHER -src_train/-tgt_train OR -train_set options')
+    if self.src_train is None or self.tgt_train is None:
+      self.usage('missing -src_train/-tgt_train options')
     create_logger(log_file,log_level)
     random.seed(self.seed)
     logging.info("Options = {}".format(self.__dict__))
@@ -173,8 +167,6 @@ class Options():
    -tgt_train        FILE : target-side training file
    -src_valid        FILE : source-side validation file
    -tgt_valid        FILE : target-side validation file
-   -train_set        FILE : training dataset in binary file
-   -valid_set        FILE : validation dataset in binary file
 
    [learning]
    -max_steps         INT : maximum number of training updates ({})
@@ -267,9 +259,9 @@ if __name__ == '__main__':
   ##################
   ### load data ####
   ##################
-  valid = load_dataset(src_vocab, tgt_vocab, o.valid_set, o.src_valid, o.tgt_valid, o.shard_size, o.max_length, o.batch_size, o.batch_type)
-  train = load_dataset(src_vocab, tgt_vocab, o.train_set, o.src_train, o.tgt_train, o.shard_size, o.max_length, o.batch_size, o.batch_type)
-
+  valid = Dataset(src_vocab, o.src_valid, tgt_vocab, o.tgt_valid, o.shard_size, o.batch_size, o.batch_type, o.max_length)
+  train = Dataset(src_vocab, o.src_train, tgt_vocab, o.tgt_train, o.shard_size, o.batch_size, o.batch_type, o.max_length)
+  
   #############
   ### learn ###
   #############

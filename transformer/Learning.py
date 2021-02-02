@@ -92,7 +92,6 @@ class Learning():
     while True: #repeat epochs
       n_epoch += 1
       logging.info('Epoch {}'.format(n_epoch))
-#      trainset.shuffle()
       n_batch = 0
       score = Score()
       for _, batch_src, batch_tgt in trainset:
@@ -117,7 +116,8 @@ class Learning():
         if self.report_every and self.optScheduler._step % self.report_every == 0: ### report
           loss_per_tok, ms_per_step = score.report()
           logging.info('LearningStep: {} epoch: {} batch: {} of {} steps/sec: {:.2f} lr: {:.6f} loss: {:.3f}'.format(self.optScheduler._step, n_epoch, n_batch, len(trainset), 1000.0/ms_per_step, self.optScheduler._rate, loss_per_tok))
-          self.writer.add_scalar('Loss/train', loss_per_tok, self.optScheduler._step)
+          #self.writer.add_scalar('Loss/train', loss_per_tok, self.optScheduler._step)
+          self.writer.add_scalar('Loss/train', loss_token.item(), self.optScheduler._step)
           self.writer.add_scalar('LearningRate', self.optScheduler._rate, self.optScheduler._step)
 
         if self.validate_every and self.optScheduler._step % self.validate_every == 0: ### validate
