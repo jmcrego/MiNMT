@@ -1,5 +1,7 @@
 # Basic Transformer implementation for MT
 
+## Clients
+
 Preprocess:
 * `learnBPE_cli` : Learns BPE model after applying tokenization ("aggressive", joiner_annotate=True, segment_numbers=True)
 * `buildVOC_cli` : Builds vocabulary given tokenization
@@ -10,3 +12,5 @@ Network:
 * `create_cli` : Creates new network from scratch
 * `learn_cli` : Runs learning 
 * `translate_cli`: Runs inference
+
+## Usage example:
