@@ -15,9 +15,9 @@ Network:
 
 ## Usage example:
 
-Given training/validation/test datasets:
+Given train/valid/test datasets:
 
-### 1 Preprocess
+### (1) Preprocess
 
 Build `$fBPE` Model:
 
@@ -37,8 +37,24 @@ bpe_model_path: $fBPE
 Build Vocabularies:
 
 ```
-cat $TRAINING.$SS | python3 buildVOC_cli.py -tokenizer_config $fTOK -max_size 32768 > $VOC.$SS
-cat $TRAINING.$TT | python3 buildVOC_cli.py -tokenizer_config $fTOK -max_size 32768 > $VOC.$TT
+cat $TRAIN.$SS | python3 buildVOC_cli.py -tokenizer_config $fTOK -max_size 32768 > $fVOC.$SS
+cat $TRAIN.$TT | python3 buildVOC_cli.py -tokenizer_config $fTOK -max_size 32768 > $fVOC.$TT
+```
+
+### (2) Create network
+
+```
+python3 ./create_cli.py -dnet $DIR -src_vocab $fVOC.$SS -tgt_vocab $fVOC.$TT -src_token $fTOK -tgt_token $fTOK
+```
+
+### (3) Learning
+```
+python3 ./learn_cli.py -dnet $DIR -src_train $TRAIN.$SS -tgt_train $TRAIN.$TT -src_valid $VALID.$SS -tgt_valid $VALID.$TT
+```
+
+### (4) Inference
+```
+python3 ./translate_cli.py -dnet $DIR -i $TEST.$SS
 ```
 
 
