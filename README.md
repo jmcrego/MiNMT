@@ -25,7 +25,7 @@ Build `$BPE` Model:
 cat $TRAIN.{$SS,$TT} | python3 learnBPE_cli.py $BPE
 ```
 
-Create tokenization config file `$TOK`:
+Create tokenization config file `$TOK` containing:
 
 ```
 mode: aggressive
