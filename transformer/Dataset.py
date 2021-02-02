@@ -158,10 +158,8 @@ class Dataset():
           b.add(pos, idx_src, idx_tgt)
       if len(b):
         self.batchs.append(b.pad_batch()) #[posses, padded_src, padded_tgt]
-    self.batchs = np.asarray(self.batchs)
-    np.random.shuffle(self.batchs)
     #each batch contains up to batch_size examples with 3 items (pos, list(idx_src) and list(idx_tgt))
-    logging.info('Shuffled {} batchs [size={},type={}]'.format(self.batchs.shape[0], self.batch_size, self.batch_type))
+    logging.info('Shuffled {} batchs [size={},type={}]'.format(len(self.batchs), self.batch_size, self.batch_type))
 
   def sort_shard(self, shard):
     shard = np.asarray(shard)
@@ -180,7 +178,9 @@ class Dataset():
 
   def __iter__(self):
     self.build_shards_batchs()
-    for batch in self.batchs:
-      yield batch
+    idx_batch = [i for i in range(len(self.batchs))]
+    np.random.shuffle(idx_batch)
+    for idx in idx_batch:
+      yield self.batches[idx]
 
 
