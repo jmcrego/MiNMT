@@ -9,6 +9,6 @@ Clients:
 * `buildIDX_cli` : Converts raw data to corresponding idx given tokenization and vocabularies
 
 Network:
-* net_create_cli
-* net_learn_cli
-* net_translate_cli
+* `create_cli` : Creates new network
+* `learn_cli` : Runs learning 
+* `translate_cli`: Runs inference
