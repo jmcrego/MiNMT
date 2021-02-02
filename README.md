@@ -15,7 +15,10 @@ Network:
 
 ## Usage example:
 
-Given train/valid/test datasets:
+Given train/valid/test raw (untokenized) datasets:
+
+`$TRAIN`, `$VALID` and `$TEST` indicate the suffix of each dataset while `$SS` and `$TT` indicate source and target sides of parallel data.
+
 
 ### (1) Preprocess
 
@@ -24,6 +27,8 @@ Build `$BPE` Model:
 ```
 cat $TRAIN.{$SS,$TT} | python3 learnBPE_cli.py $BPE
 ```
+(A single BPE model is built for source and target language sides of parallel data)
+
 
 Create tokenization config file `$TOK` containing:
 
@@ -40,6 +45,7 @@ Build Vocabularies:
 cat $TRAIN.$SS | python3 buildVOC_cli.py -tokenizer_config $TOK -max_size 32768 > $VOC.$SS
 cat $TRAIN.$TT | python3 buildVOC_cli.py -tokenizer_config $TOK -max_size 32768 > $VOC.$TT
 ```
+(Both source and target vocabularies are built with at most 32K tokens)
 
 ### (2) Create network
 
