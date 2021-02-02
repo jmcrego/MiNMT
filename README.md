@@ -44,17 +44,17 @@ cat $TRAIN.$TT | python3 buildVOC_cli.py -tokenizer_config $fTOK -max_size 32768
 ### (2) Create network
 
 ```
-python3 ./create_cli.py -dnet $DIR -src_vocab $fVOC.$SS -tgt_vocab $fVOC.$TT -src_token $fTOK -tgt_token $fTOK
+python3 ./create_cli.py -dnet $DNET -src_vocab $fVOC.$SS -tgt_vocab $fVOC.$TT -src_token $fTOK -tgt_token $fTOK
 ```
 
 ### (3) Learning
 ```
-python3 ./learn_cli.py -dnet $DIR -src_train $TRAIN.$SS -tgt_train $TRAIN.$TT -src_valid $VALID.$SS -tgt_valid $VALID.$TT
+python3 ./learn_cli.py -dnet $DNET -src_train $TRAIN.$SS -tgt_train $TRAIN.$TT -src_valid $VALID.$SS -tgt_valid $VALID.$TT
 ```
 
 ### (4) Inference
 ```
-python3 ./translate_cli.py -dnet $DIR -i $TEST.$SS
+python3 ./translate_cli.py -dnet $DNET -i $TEST.$SS
 ```
 
 
