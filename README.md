@@ -14,3 +14,14 @@ Network:
 * `translate_cli`: Runs inference
 
 ## Usage example:
+
+Given training/validation/test datasets:
+
+tokconf:
+
+```
+mode: aggressive
+joiner_annotate: True
+segment_numbers: True
+bpe_model_path: $fbpe
+```
