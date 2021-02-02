@@ -1,6 +1,4 @@
-# Transformer
-
-Neural Machine Translation Network based on Transformer
+# Neural Machine Translation Network based on Transformer
 
 Clients:
 * `learnBPE_cli` : Learns BPE model after applying tokenization ("aggressive", joiner_annotate=True, segment_numbers=True)
