@@ -34,6 +34,7 @@ class Options():
     self.prog = argv.pop(0)
     self.dnet = None
     self.input = None
+    self.output = '-'
     self.beam_size = 4
     self.n_best = 1
     self.max_size = 250
@@ -67,6 +68,8 @@ class Options():
         self.format = argv.pop(0)
       elif tok=='-i' and len(argv):
         self.input = argv.pop(0)
+      elif tok=='-o' and len(argv):
+        self.output = argv.pop(0)
       elif tok=='-shard_size' and len(argv):
         self.shard_size = int(argv.pop(0))
       elif tok=='-max_length' and len(argv):
@@ -97,6 +100,7 @@ class Options():
     sys.stderr.write('''{} -dnet DIR -i FILE [Options]
    -dnet          DIR : network directory [must exist]
    -i            FILE : input file to translate
+   -o            FILE : output file ({})
 
    [Inference]
    -beam_size     INT : size of beam ({})
@@ -124,7 +128,7 @@ class Options():
    -log_file     FILE : log file  (stderr)
    -log_level  STRING : log level [debug, info, warning, critical, error] (info)
    -h                 : this help
-'''.format(self.prog, self.beam_size, self.n_best, self.max_size, self.alpha, self.format, self.shard_size, self.max_length, self.batch_size, self.batch_type, self.cuda))
+'''.format(self.prog, self.output, self.beam_size, self.n_best, self.max_size, self.alpha, self.format, self.shard_size, self.max_length, self.batch_size, self.batch_type, self.cuda))
     sys.exit()
 
 ######################################################################
@@ -184,7 +188,7 @@ if __name__ == '__main__':
   ### Inference ####
   ##################
   inference = Inference(model, src_vocab, tgt_vocab, src_token, tgt_token, o, device)
-  inference.translate(test)
+  inference.translate(test,o.output)
 
   toc = time.time()
   logging.info('Done ({:.2f} seconds)'.format(toc-tic))

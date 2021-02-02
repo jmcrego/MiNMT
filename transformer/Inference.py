@@ -42,8 +42,13 @@ class Inference():
     self.next_wrds = torch.tensor([i for i in range(self.Vt)], dtype=int, device=self.device).view(1,-1) #[1,Vt]
 
 
-  def translate(self, testset):
+  def translate(self, testset, output):
     logging.info('Running: inference')
+
+    if output != '-':
+      fh = open(output, 'w')
+    else:
+      fh = sys.stdout
 
     with torch.no_grad():
       self.model.eval()
@@ -59,9 +64,13 @@ class Inference():
         for b in range(len(finals)):
           for n, (hyp, logp) in enumerate(sorted(finals[b].items(), key=lambda kv: kv[1], reverse=True)):
             hyp = list(map(int,hyp.split(' ')))
-            self.print_hyp(pos[b],n,logp,hyp,batch_src[b])
+            fh.write(self.format_hyp(pos[b],n,logp,hyp,batch_src[b]) + '\n')
+            fh.flush()
             if n+1 >= self.N:
               break
+
+    if output != '-':
+      fh.close()
 
 
   def translate_greedy(self):
@@ -188,7 +197,7 @@ class Inference():
         return finals
 
 
-  def print_hyp(self, i, n, c, hyp_idx, src_idx): 
+  def format_hyp(self, i, n, c, hyp_idx, src_idx): 
     #i is the position in the input sentence
     #n is the position in the nbest 
     #c is the hypothesis overall cost (sum_logP_norm)
@@ -228,7 +237,7 @@ class Inference():
       else:
         logging.error('invalid format option {} in {}'.format(ch,self.format))
         sys.exit()
-    print('\t'.join(out), flush=True)
+    return '\t'.join(out)
 
 
 
