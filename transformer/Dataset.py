@@ -146,11 +146,8 @@ class Dataset():
     #############################################
     self.batchs = []
     for shard in shards:
-      print('a')
       b = Batch(self.batch_size, self.batch_type, self.idx_pad) #new empty batch
-      print('b')
       for i in range(shard.shape[0]):
-        print('c')
         pos = shard[i] 
         idx_src = self.idxs_src[pos]
         idx_tgt = self.idxs_tgt[pos] if self.idxs_tgt is not None else []
@@ -161,9 +158,7 @@ class Dataset():
           b.add(pos, idx_src, idx_tgt)
       if len(b):
         self.batchs.append(b.pad_batch()) #[posses, padded_src, padded_tgt]
-    print('d')
     self.batchs = np.asarray(self.batchs)
-    print('e')
     np.random.shuffle(self.batchs)
     #each batch contains up to batch_size examples with 3 items (pos, list(idx_src) and list(idx_tgt))
     logging.info('Shuffled {} batchs [size={},type={}]'.format(self.batchs.shape[0], self.batch_size, self.batch_type))
