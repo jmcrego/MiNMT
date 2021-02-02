@@ -75,8 +75,7 @@ class Batch():
     for i in range(len(self.idxs_src)):
       self.idxs_src[i] += [self.idx_pad] * (self.max_len_src - len(self.idxs_src[i]))
       self.idxs_tgt[i] += [self.idx_pad] * (self.max_len_tgt - len(self.idxs_tgt[i]))
-    batch = np.asarray([self.pos, self.idxs_src, self.idxs_tgt])
-    return batch
+    return [self.pos, self.idxs_src, self.idxs_tgt]
 
   def max_lsrc(self):
     return self.max_len_src
