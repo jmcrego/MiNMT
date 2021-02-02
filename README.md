@@ -22,7 +22,7 @@ Given train/valid/test raw (untokenized) datasets:
 
 ### (1) Preprocess
 
-Build `$BPE` Model:
+* Build `$BPE` Model:
 
 ```
 cat $TRAIN.{$SS,$TT} | python3 learnBPE_cli.py $BPE
@@ -30,7 +30,7 @@ cat $TRAIN.{$SS,$TT} | python3 learnBPE_cli.py $BPE
 (A single BPE model is built for source and target sides of parallel data)
 
 
-Create tokenization config file `$TOK` containing:
+* Create tokenization config file `$TOK` containing:
 
 ```
 mode: aggressive
@@ -39,7 +39,7 @@ segment_numbers: True
 bpe_model_path: $BPE
 ```
 
-Build Vocabularies:
+* Build Vocabularies:
 
 ```
 cat $TRAIN.$SS | python3 buildVOC_cli.py -tokenizer_config $TOK -max_size 32768 > $VOC.$SS
