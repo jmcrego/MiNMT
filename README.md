@@ -75,13 +75,13 @@ python3 ./train_cli.py -dnet $DNET -src_train $TRAIN.$SS -tgt_train $TRAIN.$TT -
 
 Starts or continues learning using the given training/validation files. Default learning options are:
 ```
--max_steps      0 (infinite)
--max_epochs     0 (infinite)
+-max_steps      0 (infinity)
+-max_epochs     0 (infinity)
 -validate_every 5000
 -save_every     5000
 -report_every   100
 -keep_last_n    10
--clip_grad_norm 0.0 (not clipped)
+-clip_grad_norm 0.0 (without gradient clipping)
 ```
 ```
 -lr              2.0
