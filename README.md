@@ -76,13 +76,13 @@ python3 ./train_cli.py -dnet $DNET -src_train $TRAIN.$SS -tgt_train $TRAIN.$TT -
 Starts/continues learning using the given training/validation files.
 Default learning options are:
 ```
-   -max_steps         0
-   -max_epochs        0
-   -validate_every    5000
-   -save_every        5000
-   -report_every      100
-   -keep_last_n       10
-   -clip_grad_norm    0.0
+   -max_steps       0
+   -max_epochs      0
+   -validate_every  5000
+   -save_every      5000
+   -report_every    100
+   -keep_last_n     10
+   -clip_grad_norm  0.0
 ```
 ```
    -lr              2.0
@@ -96,10 +96,10 @@ Default learning options are:
    -loss            KLDiv
 ```
 ```
-   -shard_size     1000000
-   -max_length     100
-   -batch_size     4096
-   -batch_type     tokens
+   -shard_size      1000000
+   -max_length      100
+   -batch_size      4096
+   -batch_type      tokens
 ```
 
 ### (4) Inference
