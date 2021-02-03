@@ -16,7 +16,7 @@ Preprocess:
 
 Given train/valid/test raw (untokenized) datasets:
 
-`$TRAIN`, `$VALID` and `$TEST` indicate the suffix of each dataset while `$SS` and `$TT` indicate source and target sides of parallel data.
+`$TRAIN`, `$VALID` and `$TEST` indicate the suffix of each dataset while `$SS`/`$TT` indicate file extensions for source/target sides of parallel data.
 
 
 ### (1) Preprocess
