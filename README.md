@@ -73,7 +73,7 @@ share_embeddings: False
 python3 ./train_cli.py -dnet $DNET -src_train $TRAIN.$SS -tgt_train $TRAIN.$TT -src_valid $VALID.$SS -tgt_valid $VALID.$TT
 ```
 
-Starts/continues learning using the given training/validation files.
+Starts or continues learning using the given training/validation files.
 Default learning options are:
 ```
    -max_steps       0
@@ -106,5 +106,35 @@ Default learning options are:
 ```
 python3 ./translate_cli.py -dnet $DNET -i $TEST.$SS
 ```
+
+Translates the given input file using the last network checkpoint in `$DNET` directory.
+
+Default inference options are:
+```
+   -beam_size     4
+   -n_best        1
+   -max_size      250
+   -alpha         0.0 (not used)
+   -format        iH
+```
+```
+   -shard_size    0
+   -max_length    0
+   -batch_size    30
+   -batch_type    sentences
+```
+
+The option -format is used to specify the fields output for every example (TAB-separated):
+[i] index in test set
+[n] rank in n-best
+[c] global hypothesis cost
+[s] source sentence
+[S] source sentence (detokenised)
+[u] source indexes
+[h] hypothesis
+[H] hypothesis (detokenised)
+[v] hypothesis indexes
+
+
 
 
