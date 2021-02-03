@@ -38,7 +38,7 @@ segment_numbers: True
 bpe_model_path: $BPE
 ```
 
-The network input files will always be tokenized following this configuration.
+All network input/output files are tokenized/detokenized following this configuration.
 
 * Build Vocabularies:
 
