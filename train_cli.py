@@ -261,7 +261,7 @@ if __name__ == '__main__':
   ##################
   valid = Dataset(src_vocab, o.src_valid, tgt_vocab, o.tgt_valid, o.shard_size, o.batch_size, o.batch_type, o.max_length)
   train = Dataset(src_vocab, o.src_train, tgt_vocab, o.tgt_train, o.shard_size, o.batch_size, o.batch_type, o.max_length)
-  
+
   #############
   ### learn ###
   #############
