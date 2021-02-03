@@ -73,6 +73,35 @@ share_embeddings: False
 python3 ./train_cli.py -dnet $DNET -src_train $TRAIN.$SS -tgt_train $TRAIN.$TT -src_valid $VALID.$SS -tgt_valid $VALID.$TT
 ```
 
+Starts/continues learning using the given training/validation files.
+Default learning options are:
+```
+   -max_steps         0
+   -max_epochs        0
+   -validate_every    5000
+   -save_every        5000
+   -report_every      100
+   -keep_last_n       10
+   -clip_grad_norm    0.0
+```
+```
+   -lr              2.0
+   -min_lr          0.0001
+   -beta1           0.9
+   -beta2           0.998
+   -eps             1e-09
+   -noam_scale      2.0
+   -noam_warmup     4000
+   -label_smoothing 0.1
+   -loss            KLDiv
+```
+```
+   -shard_size     1000000
+   -max_length     100
+   -batch_size     4096
+   -batch_type     tokens
+```
+
 ### (4) Inference
 ```
 python3 ./translate_cli.py -dnet $DNET -i $TEST.$SS
