@@ -76,13 +76,13 @@ python3 ./train_cli.py -dnet $DNET -src_train $TRAIN.$SS -tgt_train $TRAIN.$TT -
 Starts or continues learning using the given training/validation files.
 Default learning options are:
 ```
--max_steps       0
--max_epochs      0
--validate_every  5000
--save_every      5000
--report_every    100
--keep_last_n     10
--clip_grad_norm  0.0
+-max_steps      0
+-max_epochs     0
+-validate_every 5000
+-save_every     5000
+-report_every   100
+-keep_last_n    10
+-clip_grad_norm 0.0
 ```
 ```
 -lr              2.0
@@ -96,10 +96,10 @@ Default learning options are:
 -loss            KLDiv
 ```
 ```
--shard_size      1000000
--max_length      100
--batch_size      4096
--batch_type      tokens
+-shard_size 1000000
+-max_length 100
+-batch_size 4096
+-batch_type tokens
 ```
 
 ### (4) Inference
@@ -111,17 +111,17 @@ Translates the given input file using the last network checkpoint in `$DNET` dir
 
 Default inference options are:
 ```
--beam_size     4
--n_best        1
--max_size      250
--alpha         0.0 (not used)
--format        iH
+-beam_size 4
+-n_best    1
+-max_size  250
+-alpha     0.0 (not used)
+-format    iH
 ```
 ```
--shard_size    0 (single shared)
--max_length    0 (do not filter longer sentences)
--batch_size    30
--batch_type    sentences
+-shard_size 0 (single shared)
+-max_length 0 (do not filter longer sentences)
+-batch_size 30
+-batch_type sentences
 ```
 
 The option -format is used to specify the fields output for every example (TAB-separated):
