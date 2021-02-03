@@ -3,7 +3,7 @@
 ## Clients
 
 Preprocess:
-* `learnBPE_cli` : Learns BPE model after applying tokenization ("aggressive", joiner_annotate=True, segment_numbers=True)
+* `learnBPE_cli` : Learns BPE model after applying tokenization (`mode "aggressive", joiner_annotate=True, segment_numbers=True`)
 * `buildVOC_cli` : Builds vocabulary given tokenization
 * `tokenTXT_cli` : Tokenizes raw data
 * `buildIDX_cli` : Builds batches from raw data given tokenization and vocabularies
