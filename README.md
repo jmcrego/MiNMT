@@ -118,13 +118,14 @@ Default inference options are:
    -format        iH
 ```
 ```
-   -shard_size    0
-   -max_length    0
+   -shard_size    0 (single shared)
+   -max_length    0 (do not filter longer sentences)
    -batch_size    30
    -batch_type    sentences
 ```
 
 The option -format is used to specify the fields output for every example (TAB-separated):
+```
 [i] index in test set
 [n] rank in n-best
 [c] global hypothesis cost
@@ -134,7 +135,7 @@ The option -format is used to specify the fields output for every example (TAB-s
 [h] hypothesis
 [H] hypothesis (detokenised)
 [v] hypothesis indexes
-
+```
 
 
 
