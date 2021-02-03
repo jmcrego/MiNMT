@@ -119,7 +119,7 @@ Translates the given input file using the last network checkpoint in `$DNET` dir
 -batch_type sentences
 ```
 
-The option -format is used to specify the fields output for every example (TAB-separated):
+Option -format is used to specify the fields output for every example (TAB-separated):
 ```
 [i] index in test set (sentences are sorted to minimize padding)
 [n] rank in n-best
