@@ -16,7 +16,7 @@ Network:
 
 Given train/valid/test raw (untokenized) datasets:
 
-`$TRAIN`, `$VALID` and `$TEST` indicate the suffix of the respective (train/valid/test) datasets files while `$SS`/`$TT` indicate the extensions for source/target data.
+`$TRAIN`, `$VALID` and `$TEST` indicate the suffix of the respective (train/valid/test) datasets files while `$SS`/`$TT` indicate file extensions for source/target data.
 
 
 ### (1) Preprocess
