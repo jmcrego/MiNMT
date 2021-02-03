@@ -8,6 +8,7 @@ Preprocess:
 * `tokenTXT_cli` : Tokenizes raw data
 * `buildIDX_cli` : Builds batches from raw data given tokenization and vocabularies
 
+Network:
 * `create_cli` : Creates network
 * `learn_cli` : Runs learning 
 * `translate_cli`: Runs inference
