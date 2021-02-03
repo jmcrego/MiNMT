@@ -29,7 +29,7 @@ cat $TRAIN.{$SS,$TT} | python3 learnBPE_cli.py $BPE
 A single BPE model is built for source and target sides of parallel data. Default number of symbols is 32,000.
 BPE learning is computed after tokenizing input files following (`mode: aggressive, joiner_annotate: True, segment_numbers: True`).
 
-* Create tokenization config file `$TOK` containing:
+* Create `$TOK` (tokenization config file) containing:
 
 ```
 mode: aggressive
