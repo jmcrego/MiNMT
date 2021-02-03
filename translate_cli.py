@@ -6,7 +6,7 @@ import time
 import logging
 import torch
 import yaml
-from transformer.Data import Dataset
+from transformer.Dataset import Dataset
 from transformer.Vocab import Vocab
 from transformer.ONMTTokenizer import ONMTTokenizer
 from transformer.Model import Encoder_Decoder, load_checkpoint_or_initialise, save_checkpoint, load_checkpoint, numparameters
@@ -179,10 +179,7 @@ if __name__ == '__main__':
   ##################
   ### load test ####
   ##################
-  test = Dataset(src_vocab, None)
-  test.numberize(o.input, None)
-  test.split_in_shards(o.shard_size)
-  test.split_in_batches(o.max_length, o.batch_size, o.batch_type)
+  test = Dataset(src_vocab, o.input, tgt_vocab, None, o.shard_size, o.batch_size, o.batch_type, o.max_length)
 
   ##################
   ### Inference ####

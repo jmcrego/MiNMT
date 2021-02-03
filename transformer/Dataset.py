@@ -93,8 +93,11 @@ class Batch():
 ### Dataset ##################################################################################################
 ##############################################################################################################
 class Dataset():
-  def __init__(self, vocab_src, ftxt_src, vocab_tgt=None, ftxt_tgt=None, shard_size=100000, batch_size=64, batch_type='sentences', max_length=100):    
+  def __init__(self, vocab_src, ftxt_src, vocab_tgt, ftxt_tgt=None, shard_size=100000, batch_size=64, batch_type='sentences', max_length=100):    
     super(Dataset, self).__init__()
+    assert vocab_src.idx_pad == vocab_tgt.idx_pad
+    assert vocab_src.idx_bos == vocab_tgt.idx_bos
+    assert vocab_src.idx_eos == vocab_tgt.idx_eos
     self.shard_size = shard_size
     self.batch_type = batch_type
     self.batch_size = batch_size
@@ -103,14 +106,10 @@ class Dataset():
     _, self.idxs_src, self.lens_src = file2idx(ftxt_src, vocab_src) #no need to save txts_src
     self.pos_lens = [i for i in range(len(self.idxs_src))] #[nsents, 1]
     self.pos_lens = np.column_stack((self.pos_lens,self.lens_src)) #[nsents, 2]
-    if vocab_tgt is None:
-      self.txts_tgt = None
+    if ftxt_tgt is None: #not a bitext
       self.idxs_tgt = None
       self.lens_tgt = None
       return
-    assert vocab_src.idx_pad == vocab_tgt.idx_pad
-    assert vocab_src.idx_bos == vocab_tgt.idx_bos
-    assert vocab_src.idx_eos == vocab_tgt.idx_eos
     _, self.idxs_tgt, self.lens_tgt = file2idx(ftxt_tgt, vocab_tgt) #no need to save txts_tgt
     if len(self.lens_src) != len(self.lens_tgt):
       logging.error('Different number of lines in parallel dataset {}-{}'.format(len(self.lens_src),len(self.lens_tgt)))
