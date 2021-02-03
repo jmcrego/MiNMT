@@ -47,7 +47,7 @@ cat $TRAIN.$SS | python3 buildVOC_cli.py -tokenizer_config $TOK -max_size 32768 
 cat $TRAIN.$TT | python3 buildVOC_cli.py -tokenizer_config $TOK -max_size 32768 > $VOC.$TT
 ```
 
-Both source and target vocabularies are built with at most 32,000 tokens
+Both source and target vocabularies are built with at most 32,768 tokens
 
 ### (2) Create network
 
