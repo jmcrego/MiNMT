@@ -169,9 +169,6 @@ class Dataset():
     shard = shard[shard_sorted]
     return shard[:,0] #keep only pos
 
-  def pos2txts_src(self, pos):
-    return self.txts_src[pos]
-
   def __len__(self):
     return len(self.batchs)
 
