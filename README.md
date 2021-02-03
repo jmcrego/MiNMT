@@ -115,7 +115,7 @@ Translates the given input file using the last network checkpoint in `$DNET` dir
 -format    iH
 ```
 ```
--shard_size 0 (single shared)
+-shard_size 0 (all example in one shard)
 -max_length 0 (do not filter longer sentences)
 -batch_size 30
 -batch_type sentences
