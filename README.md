@@ -55,8 +55,7 @@ Vocabulries are computed after tokenizing files following `$TOK`. Vocabularies c
 python3 ./create_cli.py -dnet $DNET -src_vocab $VOC.$SS -tgt_vocab $VOC.$TT -src_token $TOK -tgt_token $TOK
 ```
 
-Builds network with default parameters; creates $DNET directory and copies files: network, src_voc, tgt_voc, src_tok, tgt_tok, src_bpe, tgt_bpe
-Default network options are:
+Creates $DNET directory and copies files: network, src_voc, tgt_voc, src_tok, tgt_tok, src_bpe, tgt_bpe. Default network options are:
 ```
 emb_dim: 512
 qk_dim: 64
@@ -73,8 +72,7 @@ share_embeddings: False
 python3 ./train_cli.py -dnet $DNET -src_train $TRAIN.$SS -tgt_train $TRAIN.$TT -src_valid $VALID.$SS -tgt_valid $VALID.$TT
 ```
 
-Starts or continues learning using the given training/validation files.
-Default learning options are:
+Starts or continues learning using the given training/validation files. Default learning options are:
 ```
 -max_steps      0
 -max_epochs     0
@@ -107,9 +105,7 @@ Default learning options are:
 python3 ./translate_cli.py -dnet $DNET -i $TEST.$SS
 ```
 
-Translates the given input file using the last network checkpoint in `$DNET` directory.
-
-Default inference options are:
+Translates the given input file using the last network checkpoint in `$DNET` directory. Default inference options are:
 ```
 -beam_size 4
 -n_best    1
