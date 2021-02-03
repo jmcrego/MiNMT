@@ -57,14 +57,13 @@ python3 ./create_cli.py -dnet $DNET -src_vocab $VOC.$SS -tgt_vocab $VOC.$TT -src
 
 Creates $DNET directory and copies files: network, src_voc, tgt_voc, src_tok, tgt_tok, src_bpe, tgt_bpe. Default network options are:
 ```
-emb_dim: 512
-qk_dim: 64
-v_dim: 64
-ff_dim: 2048
-n_heads: 8
-n_layers: 6
-dropout: 0.1
-share_embeddings: False
+-emb_dim  512
+-qk_dim   64
+-v_dim    64
+-ff_dim   2048
+-n_heads  8
+-n_layers 6
+-dropout  0.1
 ```
 
 ### (3) Learning
