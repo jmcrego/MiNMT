@@ -66,6 +66,8 @@ Creates $DNET directory and copies files: network, src_voc, tgt_voc, src_tok, tg
 -dropout  0.1
 ```
 
+Check network options in `$DNET/network`
+
 ### (3) Learning
 ```
 python3 ./train_cli.py -dnet $DNET -src_train $TRAIN.$SS -tgt_train $TRAIN.$TT -src_valid $VALID.$SS -tgt_valid $VALID.$TT
