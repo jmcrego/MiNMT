@@ -3,10 +3,9 @@
 ## Clients
 
 Preprocess:
-* `learnBPE_cli` : Learns BPE model after applying tokenization
-* `buildVOC_cli` : Builds vocabulary given tokenization
+* `learnBPE_cli` : Learns BPE model
+* `buildVOC_cli` : Builds vocabulary
 * `tokenTXT_cli` : Tokenizes raw data
-* `buildIDX_cli` : Builds batches from raw data given tokenization and vocabularies
 
 Network:
 * `create_cli` : Creates network
