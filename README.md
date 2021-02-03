@@ -111,7 +111,7 @@ Translates the given input file using the last network checkpoint in `$DNET` dir
 -beam_size 4
 -n_best    1
 -max_size  250
--alpha     0.0 (not used)
+-alpha     0.0 (do not normalize)
 -format    iH
 ```
 ```
