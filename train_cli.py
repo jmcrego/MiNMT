@@ -58,7 +58,7 @@ class Options():
     self.validate_every = 5000
     self.save_every =5000
     self.report_every = 100
-    self.keep_last_n = 10
+    self.keep_last_n = 2
     self.clip_grad_norm = 0.0
     ### optimization
     self.lr = 2.0
