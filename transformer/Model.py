@@ -304,7 +304,8 @@ class MultiHead_Attn(torch.nn.Module):
     K = self.WK(k).contiguous().view([bs,lk,self.nh,self.kd]).permute(0,2,1,3) #=> [bs,lk,nh*kd] => [bs,lk,nh,kd] => [bs,nh,lk,kd]
     V = self.WV(v).contiguous().view([bs,lv,self.nh,self.vd]).permute(0,2,1,3) #=> [bs,lv,nh*vd] => [bs,lv,nh,vd] => [bs,nh,lv,vd]
     #Scaled dot-product Attn from multiple Q, K, V vectors (bs*nh*l vectors)
-    s = torch.matmul(Q, K.transpose(2, 3)) / self.kd**0.5 #[bs,nh,lq,qd] x [bs,nh,kd,lk] = [bs,nh,lq,lk] # thanks to qd==kd #in decoder lq are target words and lk are source words
+    Q = Q / math.sqrt(self.kd)
+    s = torch.matmul(Q, K.transpose(2, 3)) #[bs,nh,lq,qd] x [bs,nh,kd,lk] = [bs,nh,lq,lk] # thanks to qd==kd #in decoder lq are target words and lk are source words
     if msk is not None:
       s = s.masked_fill(msk == 0, -1e9) #score=-1e9 to masked tokens
     w = self.dropout(torch.nn.functional.softmax(s, dim=-1)) #[bs,nh,lq,lk] (these are the attention weights)
