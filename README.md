@@ -14,10 +14,8 @@ Network:
 
 ## Usage example:
 
-Given train/valid/test raw (untokenized) datasets:
-
-`$TRAIN`, `$VALID` and `$TEST` indicate suffixes of the respective train/valid/test files while `$SS`/`$TT` are the file extensions for source/target data.
-Train/Valid/Test files contain one sentence per line with untokenized (raw) text (learning and inference steps are performed after tokenization as described in the preprocess step).
+Hereinafter we considier `$TRAIN`, `$VALID` and `$TEST` variables containing suffixes of the respective train/valid/test files with `$SS` and `$TT` the variables indicating file extensions of source and target sides.
+Train/Valid/Test files contain one sentence per line with untokenized (raw) text. Learning and inference steps are performed after tokenization as described in the preprocess step.
 
 ### (1) Preprocess
 
