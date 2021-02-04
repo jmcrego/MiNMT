@@ -11,7 +11,7 @@ from transformer.Dataset import Dataset
 from transformer.Vocab import Vocab
 from transformer.ONMTTokenizer import ONMTTokenizer
 from transformer.Model import Encoder_Decoder, load_checkpoint_or_initialise, save_checkpoint, load_checkpoint, numparameters
-from transformer.Optimizer import OptScheduler, NLL, LabelSmoothing_NLL, LabelSmoothing_KLDiv
+from transformer.Optimizer import OptScheduler, LabelSmoothing_NLL, LabelSmoothing_KLDiv
 from transformer.Learning import Learning
 #import numpy as np
 
@@ -249,16 +249,13 @@ if __name__ == '__main__':
   last_step, model, optim = load_checkpoint_or_initialise(o.dnet + '/network', model, optim, device)
   optScheduler = OptScheduler(optim, n['emb_dim'], o.noam_scale, o.noam_warmup, last_step)
 
-  if o.label_smoothing > 0.0:
-    if o.loss == 'KLDiv':
-      criter = LabelSmoothing_KLDiv(len(tgt_vocab), src_vocab.idx_pad, o.label_smoothing).to(device)
-    elif o.loss == 'NLL':
-      criter = LabelSmoothing_NLL(len(tgt_vocab), src_vocab.idx_pad, o.label_smoothing).to(device)
-    else:
-      logging.error('bad -loss option')
-      sys.exit()
+  if o.loss == 'KLDiv':
+    criter = LabelSmoothing_KLDiv(len(tgt_vocab), src_vocab.idx_pad, o.label_smoothing).to(device)
+  elif o.loss == 'NLL':
+    criter = LabelSmoothing_NLL(len(tgt_vocab), src_vocab.idx_pad, o.label_smoothing).to(device)
   else:
-    criter = NLL(src_vocab.idx_pad).to(device)
+    logging.error('bad -loss option')
+    sys.exit()
 
   ##################
   ### load data ####

@@ -25,25 +25,12 @@ class OptScheduler(): ### Adam optimizer with scheduler
       p['lr'] = self._rate                
     self.optimizer.step()                 # parameters update (fwd) based on gradients and lrate
 
-class NLL(torch.nn.Module):
-  def __init__(self, padding_idx):
-    super(NLL, self).__init__()
-    self.criterion = torch.nn.NLLLoss(ignore_index=padding_idx, reduction='sum')
-    logging.info('Optimizer is NLL')
-
-  def forward(self, pred, gold):
-    gold = gold.contiguous().view(-1)
-    pred = pred.contiguous().view(-1,pred.size(-1))
-    return self.criterion(pred, gold)
-
-
 class LabelSmoothing_NLL(torch.nn.Module):
   def __init__(self, nclasses, padding_idx, smoothing=0.0):
     super(LabelSmoothing_NLL, self).__init__()
     self.padding_idx = padding_idx
     self.nclasses = nclasses #size of tgt vocab
     self.smoothing = smoothing
-    logging.info('Optimizer is labelsmoothing_NLL')
 
   def forward(self, pred, gold):
     pred = pred.contiguous().view(-1,pred.size(2)) #[bs*lt, Vt]
@@ -67,7 +54,6 @@ class LabelSmoothing_KLDiv(torch.nn.Module):
     assert 0 <= padding_idx <= nclasses
     self.confidence = 1.0 - smoothing
     self.padding_idx = padding_idx
-    logging.info('Optimizer is labelsmoothing_KLDiv')
 
     smoothing_value = smoothing / (nclasses - 2) #smoothing value
     one_hot = torch.full((nclasses,), smoothing_value) #[Vt, 1] filled with smoothing_value
