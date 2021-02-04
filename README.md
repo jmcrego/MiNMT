@@ -1,4 +1,4 @@
-# Basic Transformer implementation for MT
+# Minimalistic Transformer implementation for MT
 
 ## Clients
 
