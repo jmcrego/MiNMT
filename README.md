@@ -14,7 +14,7 @@ Network:
 
 ## Usage example:
 
-Hereinafter we considier `$TRAIN`, `$VALID` and `$TEST` variables containing suffixes of the respective train/valid/test files with `$SS` and `$TT` the variables indicating file extensions of source and target sides.
+Hereinafter we considier `$TRAIN`, `$VALID` and `$TEST` variables containing suffixes of the respective train/valid/test files, with `$SS` and `$TT` the variables indicating file extensions of source and target sides.
 Train/Valid/Test files contain one sentence per line with untokenized (raw) text. Learning and inference steps are performed after tokenization as described in the preprocess step.
 
 ### (1) Preprocess
