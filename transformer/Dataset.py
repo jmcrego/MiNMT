@@ -71,13 +71,13 @@ class Batch():
     self.max_len_tgt = max(len(idx_tgt),self.max_len_tgt)
     return True
 
+  def batch(self):
+    return [self.pos, self.idxs_src, self.idxs_tgt]
+
   def pad_batch(self):
     for i in range(len(self.idxs_src)):
       self.idxs_src[i] += [self.idx_pad] * (self.max_len_src - len(self.idxs_src[i]))
       self.idxs_tgt[i] += [self.idx_pad] * (self.max_len_tgt - len(self.idxs_tgt[i]))
-#    print('batch')
-#    for i in range(len(self.pos)):
-#      print('{}\n\t{}: {}\n\t{}: {}'.format(self.pos[i], len(self.idxs_src[i]), self.idxs_src[i], len(self.idxs_tgt[i]), self.idxs_tgt[i]))
     return [self.pos, self.idxs_src, self.idxs_tgt]
 
   def max_lsrc(self):
@@ -156,13 +156,13 @@ class Dataset():
         idx_src = self.idxs_src[pos]
         idx_tgt = self.idxs_tgt[pos] if self.idxs_tgt is not None else []
         if not b.add(pos, idx_src, idx_tgt): #cannot continue adding in current batch b
-          self.batchs.append(b.pad_batch()) #[posses, padded_src, padded_tgt]
+          self.batchs.append(b.batch()) #[posses, padded_src, padded_tgt]
           #new empty batch
           b = Batch(self.batch_size, self.batch_type, self.idx_pad) 
           if not b.add(pos, idx_src, idx_tgt):
             logging.error('Example {} does not fit in empty batch [Discarded]'.format(pos))
       if len(b): ### last batch
-        self.batchs.append(b.pad_batch()) #[posses, padded_src, padded_tgt]
+        self.batchs.append(b.batch()) #[posses, padded_src, padded_tgt]
     #each batch contains up to batch_size examples with 3 items (pos, padded_idxs_src, padded_idxs_tgt)
     logging.info('Built {} batchs [{} {}]'.format(len(self.batchs), self.batch_size, self.batch_type))
 
