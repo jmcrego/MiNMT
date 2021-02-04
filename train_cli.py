@@ -248,13 +248,17 @@ if __name__ == '__main__':
   optim = torch.optim.Adam(model.parameters(), lr=o.lr, betas=(o.beta1, o.beta2), eps=o.eps)
   last_step, model, optim = load_checkpoint_or_initialise(o.dnet + '/network', model, optim, device)
   optScheduler = OptScheduler(optim, n['emb_dim'], o.noam_scale, o.noam_warmup, last_step)
-  if o.loss == 'KLDiv':
-    criter = LabelSmoothing_KLDiv(len(tgt_vocab), src_vocab.idx_pad, o.label_smoothing).to(device)
-  elif o.loss == 'NLL':
-    criter = LabelSmoothing_NLL(len(tgt_vocab), src_vocab.idx_pad, o.label_smoothing).to(device)
+
+  if o.label_smoothing > 0.0:
+    if o.loss == 'KLDiv':
+      criter = LabelSmoothing_KLDiv(len(tgt_vocab), src_vocab.idx_pad, o.label_smoothing).to(device)
+    elif o.loss == 'NLL':
+      criter = LabelSmoothing_NLL(len(tgt_vocab), src_vocab.idx_pad, o.label_smoothing).to(device)
+    else:
+      logging.error('bad -loss option')
+      sys.exit()
   else:
-    logging.error('bad -loss option')
-    sys.exit()
+    criter = NLL(src_vocab.idx_pad).to(device)
 
   ##################
   ### load data ####
