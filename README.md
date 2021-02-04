@@ -11,6 +11,8 @@ Network:
 * `learn_cli` : Runs learning 
 * `translate_cli`: Runs inference
 
+Use the -h option of each client for full details.
+
 ## Usage example:
 
 Hereinafter we considier `$TRAIN`, `$VALID` and `$TEST` variables containing suffixes of the respective train/valid/test files, with `$SS` and `$TT` variables indicating file extensions of source and target sides.
@@ -52,15 +54,16 @@ Vocabulries are computed after tokenizing files following `$TOK`. Vocabularies c
 python3 ./create_cli.py -dnet $DNET -src_vocab $VOC.$SS -tgt_vocab $VOC.$TT -src_token $TOK -tgt_token $TOK
 ```
 
-Creates $DNET directory with the next files: network, src_voc, tgt_voc, src_tok, tgt_tok, src_bpe, tgt_bpe. Default network options are:
+Creates $DNET directory with the next files: network (default network options), src_voc, tgt_voc, src_tok, tgt_tok, src_bpe, tgt_bpe. Default network options are:
 ```
--emb_dim  512
--qk_dim   64
--v_dim    64
--ff_dim   2048
--n_heads  8
+-emb_dim 512
+-qk_dim 64
+-v_dim 64
+-ff_dim 2048
+-n_heads 8
 -n_layers 6
--dropout  0.1
+-dropout 0.1
+-share_embeddings False
 ```
 
 Check network options in `$DNET/network`
@@ -72,24 +75,24 @@ python3 ./train_cli.py -dnet $DNET -src_train $TRAIN.$SS -tgt_train $TRAIN.$TT -
 
 Starts or continues learning using the given training/validation files. Default learning options are:
 ```
--max_steps      0 (infinity)
--max_epochs     0 (infinity)
+-max_steps 0
+-max_epochs 0
 -validate_every 5000
--save_every     5000
--report_every   100
--keep_last_n    10
--clip_grad_norm 0.0 (without gradient clipping)
+-save_every 5000
+-report_every 100
+-keep_last_n 10
+-clip_grad_norm 0.0
 ```
 ```
--lr              2.0
--min_lr          0.0001
--beta1           0.9
--beta2           0.998
--eps             1e-09
--noam_scale      2.0
--noam_warmup     4000
+-lr 2.0
+-min_lr 0.0001
+-beta1 0.9
+-beta2 0.998
+-eps 1e-09
+-noam_scale 2.0
+-noam_warmup 4000
 -label_smoothing 0.1
--loss            KLDiv
+-loss KLDiv
 ```
 ```
 -shard_size 1000000
@@ -106,14 +109,14 @@ python3 ./translate_cli.py -dnet $DNET -i $TEST.$SS
 Translates the given input file using the last network checkpoint in `$DNET` directory. Default inference options are:
 ```
 -beam_size 4
--n_best    1
--max_size  250
--alpha     0.0 (do not normalize) [lp(Y) function in Eq. 14 of https://arxiv.org/pdf/1609.08144.pdf]
--format    iH
+-n_best 1
+-max_size 250
+-alpha 0.0
+-format iH
 ```
 ```
--shard_size 0 (all example in one shard)
--max_length 0 (do not filter long sentences)
+-shard_size 0
+-max_length 0
 -batch_size 30
 -batch_type sentences
 ```
