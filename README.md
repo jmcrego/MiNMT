@@ -1,11 +1,10 @@
-# Minimalistic Transformer implementation for MT
+# Minimalistic Transformer implementation for Machine Translation using Pytorch
 
 ## Clients
 
 Preprocess:
-* `learnBPE_cli` : Learns BPE model
+* `buildBPE_cli` : Learns BPE model
 * `buildVOC_cli` : Builds vocabulary
-* `tokenTXT_cli` : Tokenizes raw data
 
 Network:
 * `create_cli` : Creates network
@@ -22,7 +21,7 @@ Train/Valid/Test files contain one sentence per line with untokenized (raw) text
 * Build `$BPE` Model:
 
 ```
-cat $TRAIN.{$SS,$TT} | python3 learnBPE_cli.py $BPE
+cat $TRAIN.{$SS,$TT} | python3 buildBPE_cli.py $BPE
 ```
 A single BPE model is built for source and target sides of parallel data. Default number of symbols is 32,000.
 BPE learning is computed after tokenizing input files following (`mode: aggressive, joiner_annotate: True, segment_numbers: True`).
