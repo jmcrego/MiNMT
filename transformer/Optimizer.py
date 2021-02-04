@@ -58,7 +58,6 @@ class LabelSmoothing_KLDiv(torch.nn.Module):
     smoothing_value = smoothing / (nclasses - 2) #smoothing value
     one_hot = torch.full((nclasses,), smoothing_value) #[Vt, 1] filled with smoothing_value
     one_hot[padding_idx] = 0.0
-    logging.info('one_hot = {}'.format(one_hot.shape))
     self.register_buffer('one_hot', one_hot.unsqueeze(0))
 
   def forward(self, pred, gold):
