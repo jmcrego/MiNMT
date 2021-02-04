@@ -186,4 +186,13 @@ class Dataset():
     for idx in idx_batch:
       yield self.batchs[idx]
 
-
+'''
+  def __iter__(self):
+    shards = self.build_shards() 
+    idx_shards = [i for i in range(len(shards))]
+    for n_shard,idx_shard in enumerate(idx_shards):
+      batchs = self.build_batchs(shards[idx_shard]) ### updates self.batchs
+      idx_batchs = [i for i in range(len(batchs))]
+      for n_batch,idx_batch in enumerate(idx_batchs):
+        yield batchs[idx_batch]
+'''
