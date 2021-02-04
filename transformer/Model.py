@@ -328,7 +328,7 @@ class FeedForward(torch.nn.Module):
     tmp = torch.nn.functional.relu(tmp)
     tmp = self.dropout(tmp)
     tmp = self.FF_out(tmp)
-    tmp = self.dropout(tmp)
+    tmp = self.dropout(tmp) #too much???
     return tmp
 
 ##############################################################################################################
