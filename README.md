@@ -53,7 +53,7 @@ Vocabulries are computed after tokenizing files following `$TOK`. Vocabularies c
 python3 ./create_cli.py -dnet $DNET -src_vocab $VOC.$SS -tgt_vocab $VOC.$TT -src_token $TOK -tgt_token $TOK
 ```
 
-Creates $DNET directory and copies files: network, src_voc, tgt_voc, src_tok, tgt_tok, src_bpe, tgt_bpe. Default network options are:
+Creates $DNET directory with the next files: network, src_voc, tgt_voc, src_tok, tgt_tok, src_bpe, tgt_bpe. Default network options are:
 ```
 -emb_dim  512
 -qk_dim   64
