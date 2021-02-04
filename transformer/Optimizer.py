@@ -25,34 +25,6 @@ class OptScheduler(): ### Adam optimizer with scheduler
       p['lr'] = self._rate                
     self.optimizer.step()                 # parameters update (fwd) based on gradients and lrate
 
-class LabelSmoothing(torch.nn.Module):
-  def __init__(self, nclasses, padding_idx, smoothing=0.0):
-    super(LabelSmoothing, self).__init__()
-    self.criterion = torch.nn.KLDivLoss(reduction='sum')
-    self.padding_idx = padding_idx
-    self.confidence = 1.0 - smoothing
-    self.smoothing = smoothing
-    self.nclasses = nclasses #size of tgt vocab
-
-  def forward(self, pred, gold):
-    #pred is [bs, lt, Vt] (after softmax)
-    #gold is [bs, lt]
-    assert pred.size(0) == gold.size(0)
-    assert pred.size(1) == gold.size(1)
-    assert pred.size(2) == self.nclasses
-
-    pred = pred.contiguous().view(-1, pred.size(-1)) #[bs*lt, Vt]
-    gold = gold.contiguous().view(-1).long() #gold is [bs*lt]
-
-    #true_dist is the gold distribution after label smoothing
-    true_dist = pred.data.clone() #[bs*lt, Vt]
-    true_dist.fill_(self.smoothing / (self.nclasses - 2))
-    true_dist.scatter_(1, gold.data.unsqueeze(1), self.confidence)
-    true_dist[:, self.padding_idx] = 0
-    mask = torch.nonzero(gold.data == self.padding_idx, as_tuple=False)
-    true_dist.index_fill_(0, mask.squeeze(), 0.0)
-    return self.criterion(pred, Variable(true_dist, requires_grad=False)) ### sum of loss of all words (other than <pad> in reference)
-
 
 class LabelSmoothing_NLL(torch.nn.Module):
   def __init__(self, nclasses, padding_idx, smoothing=0.0):
