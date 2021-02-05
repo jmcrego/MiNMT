@@ -21,7 +21,7 @@ Learning and inference steps are performed after tokenization as described in th
 
 ### (1) Preprocess
 
-Preprocessing indicates string transformations performed over raw text files before passed to the NMT network. Namely, tokenization and subtokenization steps. We use the python api (https://github.com/OpenNMT/Tokenizer) that can bi installed via `pip install pyonmttok`.
+Preprocessing indicates string transformations performed over raw text files before passed to the NMT network. Namely, tokenization and subtokenization steps. We use the python api (https://github.com/OpenNMT/Tokenizer) that can be installed via `pip install pyonmttok`.
 
 * Build `$BPE` Model:
 
@@ -29,7 +29,7 @@ Preprocessing indicates string transformations performed over raw text files bef
 cat $TRAIN.{$SS,$TT} | python3 buildBPE_cli.py $BPE
 ```
 A single BPE model is built for source and target sides of parallel data. Default number of symbols is 32,000.
-BPE learning is computed after tokenizing input files following (`mode: aggressive, joiner_annotate: True, segment_numbers: True`).
+BPE learning is computed after an internal tokenization step following (`mode: aggressive, joiner_annotate: True, segment_numbers: True`).
 
 * Create `$TOK` (tokenization config file) containing:
 
