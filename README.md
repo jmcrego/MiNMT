@@ -64,14 +64,14 @@ python3 ./create_cli.py -dnet $DNET -src_vocab $VOC.$SS -tgt_vocab $VOC.$TT -src
 
 Creates $DNET directory with the next files: 
 * Network options: 
-** network
+  * network
 * Tokenization options and files:
-** src_voc, 
-** tgt_voc, 
-** src_tok, 
-** tgt_tok, 
-** src_bpe, 
-** tgt_bpe.
+  * src_voc, 
+  * tgt_voc, 
+  * src_tok, 
+  * tgt_tok, 
+  * src_bpe, 
+  * tgt_bpe.
 
 Default network options are:
 ```
