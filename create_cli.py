@@ -4,15 +4,8 @@ import sys
 import os
 import shutil
 import time
-import shutil
 import yaml
-#import pickle
 import logging
-#import torch
-#import math
-#from transformer.Vocab import Vocab
-#from transformer.ONMTTokenizer import ONMTTokenizer
-#import numpy as np
 
 def create_logger(logfile, loglevel):
     numeric_level = getattr(logging, loglevel.upper(), None)
