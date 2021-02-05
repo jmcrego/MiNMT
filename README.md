@@ -85,14 +85,12 @@ Default network options are:
 -share_embeddings False
 ```
 
-Check network options in `$DNET/network`
-
 ### (3) Learning
 ```
 python3 ./train_cli.py -dnet $DNET -src_train $TRAIN.$SS -tgt_train $TRAIN.$TT -src_valid $VALID.$SS -tgt_valid $VALID.$TT
 ```
 
-Starts or continues learning using the given training/validation files. Default learning options are:
+Starts (or continues) learning using the given training/validation files. Default learning options are:
 ```
 -max_steps 0
 -max_epochs 0
@@ -120,12 +118,14 @@ Starts or continues learning using the given training/validation files. Default 
 -batch_type tokens
 ```
 
+Model files are built in `$DNET/network.checkpoint_????????.pt`.
+
 ### (4) Inference
 ```
 python3 ./translate_cli.py -dnet $DNET -i $TEST.$SS
 ```
 
-Translates the given input file using the last network checkpoint in `$DNET` directory. Default inference options are:
+Translates the given input file using the last network checkpoint available in `$DNET`. Default inference options are:
 ```
 -beam_size 4
 -n_best 1
