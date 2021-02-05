@@ -118,7 +118,7 @@ Starts (or continues) learning using the given training/validation files. Defaul
 -batch_type tokens
 ```
 
-Model files are built in `$DNET/network.checkpoint_????????.pt`.
+Network checkpoints are built in `$DNET` directory named `network.checkpoint_????????.pt`.
 
 ### (4) Inference
 ```
