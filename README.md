@@ -65,10 +65,10 @@ Creates the directory `$DNET` containing:
   * network
 * Copies vocabularies, tokenization options and BPE models:
   * src_voc
-  * tgt_voc 
-  * src_tok 
-  * tgt_tok 
-  * src_bpe 
+  * tgt_voc
+  * src_tok
+  * tgt_tok
+  * src_bpe
   * tgt_bpe
 
 Default network options are:
