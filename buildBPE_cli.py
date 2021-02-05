@@ -74,7 +74,7 @@ tokenizer = pyonmttok.Tokenizer(mode, **opts)
 learner = pyonmttok.BPELearner(tokenizer=tokenizer, symbols=symbols)
 for l in sys.stdin:
   learner.ingest(l)
-loging.info('Learning bpe model: {}'.format(bpe_model))
+logging.info('Learning bpe model: {}'.format(bpe_model))
 tokenizer = learner.learn(bpe_model)
 
 ###
