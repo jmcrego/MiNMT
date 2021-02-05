@@ -2,10 +2,8 @@
 
 ## Clients
 
-Tokenization:
+Preprocessing:
 * `buildBPE_cli` : Learns BPE model
-
-Vocabulary:
 * `buildVOC_cli` : Builds vocabulary
 
 Network:
