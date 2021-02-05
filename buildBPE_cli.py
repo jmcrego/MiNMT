@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import pyonmttok
+import os
 import sys
 import yaml
 import logging
@@ -54,6 +55,7 @@ if tok_config is None:
 if bpe_model is None:		
 	logging.error('error: missing -bpe_model option')
 	sys.exit()
+bpe_model = os.path.abspath(bpe_model)
 
 ###
 ### READ tokenization config file
@@ -78,7 +80,7 @@ logging.info('Learning bpe model: {}'.format(bpe_model))
 tokenizer = learner.learn(bpe_model)
 
 ###
-### OUTPUT config file
+### OUTPUT config file with bpe model
 ###
 opts['mode'] = mode
 opts['bpe_model_path'] = bpe_model
