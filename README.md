@@ -17,7 +17,6 @@ Run clients with the -h option for a detailed description of available options.
 
 Hereinafter we considier `$TRAIN`, `$VALID` and `$TEST` variables containing suffixes of the respective train/valid/test files, with `$SS` and `$TT` variables indicating file extensions of source and target language sides.
 Train/Valid/Test files are formated with one sentence per line of untokenized (raw) text. 
-Learning and inference steps are performed after tokenization as described in the `$TOK` config file introduced in the next step.
 
 ### (1) Preprocess
 
@@ -29,17 +28,15 @@ mode: aggressive
 joiner_annotate: True
 segment_numbers: True
 ```
-For other tokenization options visit https://github.com/OpenNMT/Tokenizer/tree/master/bindings/python .
-
+For other tokenization options visit https://github.com/OpenNMT/Tokenizer/tree/master/bindings/python 
 
 
 * Build `$BPE` Model:
-
 ```
-cat $TRAIN.{$SS,$TT} | python3 buildBPE_cli.py $BPE
+cat $TRAIN.{$SS,$TT} | python3 buildBPE_cli.py $TOK $BPE
 ```
 A single BPE model is built for source and target sides of parallel data. Default number of symbols is 32,000.
-BPE learning is computed after an internal tokenization step following (`mode: aggressive, joiner_annotate: True, segment_numbers: True`).
+BPE learning is computed after an internal tokenization step as detailed in `$TOK`.
 
 * Create `$TOK` (tokenization config file) containing:
 
