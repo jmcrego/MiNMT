@@ -1,9 +1,11 @@
 # Minimalistic Transformer implementation for Machine Translation using Pytorch
 
-# Clients
+## Clients
 
-Preprocess:
+Tokenization:
 * `buildBPE_cli` : Learns BPE model
+
+Vocabularies:
 * `buildVOC_cli` : Builds vocabulary
 
 Network:
