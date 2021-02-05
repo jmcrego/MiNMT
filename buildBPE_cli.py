@@ -49,11 +49,11 @@ if 'mode' not in opts:
 	sys.exit()
 mode = opts['mode']
 del opts["mode"]
+sys.stderr.write('Using tokenization mode: {} opts: {}\n'.format(mode, opts))
 
 ###
 ### LEARN BPE model
 ###
-sys.stderr.write('Learning BPE model using mode: {} opts: {} tokenization options\n'.format(mode, opts))
 tokenizer = pyonmttok.Tokenizer(mode, **opts)
 learner = pyonmttok.BPELearner(tokenizer=tokenizer, symbols=symbols)
 for l in sys.stdin:
