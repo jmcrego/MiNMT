@@ -66,7 +66,7 @@ tokenizer = learner.learn(bpe_model)
 ###
 opts['mode'] = mode
 opts['bpe_model_path'] = bpe_model
-with open('{}.tok'.format(bpe_model), "w") as yamlfile:
+with open('{}.tok_config'.format(bpe_model), "w") as yamlfile:
 	yaml.dump(opts, yamlfile)
 
-sys.stderr.write('Built {} and {}.tok files\n'.format(bpe_model,bpe_model))
+sys.stderr.write('Built {} and {}.tok_config files\n'.format(bpe_model,bpe_model))
