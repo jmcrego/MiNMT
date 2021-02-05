@@ -62,7 +62,7 @@ Vocabularies are computed after tokenizing files following `$BPE.tok_config`.
 python3 ./create_cli.py -dnet $DNET -src_vocab $VOC.$SS -tgt_vocab $VOC.$TT -src_token $BPE.tok -tgt_token $BPE.tok
 ```
 
-Creates $DNET directory with the next files: 
+Creates the directory `$DNET` with the next files: 
 * Network description: 
   * network
 * Copies vocabularies, tokenization options and BPE models:
