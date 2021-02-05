@@ -28,6 +28,12 @@ mode: aggressive
 joiner_annotate: True
 segment_numbers: True
 ```
+
+If text files are already tokenized you can use the next tokenization options (and skip learning BPE model):
+```
+mode: space
+```
+
 For other tokenization options see https://github.com/OpenNMT/Tokenizer/tree/master/bindings/python 
 
 
