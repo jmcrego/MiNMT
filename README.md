@@ -60,8 +60,8 @@ Before computing vocabularies, the script tokenizes input streams following `$BP
 python3 ./create_cli.py -dnet $DNET -src_vocab $VOC.$SS -tgt_vocab $VOC.$TT -src_token $BPE.tok -tgt_token $BPE.tok
 ```
 
-Creates the directory `$DNET` with the next files: 
-* Network description: 
+Creates the directory `$DNET` containing:
+* A network description file: 
   * network
 * Copies vocabularies, tokenization options and BPE models:
   * src_voc
