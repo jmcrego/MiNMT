@@ -18,24 +18,19 @@ Run clients with the -h option for a detailed description of available options.
 Hereinafter we considier `$TRAIN`, `$VALID` and `$TEST` variables containing suffixes of the respective train/valid/test files, with `$SS` and `$TT` variables indicating file extensions of source and target language sides.
 Train/Valid/Test files are formated with one sentence per line of untokenized (raw) text. 
 
-### (1) Preprocess
+### (1) Tokenization
 
-Preprocessing indicates the string transformations performed over raw text files before passed to the NMT network. Namely, tokenization and subtokenization steps. 
+Tokenization indicates the string transformations performed on raw text files before passed to the NMT network (typically to separate punctuation and split words into subwords). 
 We use the python api (https://github.com/OpenNMT/Tokenizer) that can be installed via `pip install pyonmttok`.
 
-* Create `$TOK` (tokenization config file) containing tokenization options. For instance:
+* Create first the tokenization config file `$TOK`. For instance:
 ```
 mode: aggressive
 joiner_annotate: True
 segment_numbers: True
 ```
 
-If text files are already tokenized you can use the next tokenization options (and skip learning BPE model):
-```
-mode: space
-```
-
-Further information on tokenization options in https://github.com/OpenNMT/Tokenizer/tree/master/bindings/python 
+For further information on tokenization options visit https://github.com/OpenNMT/Tokenizer/tree/master/bindings/python 
 
 
 * Build `$BPE` Model:
@@ -44,21 +39,20 @@ cat $TRAIN.{$SS,$TT} | python3 buildBPE_cli.py -tok_config $TOK -bpe_model $BPE
 ```
 A single BPE model is built for both, source and target, sides of parallel data.
 Previous to BPE learning, the input stream is tokenized as detailed in `$TOK`.
-Output consists of the BPE model `$BPE` and a new tokenization config file containing a reference to the BPE model `$BPE.tok_config`.
-
+The script outputs the BPE model `$BPE` and a new tokenization config file containing a reference to the BPE model `$BPE.tok_config`.
 To build separate models for source and target sides, run the same command using as input only source (or target) data.
 
 
 ### (2) Vocabularies
 
-The network will only consider a limited set of source (and target) tokens. Vocabularies are built using:
+The network will only consider a limited set of source (and target) tokens. Such vocabularies can be built running:
 
 ```
 cat $TRAIN.$SS | python3 buildVOC_cli.py -tok_config $BPE.tok_config > $VOC.$SS
 cat $TRAIN.$TT | python3 buildVOC_cli.py -tok_config $BPE.tok_config > $VOC.$TT
 ```
 
-Before computing vocabularies input streams are tokenized following `$BPE.tok_config`. 
+Before computing vocabularies, the script tokenizes input streams following `$BPE.tok_config`. 
 
 ### (3) Create network
 
