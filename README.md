@@ -20,7 +20,7 @@ Train/Valid/Test files are formated with one sentence per line of untokenized (r
 
 ### (1) Tokenization
 
-Tokenization indicates the string transformations performed on raw text files before passed to the NMT network (typically to separate punctuation and split words into subwords). 
+Tokenization indicates the string transformations performed on raw text files before passed to the NMT network (typically to separate punctuation and to split words into subwords). 
 We use the python api (https://github.com/OpenNMT/Tokenizer) that can be installed via `pip install pyonmttok`.
 
 * Create first the tokenization config file `$TOK`. For instance:
