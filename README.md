@@ -34,7 +34,7 @@ If text files are already tokenized you can use the next tokenization options (a
 mode: space
 ```
 
-For other tokenization options see https://github.com/OpenNMT/Tokenizer/tree/master/bindings/python 
+Further information on tokenization options in https://github.com/OpenNMT/Tokenizer/tree/master/bindings/python 
 
 
 * Build `$BPE` Model:
