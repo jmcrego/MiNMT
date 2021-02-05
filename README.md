@@ -20,7 +20,8 @@ Train/Valid/Test files are formated with one sentence per line of untokenized (r
 
 ### (1) Preprocess
 
-Preprocessing indicates the string transformations performed over raw text files before passed to the NMT network. Namely, tokenization and subtokenization steps. We use the python api (https://github.com/OpenNMT/Tokenizer) that can be installed via `pip install pyonmttok`.
+Preprocessing indicates the string transformations performed over raw text files before passed to the NMT network. Namely, tokenization and subtokenization steps. 
+We use the python api (https://github.com/OpenNMT/Tokenizer) that can be installed via `pip install pyonmttok`.
 
 * Create `$TOK` (tokenization config file) containing tokenization options. For instance:
 ```
@@ -47,16 +48,19 @@ Output consists of the BPE model `$BPE` and a new tokenization config file conta
 
 To build separate models for source and target sides, run the same command using as input only source (or target) data.
 
-* Build Vocabularies:
+
+### (2) Vocabularies
+
+The network will only consider a limited set of source (and target) tokens. Vocabularies are built using:
 
 ```
 cat $TRAIN.$SS | python3 buildVOC_cli.py -tok_config $BPE.tok_config > $VOC.$SS
 cat $TRAIN.$TT | python3 buildVOC_cli.py -tok_config $BPE.tok_config > $VOC.$TT
 ```
 
-Vocabularies are computed after tokenizing files following `$BPE.tok_config`. 
+Before computing vocabularies input streams are tokenized following `$BPE.tok_config`. 
 
-### (2) Create network
+### (3) Create network
 
 ```
 python3 ./create_cli.py -dnet $DNET -src_vocab $VOC.$SS -tgt_vocab $VOC.$TT -src_token $BPE.tok -tgt_token $BPE.tok
@@ -85,7 +89,7 @@ Default network options are:
 -share_embeddings False
 ```
 
-### (3) Learning
+### (4) Learning
 ```
 python3 ./train_cli.py -dnet $DNET -src_train $TRAIN.$SS -tgt_train $TRAIN.$TT -src_valid $VALID.$SS -tgt_valid $VALID.$TT
 ```
@@ -120,7 +124,7 @@ Starts (or continues) learning using the given training/validation files. Defaul
 
 Network checkpoints are built in `$DNET` directory named `network.checkpoint_????????.pt`.
 
-### (4) Inference
+### (5) Inference
 ```
 python3 ./translate_cli.py -dnet $DNET -i $TEST.$SS
 ```
