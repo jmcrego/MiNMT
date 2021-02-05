@@ -4,7 +4,7 @@
 
 Preprocessing:
 * `bpe_cli` : Learns BPE model
-* `voc_cli` : Builds vocabulary
+* `vocab_cli` : Builds vocabulary
 
 Network:
 * `create_cli` : Creates network
@@ -48,8 +48,8 @@ To build separate models for source and target sides, run the same command using
 The network will only consider a limited set of source (and target) tokens. Such vocabularies can be built running:
 
 ```
-cat $TRAIN.$SS | python3 voc_cli.py -tok_config $BPE.tok_config > $VOC.$SS
-cat $TRAIN.$TT | python3 voc_cli.py -tok_config $BPE.tok_config > $VOC.$TT
+cat $TRAIN.$SS | python3 vocab_cli.py -tok_config $BPE.tok_config > $VOC.$SS
+cat $TRAIN.$TT | python3 vocab_cli.py -tok_config $BPE.tok_config > $VOC.$TT
 ```
 
 Before computing vocabularies, the script tokenizes input streams following `$BPE.tok_config`. 
