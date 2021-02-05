@@ -22,46 +22,38 @@ Train/Valid/Test files are formated with one sentence per line of untokenized (r
 
 Preprocessing indicates the string transformations performed over raw text files before passed to the NMT network. Namely, tokenization and subtokenization steps. We use the python api (https://github.com/OpenNMT/Tokenizer) that can be installed via `pip install pyonmttok`.
 
-* Create `$TOK` (tokenization config file) containing:
+* Create `$TOK` (tokenization config file) containing tokenization options. For instance:
 ```
 mode: aggressive
 joiner_annotate: True
 segment_numbers: True
 ```
-For other tokenization options visit https://github.com/OpenNMT/Tokenizer/tree/master/bindings/python 
+For other tokenization options see https://github.com/OpenNMT/Tokenizer/tree/master/bindings/python 
 
 
 * Build `$BPE` Model:
 ```
-cat $TRAIN.{$SS,$TT} | python3 buildBPE_cli.py $TOK $BPE
+cat $TRAIN.{$SS,$TT} | python3 buildBPE_cli.py -tok_config $TOK -symbols 30000 -bpe_model $BPE
 ```
-A single BPE model is built for source and target sides of parallel data. Default number of symbols is 32,000.
-BPE learning is computed after an internal tokenization step as detailed in `$TOK`.
-
-* Create `$TOK` (tokenization config file) containing:
-
-```
-mode: aggressive
-joiner_annotate: True
-segment_numbers: True
-bpe_model_path: $BPE
-```
+A single BPE model is built for both, source and target, sides of parallel data using 30,000 operations.
+Previous to BPE learning, the input stream is tokenized as detailed in `$TOK`.
+Output consists of the BPE model `$BPE` and a new tokenization config file containing a reference to the BPE model `$BPE.tok_config`
 
 All network input/output files are tokenized/detokenized following this configuration.
 
 * Build Vocabularies:
 
 ```
-cat $TRAIN.$SS | python3 buildVOC_cli.py -tokenizer_config $TOK -max_size 32768 > $VOC.$SS
-cat $TRAIN.$TT | python3 buildVOC_cli.py -tokenizer_config $TOK -max_size 32768 > $VOC.$TT
+cat $TRAIN.$SS | python3 buildVOC_cli.py -tok_config $BPE.tok_config -max_size 32768 > $VOC.$SS
+cat $TRAIN.$TT | python3 buildVOC_cli.py -tok_config $BPE.tok_config -max_size 32768 > $VOC.$TT
 ```
 
-Vocabulries are computed after tokenizing files following `$TOK`. Vocabularies contain at most `32,768` tokens
+Vocabulries are computed after tokenizing files following `$BPE.tok`. Vocabularies contain at most `32,768` tokens.
 
 ### (2) Create network
 
 ```
-python3 ./create_cli.py -dnet $DNET -src_vocab $VOC.$SS -tgt_vocab $VOC.$TT -src_token $TOK -tgt_token $TOK
+python3 ./create_cli.py -dnet $DNET -src_vocab $VOC.$SS -tgt_vocab $VOC.$TT -src_token $BPE.tok -tgt_token $BPE.tok
 ```
 
 Creates $DNET directory with the next files: 
