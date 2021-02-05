@@ -29,7 +29,7 @@ mode: aggressive
 joiner_annotate: True
 segment_numbers: True
 ```
-For other tokenization options visit https://github.com/OpenNMT/Tokenizer/tree/master/bindings/python
+For other tokenization options visit https://github.com/OpenNMT/Tokenizer/tree/master/bindings/python.
 
 
 
