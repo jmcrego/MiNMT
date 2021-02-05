@@ -21,7 +21,17 @@ Learning and inference steps are performed after tokenization as described in th
 
 ### (1) Preprocess
 
-Preprocessing indicates string transformations performed over raw text files before passed to the NMT network. Namely, tokenization and subtokenization steps. We use the python api (https://github.com/OpenNMT/Tokenizer) that can be installed via `pip install pyonmttok`.
+Preprocessing indicates the string transformations performed over raw text files before passed to the NMT network. Namely, tokenization and subtokenization steps. We use the python api (https://github.com/OpenNMT/Tokenizer) that can be installed via `pip install pyonmttok`.
+
+* Create `$TOK` (tokenization config file) containing:
+```
+mode: aggressive
+joiner_annotate: True
+segment_numbers: True
+```
+For other tokenization options visit https://github.com/OpenNMT/Tokenizer/tree/master/bindings/python
+
+
 
 * Build `$BPE` Model:
 
