@@ -39,22 +39,22 @@ For other tokenization options see https://github.com/OpenNMT/Tokenizer/tree/mas
 
 * Build `$BPE` Model:
 ```
-cat $TRAIN.{$SS,$TT} | python3 buildBPE_cli.py -tok_config $TOK -symbols 30000 -bpe_model $BPE
+cat $TRAIN.{$SS,$TT} | python3 buildBPE_cli.py -tok_config $TOK -bpe_model $BPE
 ```
-A single BPE model is built for both, source and target, sides of parallel data using 30,000 operations.
+A single BPE model is built for both, source and target, sides of parallel data.
 Previous to BPE learning, the input stream is tokenized as detailed in `$TOK`.
-Output consists of the BPE model `$BPE` and a new tokenization config file containing a reference to the BPE model `$BPE.tok_config`
+Output consists of the BPE model `$BPE` and a new tokenization config file containing a reference to the BPE model `$BPE.tok_config`.
 
-To build a separate source (target) BPE model, run the same command using as input only source (target) data.
+To build separate models four source and target sides, run the same command using as input only source (or target) data.
 
 * Build Vocabularies:
 
 ```
-cat $TRAIN.$SS | python3 buildVOC_cli.py -tok_config $BPE.tok_config -max_size 32768 > $VOC.$SS
-cat $TRAIN.$TT | python3 buildVOC_cli.py -tok_config $BPE.tok_config -max_size 32768 > $VOC.$TT
+cat $TRAIN.$SS | python3 buildVOC_cli.py -tok_config $BPE.tok_config > $VOC.$SS
+cat $TRAIN.$TT | python3 buildVOC_cli.py -tok_config $BPE.tok_config > $VOC.$TT
 ```
 
-Vocabulries are computed after tokenizing files following `$BPE.tok`. Vocabularies contain at most `32,768` tokens.
+Vocabularies are computed after tokenizing files following `$BPE.tok_config`. 
 
 ### (2) Create network
 
