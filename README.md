@@ -5,7 +5,7 @@
 Tokenization:
 * `buildBPE_cli` : Learns BPE model
 
-Vocabularies:
+Vocabulary:
 * `buildVOC_cli` : Builds vocabulary
 
 Network:
