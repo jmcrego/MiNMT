@@ -16,9 +16,12 @@ Run clients with the -h option for a detailed description of available options.
 ## Usage example:
 
 Hereinafter we considier `$TRAIN`, `$VALID` and `$TEST` variables containing suffixes of the respective train/valid/test files, with `$SS` and `$TT` variables indicating file extensions of source and target language sides.
-Train/Valid/Test files contain one sentence per line with untokenized (raw) text. Learning and inference steps are performed after tokenization as described in the `$TOK` file built in the next step.
+Train/Valid/Test files are formated with one sentence per line of untokenized (raw) text. 
+Learning and inference steps are performed after tokenization as described in the `$TOK` config file introduced in the next step.
 
 ### (1) Preprocess
+
+Preprocessing indicates string transformations performed over raw text files before passed to the NMT network. Namely, tokenization and subtokenization steps. We use the python api (https://github.com/OpenNMT/Tokenizer) that can bi installed via `pip install pyonmttok`.
 
 * Build `$BPE` Model:
 
@@ -55,8 +58,8 @@ python3 ./create_cli.py -dnet $DNET -src_vocab $VOC.$SS -tgt_vocab $VOC.$TT -src
 ```
 
 Creates $DNET directory with the next files: 
-** network (network options), 
-** src_voc, tgt_voc, src_tok, tgt_tok, src_bpe, tgt_bpe (needed for source/target tokenization).
+* network (network options), 
+* src_voc, tgt_voc, src_tok, tgt_tok, src_bpe, tgt_bpe (needed for source/target tokenization).
 
 Default network options are:
 ```
