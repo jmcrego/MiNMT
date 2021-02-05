@@ -26,10 +26,10 @@ if __name__ == '__main__':
 
     prog = sys.argv.pop(0)
     usage = '''usage: {} [-tokenizer_config FILE] [-min_freq N] [-max_size N] < text > vocab
-   -tokenizer_config FILE : tokenizer config file (if not used mode=space)
-   -min_freq          INT : minimum frequence to keep a word (default 1)
-   -max_size          INT : maximum number of words in vocab (default 0:all) 
-   -log_level       LEVEL : log level [debug, info, warning, critical, error] (info)
+   -tok_config FILE : tokenizer config file (if not used mode=space)
+   -min_freq    INT : minimum frequence to keep a word (default 1)
+   -max_size    INT : maximum number of words in vocab (default 0:all) 
+   -log_level LEVEL : log level [debug, info, warning, critical, error] (info)
 
 further details on onmt-tokenizer at: https://github.com/OpenNMT/Tokenizer/tree/master/bindings/python
 '''.format(prog)
@@ -43,7 +43,7 @@ further details on onmt-tokenizer at: https://github.com/OpenNMT/Tokenizer/tree/
         if tok=="-h":
             sys.stderr.write(usage);
             sys.exit()
-        elif tok=="-tokenizer_config":
+        elif tok=="-tok_config":
             ftokconf = sys.argv.pop(0)
         elif tok=="-min_freq":
             min_freq = int(sys.argv.pop(0))
