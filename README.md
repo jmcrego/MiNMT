@@ -45,7 +45,7 @@ A single BPE model is built for both, source and target, sides of parallel data.
 Previous to BPE learning, the input stream is tokenized as detailed in `$TOK`.
 Output consists of the BPE model `$BPE` and a new tokenization config file containing a reference to the BPE model `$BPE.tok_config`.
 
-To build separate models four source and target sides, run the same command using as input only source (or target) data.
+To build separate models for source and target sides, run the same command using as input only source (or target) data.
 
 * Build Vocabularies:
 
