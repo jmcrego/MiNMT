@@ -104,19 +104,23 @@ class Inference():
       logP_extended = torch.cat((logP_extended, next_logP), dim=-1).view(bs,self.Vt,lt+1) #[bs,Vt,lt+1]
       lt = hyps_extended.shape[2] #new hypothesis length
 
-      ### REDUCE ###
+      ### KEEP K-best expansions of each hypothesis I ###
       sum_logP = torch.sum(logP_extended,dim=2) #[bs,Vt]
       _, ind_best = torch.topk(sum_logP, k=1, dim=1) #[bs,1]
 
       hyps = torch.stack([hyps_extended[b][ind] for b,ind in enumerate(ind_best)], dim=0).contiguous().view(bs,lt) #[bs,1,lt] => [bs,lt]
       logP = torch.stack([logP_extended[b][ind] for b,ind in enumerate(ind_best)], dim=0).contiguous().view(bs,lt) #[bs,1,lt] => [bs,lt]
 
+      #print('')
+      #for b in range(hyps.shape[0]):
+      #  print('batch {}\tlogP={:.6f}\t{}'.format(b,sum(logP[b]), ' '.join([self.tgt_vocab[t] for t in hyps[b].tolist()]) ))
+
       ### FINALS ###
       index_of_finals = (hyps[:,-1]==self.idx_eos).nonzero(as_tuple=False).squeeze(-1) #[n] n being the number of final hyps found
       for b in index_of_finals:
         if len(finals[b]) < 1: ### not already finished
           hyp = ' '.join(map(str,hyps[b].tolist()))
-          cst = sum(logP[b,:])
+          cst = sum(logP[b])
           if self.alpha:
             cst = cst / norm_length(hyps.shape[1],self.alpha)
           #logging.info('[FINAL b={}]\t{:6f}\t{}'.format(b,sum_logp,hyp))
@@ -149,8 +153,8 @@ class Inference():
       ### DECODE ###
       y_next = self.model.decode(self.z_src, hyps, self.msk_src, msk_tgt=None)[:,-1,:] #[I,lt,Vt] => [I,Vt]
       #logging.info('y_next = {}'.format(y_next.shape))
-      if lt == self.max_size - 1: #last extension
-        y_next[:,] *= self.force_eos #all words are assigned -Inf except <eos> which keeps its logP (this forces <eos> to appear)
+      if lt == self.max_size - 1: #last extension (force <eos>)
+        y_next[:,] *= self.force_eos #all words are assigned -Inf except <eos> which keeps its logP
 
       next_logP = y_next.contiguous().view(-1,1) #[I*Vt,1]
       #logging.info('next_logP = {}'.format(next_logP.shape))
@@ -167,7 +171,7 @@ class Inference():
       #logging.info('hyps_extended = {} logP_extended = {}'.format(hyps_extended.shape, logP_extended.shape))
       lt = hyps_extended.shape[1] #new hyp length
 
-      ### REDUCE ###
+      ### KEEP K-best expansions of each hypothesis I ###
       hyps_extended = hyps_extended.contiguous().view(bs,-1,lt) #[bs,I,lt]
       logP_extended = logP_extended.contiguous().view(bs,-1,lt) #[bs,I,lt]
       #logging.info('hyps_extended = {} logP_extended = {}'.format(hyps_extended.shape, logP_extended.shape))
@@ -177,13 +181,17 @@ class Inference():
       logP = torch.stack([logP_extended[b][inds] for b,inds in enumerate(kbest_inds)], dim=0).contiguous().view(bs*self.K,lt) #[bs,K,lt] => [bs*K,lt]
       #logging.info('hyps = {} logP = {}'.format(hyps.shape, logP.shape))
 
+#      print('')
+#      for i in range(hyps.shape[0]):
+#        print('batch {} beam {}\tlogP={:.6f}\t{}'.format(i//self.K, i%self.K, sum(logP[i]), ' '.join([self.tgt_vocab[t] for t in hyps[i].tolist()]) ))
+
       ### FINALS ###
       index_of_finals = (hyps[:,-1]==self.idx_eos).nonzero(as_tuple=False).squeeze(-1) #[n] n being the number of final hyps found
       for i in index_of_finals:
         b = i//self.K
         if len(finals[b]) < self.K:
           hyp = ' '.join(map(str,hyps[i].tolist()))
-          cst = sum(logP[i,:])
+          cst = sum(logP[i])
           if self.alpha:
             cst = cst / norm_length(hyps.shape[1],self.alpha)
           #logging.info('[FINAL b={}]\t{:6f}\t{}'.format(b,sum_logp,hyp))

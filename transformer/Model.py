@@ -83,6 +83,8 @@ def prepare_source(batch_src, idx_pad, device):
   src = [torch.tensor(seq) for seq in batch_src] #[bs, ls]
   src = torch.nn.utils.rnn.pad_sequence(src, batch_first=True, padding_value=idx_pad).to(device) #[bs,ls]
   msk_src = (src != idx_pad).unsqueeze(-2) #[bs,1,ls] (False where <pad> True otherwise)
+  #print('src',src.tolist())
+  #print('msk_src',msk_src.tolist())
   return src, msk_src
 
 def prepare_target(batch_tgt, idx_pad, device):
@@ -91,6 +93,9 @@ def prepare_target(batch_tgt, idx_pad, device):
   ref = [torch.tensor(seq[1:])  for seq in batch_tgt] #delete <bos>
   ref = torch.nn.utils.rnn.pad_sequence(ref, batch_first=True, padding_value=idx_pad).to(device)
   msk_tgt = (tgt != idx_pad).unsqueeze(-2) & (1 - torch.triu(torch.ones((1, tgt.size(1), tgt.size(1)), device=tgt.device), diagonal=1)).bool() #[bs,lt,lt]
+  #print('tgt',tgt.tolist())
+  #print('ref',ref.tolist())
+  #print('msk_tgt',msk_tgt.tolist())
   return tgt, ref, msk_tgt
 
 ##############################################################################################################
@@ -116,7 +121,6 @@ class Encoder_Decoder(torch.nn.Module):
     #tgt is [bs,lt]
     #msk_src is [bs,1,ls] (False where <pad> True otherwise)
     #mst_tgt is [bs,lt,lt]
-
     ### encoder #####
     src = self.add_pos_enc(self.src_emb(src)) #[bs,ls,ed]
     z_src = self.stacked_encoder(src, msk_src) #[bs,ls,ed]
@@ -125,7 +129,7 @@ class Encoder_Decoder(torch.nn.Module):
     z_tgt = self.stacked_decoder(z_src, tgt, msk_src, msk_tgt) #[bs,lt,ed]
     ### generator ###
     y = self.generator(z_tgt) #[bs, lt, Vt]
-    return y
+    return y ### returns logits (for learning)
 
   def encode(self, src, msk_src):
     src = self.add_pos_enc(self.src_emb(src)) #[bs,ls,ed]
@@ -134,16 +138,13 @@ class Encoder_Decoder(torch.nn.Module):
 
   def decode(self, z_src, tgt, msk_src, msk_tgt=None):
     assert z_src.shape[0] == tgt.shape[0] ### src/tgt batch_sizes must be equal
-    #this is used on inference
     #z_src are the embeddings of the source words (encoder) [bs, sl, ed]
     #tgt is the history (words already generated) for current step [bs, lt]
-    #initially tgt contains only <eos> 
-    #logging.info('tgt = {}'.format(tgt.shape))
     tgt = self.add_pos_enc(self.tgt_emb(tgt)) #[bs,lt,ed]
     z_tgt = self.stacked_decoder(z_src, tgt, msk_src, msk_tgt) #[bs,lt,ed]
     y = self.generator(z_tgt) #[bs, lt, Vt]
-    y = torch.nn.functional.log_softmax(y, dim=-1) #log_probs
-    return y
+    y = torch.nn.functional.log_softmax(y, dim=-1) 
+    return y ### returns log_probs (for inference)
 
 ##############################################################################################################
 ### Embedding ################################################################################################
