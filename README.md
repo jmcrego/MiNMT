@@ -3,8 +3,8 @@
 ## Clients
 
 Preprocessing:
-* `buildBPE_cli` : Learns BPE model
-* `buildVOC_cli` : Builds vocabulary
+* `bpe_cli` : Learns BPE model
+* `voc_cli` : Builds vocabulary
 
 Network:
 * `create_cli` : Creates network
@@ -35,7 +35,7 @@ For further information on tokenization options visit https://github.com/OpenNMT
 
 * Build `$BPE` Model:
 ```
-cat $TRAIN.{$SS,$TT} | python3 buildBPE_cli.py -tok_config $TOK -bpe_model $BPE
+cat $TRAIN.{$SS,$TT} | python3 bpe_cli.py -tok_config $TOK -bpe_model $BPE
 ```
 A single BPE model is built for both, source and target, sides of parallel data.
 Previous to BPE learning, the input stream is tokenized as detailed in `$TOK`.
@@ -48,8 +48,8 @@ To build separate models for source and target sides, run the same command using
 The network will only consider a limited set of source (and target) tokens. Such vocabularies can be built running:
 
 ```
-cat $TRAIN.$SS | python3 buildVOC_cli.py -tok_config $BPE.tok_config > $VOC.$SS
-cat $TRAIN.$TT | python3 buildVOC_cli.py -tok_config $BPE.tok_config > $VOC.$TT
+cat $TRAIN.$SS | python3 voc_cli.py -tok_config $BPE.tok_config > $VOC.$SS
+cat $TRAIN.$TT | python3 voc_cli.py -tok_config $BPE.tok_config > $VOC.$TT
 ```
 
 Before computing vocabularies, the script tokenizes input streams following `$BPE.tok_config`. 
