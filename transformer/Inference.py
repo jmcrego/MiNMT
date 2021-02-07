@@ -59,6 +59,7 @@ class Inference():
         ### decode batch step-by-step
         if self.K == 1 and False:
           finals = self.translate_greedy()
+          #finals = self.translate_greedy_nobatchs()
         else:
           finals = self.translate_beam()
         for b in range(len(finals)):
@@ -71,6 +72,50 @@ class Inference():
 
     if output != '-':
       fh.close()
+
+  def translate_greedy_nobatchs(self):
+    hyps = torch.ones([1,1], dtype=int).to(self.device) * self.idx_bos #[1,lt=1]
+    logP = torch.zeros([1,1], dtype=torch.float32).to(self.device)     #[1,lt=1]
+    finals = [defaultdict() for i in range(1)]
+
+    while True:
+      lt = hyps.shape[0]
+
+      ###############
+      ### ADVANCE ###
+      ###############
+
+      ### DECODE ###
+      y_next = self.model.decode(self.z_src, hyps, self.msk_src, msk_tgt=None)[:,-1,:] #[1,lt,Vt] => [1,Vt]
+ 
+      if lt == self.max_size - 1: #last extension
+        y_next[:,] *= self.force_eos #all words are assigned -Inf except <eos> which keeps its logP
+
+      next_logP = y_next.contiguous().view(self.Vt,1) #[Vt,1]
+
+      ### EXPAND ###
+      hyps_extended = hyps.repeat_interleave(repeats=self.Vt, dim=0) #[1,lt] => [Vt,lt]
+      logP_extended = logP.repeat_interleave(repeats=self.Vt, dim=0) #[1,lt] => [Vt,lt]
+
+      hyps_extended = torch.cat((hyps_extended, self.next_wrds.view(-1,1)), dim=-1) #[Vt,lt+1]
+      logP_extended = torch.cat((logP_extended, next_logP), dim=-1) #[Vt,lt+1]
+      lt = hyps_extended.shape[1] #new hypothesis length
+
+      ### KEEP best expansion ###
+      sum_logP = torch.sum(logP_extended,dim=1) #[Vt]
+      _, ind_best = torch.topk(sum_logP, k=1, dim=0) #[1]
+      hyps = hyps_extended[ind_best].view(1,-1) #[1,lt]
+      logP = logP_extended[ind_best].view(1,-1) #[1,lt]
+
+      ### FINALS ###
+      if hyps[0,-1] == self.idx_eos:
+        hyp = ' '.join(map(str,hyps[0].tolist()))
+        cst = sum(logP[0])
+        if self.alpha:
+          cst = cst / norm_length(hyps.shape[1],self.alpha)
+        #logging.info('[FINAL b={}]\t{:6f}\t{}'.format(b,sum_logp,hyp))
+        finals[0][hyp] = cst.item()
+        return finals
 
 
   def translate_greedy(self):
@@ -158,7 +203,7 @@ class Inference():
 
       next_logP = y_next.contiguous().view(-1,1) #[I*Vt,1]
       #logging.info('next_logP = {}'.format(next_logP.shape))
-      next_wrds = self.next_wrds.repeat_interleave(repeats=I, dim=0).view(-1,1) #[1,Vt] => [I*1,Vt] => [bs*Vt,1]
+      next_wrds = self.next_wrds.repeat_interleave(repeats=I, dim=0).view(-1,1) #[1,Vt] => [1*I,Vt] => [I*Vt,1]
       #logging.info('next_wrds = {}'.format(next_wrds.shape))
 
       ### EXPAND ###
@@ -172,18 +217,22 @@ class Inference():
       lt = hyps_extended.shape[1] #new hyp length
 
       ### KEEP K-best expansions of each hypothesis I ###
-      hyps_extended = hyps_extended.contiguous().view(bs,-1,lt) #[bs,I,lt]
-      logP_extended = logP_extended.contiguous().view(bs,-1,lt) #[bs,I,lt]
+      hyps_extended = hyps_extended.contiguous().view(bs,-1,lt) #[bs,1*Vt,lt] or [bs,K*Vt,lt]
+      logP_extended = logP_extended.contiguous().view(bs,-1,lt) #[bs,1*Vt,lt] or [bs,K*Vt,lt]
       #logging.info('hyps_extended = {} logP_extended = {}'.format(hyps_extended.shape, logP_extended.shape))
+      sum_logP_extended = torch.sum(logP_extended,dim=2) #[bs,1*Vt] or [bs,K*Vt]
 
-      _, kbest_inds = torch.topk(torch.sum(logP_extended,dim=2), k=self.K, dim=1) #both are [bs, K] (finds the K-best of dimension 1 (I*K)) no need to norm-length since all have same length
+      _, kbest_inds = torch.topk(sum_logP_extended, k=self.K, dim=1) #both are [bs, K] (finds the K-best of dimension 1 (I*K)) no need to norm-length since all have same length
       hyps = torch.stack([hyps_extended[b][inds] for b,inds in enumerate(kbest_inds)], dim=0).contiguous().view(bs*self.K,lt) #[bs,K,lt] => [bs*K,lt]
       logP = torch.stack([logP_extended[b][inds] for b,inds in enumerate(kbest_inds)], dim=0).contiguous().view(bs*self.K,lt) #[bs,K,lt] => [bs*K,lt]
       #logging.info('hyps = {} logP = {}'.format(hyps.shape, logP.shape))
 
-#      print('')
-#      for i in range(hyps.shape[0]):
-#        print('batch {} beam {}\tlogP={:.6f}\t{}'.format(i//self.K, i%self.K, sum(logP[i]), ' '.join([self.tgt_vocab[t] for t in hyps[i].tolist()]) ))
+      print('')
+      hyps_bs_k = hyps.view(bs,self.K,lt)
+      logP_bs_k = logP.view(bs,self.K,lt)
+      for b in range(hyps_bs_k.shape[0]):
+        for k in range(hyps_bs_k.shape[1]):
+          print('batch {} beam {}\tlogP={:.6f}\t{}'.format(b, k, sum(logP_bs_k[b,k]), ' '.join([self.tgt_vocab[t] for t in hyps_bs_k[b,k].tolist()]) ))
 
       ### FINALS ###
       index_of_finals = (hyps[:,-1]==self.idx_eos).nonzero(as_tuple=False).squeeze(-1) #[n] n being the number of final hyps found
@@ -202,6 +251,7 @@ class Inference():
 
       if sum([len(d) for d in finals]) == bs*self.K:
         return finals
+
 
 
   def format_hyp(self, i, n, c, hyp_idx, src_idx): 
