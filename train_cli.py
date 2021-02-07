@@ -7,13 +7,13 @@ import random
 import logging
 import torch
 import yaml
+import numpy as np
 from transformer.Dataset import Dataset
 from transformer.Vocab import Vocab
 from transformer.ONMTTokenizer import ONMTTokenizer
 from transformer.Model import Encoder_Decoder, load_checkpoint_or_initialise, save_checkpoint, load_checkpoint, numparameters
 from transformer.Optimizer import OptScheduler, LabelSmoothing_NLL, LabelSmoothing_KLDiv
 from transformer.Learning import Learning
-#import numpy as np
 
 def load_dataset(src_vocab, tgt_vocab, fset, fsrc, ftgt, shard_size, max_length, batch_size, batch_type):
   d = Dataset(src_vocab, tgt_vocab)
@@ -156,6 +156,8 @@ class Options():
       self.usage('missing -src_train/-tgt_train options')
     create_logger(log_file,log_level)
     random.seed(self.seed)
+    np.random.seed(self.seed)
+    torch.manual_seed(self.seed)
     logging.info("Options = {}".format(self.__dict__))
 
   def usage(self, messg=None):
@@ -234,7 +236,7 @@ if __name__ == '__main__':
   src_vocab = Vocab(src_token, file=o.dnet + '/src_voc')
   tgt_token = ONMTTokenizer(fyaml=o.dnet + '/tgt_tok')
   tgt_vocab = Vocab(tgt_token, file=o.dnet + '/tgt_voc')
-  assert src_vocab.idx_pad == tgt_vocab.idx_pad
+  assert src_vocab.idx_pad == tgt_vocab.idx_pad, 'src/tgt vocabularies must have the same idx_pad'
   with open(o.dnet + '/network', 'r') as f:
     n = yaml.load(f, Loader=yaml.SafeLoader) #Loader=yaml.FullLoader)
   logging.info("Network = {}".format(n))
