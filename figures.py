@@ -59,10 +59,11 @@ def plotLRate(N):
 	qk_dim = 64
 	v_dim = 64
 	dropout = 0.1
+	share_embeddings = False
 	Vs = 32000
 	Vt = 32000
 	idx_pad = 0
-	model = Encoder_Decoder(n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout, Vs, Vt, idx_pad)
+	model = Encoder_Decoder(n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout, share_embeddings, Vs, Vt, idx_pad)
 	optim = torch.optim.Adam(model.parameters(), lr=lr, betas=(beta1, beta2), eps=eps)
 	optScheduler = OptScheduler(optim, emb_dim, noam_scale, noam_warmup, 0)
 	X = [i for i in range(1,N)]
@@ -78,7 +79,9 @@ def plotLRate(N):
 def plotMasks():
 	batch_src = [[1, 2, 3, 4, 5, 6, 7], [1, 2, 3, 4, 5, 6, 7, 8, 9]]
 	batch_tgt = [[1, 2, 3, 4, 5, 6, 7, 8, 9], [1, 2, 3, 4, 5, 6]]
-	src, tgt, ref, msk_src, msk_tgt = prepare_source(batch_src, batch_tgt, 0, 'cpu')
+
+	src, msk_src = prepare_source(batch_src, 0, 'cpu')
+	tgt, ref, msk_tgt = prepare_target(batch_src, 0, 'cpu')
 	print('src',src)
 	print('tgt',tgt)
 	print('ref',ref)
@@ -93,11 +96,12 @@ def plotMasks():
 	plt.subplot(212)
 	plt.imshow(msk_tgt[0].data.numpy())
 
+
 	plt.show()
 
 
 if __name__ == '__main__':
 
-	#plotPositionalEncoding()
-	#plotLRate(1000000)
-	#plotMasks()
+	plotPositionalEncoding()
+	plotLRate(100000)
+	plotMasks()
