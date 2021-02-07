@@ -74,56 +74,6 @@ def plotLRate(N):
 	plotPoints2d(X, Y, xlabel=xlabel, ylabel=ylabel, legend=legend, f=file)
 	
 
-def plotCurves(file):
-	step_s = []
-	lr_s = []
-	loss_s = []
-	vstep_s = []
-	vloss_s = []
-	with open(file,'r') as f: 
-		for l in f:
-			#[2021-01-12_12:07:11.086] INFO Learning step:363700 epoch:18 batch:4813/21111 ms/batch:213.41 lr:0.000147 loss/tok:2.486
-			#INFO:tensorflow:Step = 500 ; steps/s = 4.81, source words/s = 16172, target words/s = 19413 ; Learning rate = 0.000175 ; Loss = 5.969543
-			step = None
-			lr = None
-			loss = None
-			toks = l.rstrip().split()
-			if len(toks) > 14 and toks[2] == 'LearningStep:' and toks[12] == 'lr:' and toks[14] == 'loss:':
-				step_s.append(int(toks[3]))
-				lr_s.append(float(toks[13]))
-				loss_s.append(float(toks[15]))
-			elif len(toks) > 9 and toks[2] == 'Validation' and toks[3] == 'LearningStep:' and toks[9] == 'loss:':
-				vstep_s.append(int(toks[4]))
-				vloss_s.append(float(toks[10]))
-			elif len(toks) > 19 and toks[16] == 'Learning':
-				lr_s.append(float(toks[19]))
-				step_s.append(int(toks[2]))
-				loss_s.append(float(toks[-1]))
-
-	plt.figure(figsize=(20, 10))
-
-	plt.subplot(211)
-	plt.plot(np.asarray(step_s), np.asarray(loss_s))
-	plt.legend(["Learning Curve"])
-	plt.xlabel("#Steps")
-	plt.ylabel("Loss")
-	plt.grid(True)
-
-	plt.subplot(212)
-	plt.plot(np.asarray(vstep_s), np.asarray(vloss_s))
-	plt.legend(["Validation Curve"])
-	plt.xlabel("#Steps")
-	plt.ylabel("Loss")
-	plt.grid(True)
-
-#	plt.subplot(213)
-#	plt.plot(np.asarray(step_s), np.asarray(lr_s))
-#	plt.legend(["Learning Rate"])
-#	plt.xlabel("#Steps")
-#	plt.ylabel("Rate")
-#	plt.grid(True)
-
-	plt.show()
 
 def plotMasks():
 	batch_src = [[1, 2, 3, 4, 5, 6, 7], [1, 2, 3, 4, 5, 6, 7, 8, 9]]
@@ -151,4 +101,3 @@ if __name__ == '__main__':
 	#plotPositionalEncoding()
 	#plotLRate(1000000)
 	#plotMasks()
-	plotCurves(sys.argv[1])
