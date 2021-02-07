@@ -87,21 +87,15 @@ def plotMasks():
 	print('ref',ref)
 	print('msk_src = {}'.format(msk_src.shape),msk_src)
 	print('msk_tgt = {}'.format(msk_tgt.shape),msk_tgt)
-
-	plt.figure(figsize=(5,5))
-
+	plt.figure(figsize=(5,10))
 	plt.subplot(211)
-	plt.imshow(msk_src.squeeze().data.numpy())
-
+	plt.imshow(msk_src.squeeze().data.numpy()) 
 	plt.subplot(212)
 	plt.imshow(msk_tgt[0].data.numpy())
-
-
 	plt.show()
-
 
 if __name__ == '__main__':
 
-	plotPositionalEncoding()
-	plotLRate(100000)
+	#plotPositionalEncoding()
+	#plotLRate(100000)
 	plotMasks()
