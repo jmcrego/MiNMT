@@ -168,10 +168,10 @@ class Dataset():
 
   def sort_shard(self, shard):
     shard = np.asarray(shard) #[<=shard_size, 3] (3 corresponds to [pos, len_src, len_tgt])
-    if self.idxs_tgt is not None:
-      shard_sorted = np.lexsort((shard[:,2], shard[:,1])) # sort by shard[:,2] (len_src) then by shard[:,1] (len_tgt) (lower to higer lengths)
-    else:
-      shard_sorted = np.argsort(shard[:,1]) # sort by lsrc (lower to higher lenghts)
+#    if self.idxs_tgt is not None:
+#      shard_sorted = np.lexsort((shard[:,2], shard[:,1])) # sort by shard[:,2] (len_src) then by shard[:,1] (len_tgt) (lower to higer lengths)
+#    else:
+    shard_sorted = np.argsort(shard[:,1]) # sort by lsrc (lower to higher lenghts)
     shard = shard[shard_sorted]
     return shard[:,0] #returns only pos (lens are not used)
 
