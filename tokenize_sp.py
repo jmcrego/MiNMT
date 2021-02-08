@@ -21,6 +21,7 @@ prog = sys.argv.pop(0)
 usage = '''usage: {} -sp_model_path FILE [-log_level LEVEL] < stdin
    -sp_model_path FILE : SentencePiece model file
    -log_level   STRING : log level [debug, info, warning, critical, error] (info)
+[Visit https://github.com/OpenNMT/Tokenizer/tree/master/bindings/python to modify options]
 '''.format(prog)
 
 while len(sys.argv):
