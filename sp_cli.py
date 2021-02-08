@@ -63,6 +63,6 @@ for l in sys.stdin:
 logging.info('Learning sp model: {}'.format(sp_model))
 tokenizer = learner.learn(sp_model)
 
-logging.info('Built {} files'.format(sp_model))
+logging.info('Built file {}'.format(sp_model))
 
 
