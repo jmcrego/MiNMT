@@ -94,6 +94,13 @@ def plotMasks():
 	plt.imshow(msk_tgt[0].data.numpy())
 	plt.show()
 
+	plt.figure(figsize=(5,10))
+	plt.subplot(211)
+	plt.imshow(msk_src.squeeze().data.numpy()) 
+	plt.subplot(212)
+	plt.imshow(msk_tgt[1].data.numpy())
+	plt.show()
+
 if __name__ == '__main__':
 
 	#plotPositionalEncoding()
