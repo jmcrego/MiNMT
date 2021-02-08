@@ -28,7 +28,7 @@ while len(sys.argv):
   if tok=='-h':
     sys.stderr.write(usage)
     sys.exit()
-  elif tok=='-sp_model' and len(sys.argv)>=0:
+  elif tok=='-sp_model_path' and len(sys.argv)>=0:
     sp_model = sys.argv.pop(0)
   elif tok=="-log_level":
     log_level = sys.argv.pop(0)
