@@ -28,7 +28,7 @@ def sentencepiece2vocab(ifile, ofile):
       vocab[tok] = len(vocab)
 
   with open(ofile,'w') as f:
-    for wrd,key in sorted(Vocab.items(), key=lambda item: item[1], reverse=True):
+    for wrd,key in sorted(vocab.iteritems(), key=lambda item: item[1], reverse=True):
       f.write(wrd+'\n')
 
   logging.info('Read vocab from {} ~ Written into {} ({} entries)'.format(ifile, ofile, len(vocab)))
