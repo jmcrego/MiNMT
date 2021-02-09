@@ -56,6 +56,7 @@ class Vocab():
     self.str_eos = '<eos>'
     self.tok_to_idx = defaultdict()
     self.idx_to_tok = []
+
     #0 <pad>
     self.tok_to_idx[self.str_pad] = self.idx_pad
     self.idx_to_tok.append(self.str_pad)
@@ -72,6 +73,22 @@ class Vocab():
     with open(file,'r') as f: 
       for l in f:
         tok = l.rstrip()
+        if len(self.idx_to_tok) == 0 and tok != '<pad>':
+          logging.error('idx=0 must be <pad>')
+          sys.exit()
+        elif len(self.idx_to_tok) == 1 and tok != '<unk>':
+          logging.error('idx=1 must be <unk>')
+          sys.exit()
+        elif len(self.idx_to_tok) == 2 and tok != '<bos>':
+          logging.error('idx=2 must be <bos>')
+          sys.exit()
+        elif len(self.idx_to_tok) == 3 and tok != '<eos>':
+          logging.error('idx=3 must be <eos>')
+          sys.exit()
+        if tok in self.tok_to_idx:
+          logging.error('Repeated entry {}'.format(tok))
+          sys.exit()
+
         self.idx_to_tok.append(tok)
         self.tok_to_idx[tok] = len(self.tok_to_idx)
     logging.debug('Read Vocab ({} entries) from file {}'.format(len(self.idx_to_tok), file))
