@@ -26,7 +26,7 @@ cat $TRAIN.{$SS,$TT} | python3 sentencepiece_cli.py -sp_model $SP
 A single SentencePiece model `$SP.model` is built for both, source and target, sides of parallel data. 
 The script also outputs a vocabulary `$SP.vocab` containing the 30,000 most frequent words.
 
-You can use separate SentencePiece models for source and target data sides:
+You can use separate SentencePiece models/vocabularies for source and target data sides:
 ```
 cat $TRAIN.$SS | python3 sentencepiece_cli.py -sp_model $SP_SRC
 cat $TRAIN.$TT | python3 sentencepiece_cli.py -sp_model $SP_TGT
