@@ -159,9 +159,9 @@ if __name__ == '__main__':
     sys.exit()
 
   src_token = ONMTTokenizer(sp_model=o.dnet + '/src_tok')
-  src_vocab = Vocab(file=o.dnet + '/src_voc', ftok=src_token)
+  src_vocab = Vocab(file=o.dnet + '/src_voc', token=src_token)
   tgt_token = ONMTTokenizer(sp_model=o.dnet + '/tgt_tok')
-  tgt_vocab = Vocab(file=o.dnet + '/tgt_voc', ftok=tgt_token)
+  tgt_vocab = Vocab(file=o.dnet + '/tgt_voc', token=tgt_token)
   assert src_vocab.idx_pad == tgt_vocab.idx_pad
   with open(o.dnet + '/network', 'r') as f:
     n = yaml.load(f, Loader=yaml.SafeLoader) #Loader=yaml.FullLoader)
