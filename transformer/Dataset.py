@@ -34,7 +34,7 @@ def file2idx(ftxt=None, vocab=None):
     lens.append(len(idx))
     #out = ['{}:{}'.format(tok[i],idx[i]) for i in range(len(tok))]
     #print("{} {}".format(len(out), ' '.join(out)))
-  logging.info('Read {} lines ~ {} tokens ~ {} OOVs [{:.1f}%] ~ {}'.format(len(lines), ntokens, nunks, 100.0*nunks/ntokens, ftxt))
+  logging.info('Read {} lines ~ {} tokens ~ {} OOVs [{:.2f}%] ~ {}'.format(len(lines), ntokens, nunks, 100.0*nunks/ntokens, ftxt))
   return toks, idxs, lens
 
 ##############################################################################################################
