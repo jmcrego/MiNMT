@@ -163,7 +163,7 @@ class Options():
   def usage(self, messg=None):
     if messg is not None:
       sys.stderr.write(messg + '\n')
-    sys.stderr.write('''{} -dnet DIR -src_train FILE -tgt_train FILE -train_set FILE [-src_valid FILE -tgt_valid FILE -valid_set FILE] [Options]
+    sys.stderr.write('''usage: {} -dnet DIR -src_train FILE -tgt_train FILE -train_set FILE [-src_valid FILE -tgt_valid FILE -valid_set FILE] [Options]
    -dnet              DIR : network directory [must exist]
    -src_train        FILE : source-side training file
    -tgt_train        FILE : target-side training file
