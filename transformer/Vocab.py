@@ -5,13 +5,13 @@ import os
 import logging
 from collections import defaultdict
 
-def sentencepiece2vocab(file, ofile):
+def sentencepiece2vocab(ifile, ofile):
   vocab = []
   vocab.append('<pad>') #### this does not appear in sentencepiece
   vocab.append('<unk>')
   vocab.append('<bos>')
   vocab.append('<eos>')
-  with open(file,'r') as f: 
+  with open(ifile,'r') as f: 
     for l in f:
       toks = l.rstrip().split('\t')
       if len(toks) != 2:
@@ -27,13 +27,13 @@ def sentencepiece2vocab(file, ofile):
         logging.warning('Bad entry: {} [skipping]'.format(tok))
         continue
       vocab.append(tok)
-  logging.info('Read Vocab from file {}'.format(file))
+  logging.info('Read Vocab from file {}'.format(ifile))
 
   with open(ofile,'w') as f:
     for tok in vocab:
       f.write(tok+'\n')
 
-  logging.info('Written Vocab ({} entries) into file {}'.format(len(vocab),ofile))
+  logging.info('Read sp vocab from {} ~ written into {} ({} entries)'.format(ifile, ofile, len(vocab)))
 
 
 ##############################################################################################################
