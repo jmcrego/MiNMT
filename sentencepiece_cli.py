@@ -6,7 +6,7 @@ import yaml
 import logging
 
 def create_logger(logfile, loglevel):
-  numeric_level = getattr(logging, loglevel.upper(), None)
+	numeric_level = getattr(logging, loglevel.upper(), None)
 	if not isinstance(numeric_level, int):
 		logging.error("Invalid log level={}".format(loglevel))
 		sys.exit()
