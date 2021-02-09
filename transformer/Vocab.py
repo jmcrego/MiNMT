@@ -5,7 +5,7 @@ import os
 import logging
 from collections import defaultdict
 
-sentencepiece2vocab(file, ofile):
+def sentencepiece2vocab(file, ofile):
   vocab = []
   vocab.append('<pad>') #### this does not appear in sentencepiece
   with open(file,'r') as f: 
