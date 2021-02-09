@@ -19,7 +19,7 @@ def sentencepiece2vocab(ifile, ofile):
         logging.warning('Bad entry: {} [Expected 2 columns]'.format(l))
         continue
       tok = toks[0]
-      if tok == '<pad>' or tok == '<unk>' or tok == '<s>' or tok == '</s>':
+      if tok == '<pad>' or tok == '<unk>' or tok == '<s>' or tok == '</s>' or tok == '<bos>' or tok =='<eos>':
         continue
       if tok in vocab:
         logging.warning('Repeated entry: {} [skipping]'.format(tok))
