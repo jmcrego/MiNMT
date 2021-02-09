@@ -61,7 +61,7 @@ Otherwise:
 python3 ./create_cli.py -dnet $DNET -src_vocab $SP_SRC.vocab -tgt_vocab $SP_TGT.vocab -src_token $SP_SRC.model -tgt_token $SP_TGT.model
 ```
 
-If you skipped preprocessing -src_tok and/or -tgt_tok options are not used.
+Do not use `-src_tok` and/or `-tgt_tok` options if you skipped preprocessing.
 
 The script creates the directory `$DNET` containing:
 * A network description file: 
