@@ -21,6 +21,7 @@ def file2idx(ftxt=None, vocab=None):
 
   for l in lines:
     tok = vocab.token.tokenize(l)
+    print(tok)
     tok.insert(0,vocab.str_bos)
     tok.append(vocab.str_eos)
     idx = []

@@ -97,8 +97,8 @@ class Vocab():
       return self.idx_to_tok[s] ### s exists in self.idx_to_tok
     ### input is a string, i want the index
     if s not in self: 
-      print(s,self.idx_unk)
+      #print(s,self.idx_unk)
       return self.idx_unk
-    print(s,self.tok_to_idx[s])
+    #print(s,self.tok_to_idx[s])
     return self.tok_to_idx[s]
 
