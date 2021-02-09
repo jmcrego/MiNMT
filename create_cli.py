@@ -4,8 +4,8 @@ import sys
 import os
 import shutil
 import time
-import yaml
 import logging
+from transformer.Vocab import sentencepiece2vocab
 
 def create_logger(logfile, loglevel):
     numeric_level = getattr(logging, loglevel.upper(), None)
@@ -99,10 +99,10 @@ class Options():
   def usage(self):
     sys.stderr.write('''{} -dnet FILE [Options]
    -dnet         DIR : network ouput directory [must not exist]
-   -src_vocab   FILE : source vocabulary file
-   -tgt_vocab   FILE : target vocabulary file
-   -src_token   FILE : source tokenizer file
-   -tgt_token   FILE : target tokenizer file
+   -src_vocab   FILE : source SentencePiece vocab
+   -tgt_vocab   FILE : target SentencePiece vocab
+   -src_token   FILE : source SentencePiece model
+   -tgt_token   FILE : target SentencePiece model
 
    -emb_dim      INT : model embedding dimension ({})
    -qk_dim       INT : query/key embedding dimension ({})
@@ -156,31 +156,12 @@ if __name__ == '__main__':
     f.write('dropout: {}\n'.format(opts.dropout))
     f.write('share_embeddings: {}\n'.format(opts.share_embeddings))
 
-  shutil.copy(opts.src_vocab, opts.dnet+'/src_voc')
-  logging.info('copied source vocab {} into {}/src_voc'.format(opts.src_vocab, opts.dnet))
-
-  shutil.copy(opts.tgt_vocab, opts.dnet+'/tgt_voc')
-  logging.info('copied target vocab {} into {}/tgt_voc'.format(opts.tgt_vocab, opts.dnet))
-
-  with open(opts.src_token, 'r') as f:
-    tokopts = yaml.load(f, Loader=yaml.SafeLoader) #Loader=yaml.FullLoader)
-    if 'bpe_model_path' in tokopts:
-      shutil.copy(tokopts['bpe_model_path'], opts.dnet+'/src_bpe')
-      logging.info('copied source bpe {} into {}/src_bpe'.format(tokopts['bpe_model_path'], opts.dnet))
-      tokopts['bpe_model_path'] = '{}/src_bpe'.format(opts.dnet)
-      with open("{}/src_tok".format(opts.dnet), 'w') as fyaml:    
-        yaml.dump(tokopts, fyaml)
-      logging.info('copied source tok {} into {}/src_tok'.format(opts.src_token, opts.dnet))
-
-  with open(opts.tgt_token, 'r') as f:
-    tokopts = yaml.load(f, Loader=yaml.SafeLoader) #Loader=yaml.FullLoader)
-    if 'bpe_model_path' in tokopts:
-      shutil.copy(tokopts['bpe_model_path'], opts.dnet+'/tgt_bpe')
-      logging.info('copied target bpe {} into {}/tgt_bpe'.format(tokopts['bpe_model_path'], opts.dnet))
-      tokopts['bpe_model_path'] = '{}/tgt_bpe'.format(opts.dnet)
-      with open("{}/tgt_tok".format(opts.dnet), 'w') as fyaml:
-        yaml.dump(tokopts, fyaml)
-      logging.info('copied target tok {} into {}/tgt_tok'.format(opts.tgt_token, opts.dnet))
+  shutil.copy(opts.src_token, opts.dnet+'/src_tok')
+  logging.info('copied source token {} into {}/src_tok'.format(opts.src_token, opts.dnet))
+  shutil.copy(opts.tgt_token, opts.dnet+'/tgt_tok')
+  logging.info('copied target token {} into {}/tgt_tok'.format(opts.tgt_token, opts.dnet))
+  sentencepiece2vocab(opts.src_vocab, opts.dnet+'/src_voc')
+  sentencepiece2vocab(opts.tgt_vocab, opts.dnet+'/tgt_voc')
 
   toc = time.time()
   logging.info('Done ({:.2f} seconds)'.format(toc-tic))
