@@ -137,12 +137,12 @@ if __name__ == '__main__':
   if not os.path.isfile(opts.tgt_vocab):
     logging.error('cannot find target vocab file: {}'.format(opts.tgt_vocab))
     sys.exit()
-  if not os.path.isfile(opts.src_token):
-    logging.error('cannot find source token file: {}'.format(opts.src_token))
-    sys.exit()
-  if not os.path.isfile(opts.tgt_token):
-    logging.error('cannot find target token file: {}'.format(opts.tgt_token))
-    sys.exit()
+  #if not os.path.isfile(opts.src_token):
+  #  logging.error('cannot find source token file: {}'.format(opts.src_token))
+  #  sys.exit()
+  #if not os.path.isfile(opts.tgt_token):
+  #  logging.error('cannot find target token file: {}'.format(opts.tgt_token))
+  #  sys.exit()
 
   os.mkdir(opts.dnet)
   logging.info('created network directory: {}'.format(opts.dnet))
@@ -156,11 +156,16 @@ if __name__ == '__main__':
     f.write('dropout: {}\n'.format(opts.dropout))
     f.write('share_embeddings: {}\n'.format(opts.share_embeddings))
 
-  shutil.copy(opts.src_token, opts.dnet+'/src_tok')
-  logging.info('copied source token {} into {}/src_tok'.format(opts.src_token, opts.dnet))
-  shutil.copy(opts.tgt_token, opts.dnet+'/tgt_tok')
-  logging.info('copied target token {} into {}/tgt_tok'.format(opts.tgt_token, opts.dnet))
+  if self.src_token is not None:
+    shutil.copy(opts.src_token, opts.dnet+'/src_tok')
+    logging.info('copied source token {} into {}/src_tok'.format(opts.src_token, opts.dnet))
+
+  if self.tgt_token is not None:
+    shutil.copy(opts.tgt_token, opts.dnet+'/tgt_tok')
+    logging.info('copied target token {} into {}/tgt_tok'.format(opts.tgt_token, opts.dnet))
+
   sentencepiece2vocab(opts.src_vocab, opts.dnet+'/src_voc')
+
   sentencepiece2vocab(opts.tgt_vocab, opts.dnet+'/tgt_voc')
 
   toc = time.time()
