@@ -18,9 +18,9 @@ def create_logger(logfile, loglevel):
 sp_model = None
 log_level = 'info'
 prog = sys.argv.pop(0)
-usage = '''usage: {} -sp_model_path FILE [-log_level LEVEL] < stdin
-   -sp_model_path FILE : SentencePiece model file
-   -log_level    LEVEL : log level [debug, info, warning, critical, error] (info)
+usage = '''usage: {} -sp_model FILE [-log_level LEVEL] < stdin
+   -sp_model   FILE : SentencePiece model file
+   -log_level LEVEL : log level [debug, info, warning, critical, error] (info)
 [Visit https://github.com/OpenNMT/Tokenizer/tree/master/bindings/python to modify options]
 '''.format(prog)
 
@@ -29,7 +29,7 @@ while len(sys.argv):
   if tok=='-h':
     sys.stderr.write(usage)
     sys.exit()
-  elif tok=='-sp_model_path' and len(sys.argv)>=0:
+  elif tok=='-sp_model' and len(sys.argv)>=0:
     sp_model = sys.argv.pop(0)
   elif tok=="-log_level":
     log_level = sys.argv.pop(0)
@@ -45,7 +45,7 @@ if sp_model is None:
   sys.exit()
 
 
-token = pyonmttok.Tokenizer(mode = None, sp_model_path = sp_model, joiner_annotate = True)
+token = pyonmttok.Tokenizer(mode = 'space', sp_model_path = sp_model, joiner_annotate = True)
 #token = pyonmttok.Tokenizer(mode = 'space', sp_model_path = sp_model, spacer_annotate = True)
 for l in sys.stdin:
   t, _ = token.tokenize(l.rstrip())
