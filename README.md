@@ -32,7 +32,7 @@ cat $TRAIN.$SS | python3 sentencepiece_cli.py -sp_model $SP_SRC
 cat $TRAIN.$TT | python3 sentencepiece_cli.py -sp_model $SP_TGT
 ```
 
-Skip preprocessing step if your data is already tokenized.
+Skip this preprocessing step if your data is already tokenized.
 
 
 ### (2) Create network
