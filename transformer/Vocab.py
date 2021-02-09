@@ -8,6 +8,9 @@ from collections import defaultdict
 def sentencepiece2vocab(file, ofile):
   vocab = []
   vocab.append('<pad>') #### this does not appear in sentencepiece
+  vocab.append('<unk>')
+  vocab.append('<bos>')
+  vocab.append('<eos>')
   with open(file,'r') as f: 
     for l in f:
       toks = l.rstrip().split('\t')
@@ -15,10 +18,8 @@ def sentencepiece2vocab(file, ofile):
         logging.warning('Bad entry: {} [Expected 2 columns]'.format(l))
         continue
       tok = toks[0]
-      if tok == '<s>':
-        tok = '<bos>'
-      elif tok == '</s>':
-        tok = '<eos>'
+      if tok == '<pad>' or tok == '<unk>' or tok == '<s>' or tok == '</s>':
+        continue
       if tok in vocab:
         logging.warning('Repeated entry: {} [skipping]'.format(tok))
         continue
@@ -54,8 +55,6 @@ class Vocab():
     self.str_bos = '<bos>'
     self.idx_eos = 3
     self.str_eos = '<eos>'
-    self.idx_sep = 4
-    self.str_sep = '<sep>'
     self.tok_to_idx = defaultdict()
     self.idx_to_tok = []
     #0 <pad>
@@ -70,9 +69,6 @@ class Vocab():
     #3 <eos>
     self.tok_to_idx[self.str_eos] = self.idx_eos
     self.idx_to_tok.append(self.str_eos)
-    #4 <sep>
-    self.tok_to_idx[self.str_sep] = self.idx_sep
-    self.idx_to_tok.append(self.str_sep)
 
     with open(file,'r') as f: 
       for l in f:
