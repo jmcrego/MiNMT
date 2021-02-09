@@ -53,7 +53,7 @@ if sp_model is None:
 	sys.exit()
 
 ###
-### LEARN SP model
+### LEARN SP model (to use this vocabulary you must use the SAME tokenization: mode = 'none', spacer_annotate = True, sp_model_path = sp_model)
 ###
 learner = pyonmttok.SentencePieceLearner(vocab_size=vocab_size, character_coverage=character_coverage, keep_vocab=True)
 logging.info('Reading data')

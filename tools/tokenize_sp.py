@@ -40,9 +40,9 @@ while len(sys.argv):
 
 create_logger(None, log_level)
 
-if sp_model is None:		
-  logging.error('error: missing -sp_model option')    
-  sys.exit()
+#if sp_model is None:		
+#  logging.error('error: missing -sp_model option')    
+#  sys.exit()
 
 token = ONMTTokenizer(sp_model)
 for l in sys.stdin:
