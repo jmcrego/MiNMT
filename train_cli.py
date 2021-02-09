@@ -264,6 +264,8 @@ if __name__ == '__main__':
   ##################
   if o.src_valid is not None:
     valid = Dataset(src_vocab, o.src_valid, tgt_vocab, o.tgt_valid, o.shard_size, o.batch_size, o.batch_type, o.max_length)
+  else:
+    valid =None
   train = Dataset(src_vocab, o.src_train, tgt_vocab, o.tgt_train, o.shard_size, o.batch_size, o.batch_type, o.max_length)
 
   #############
