@@ -11,7 +11,7 @@ class ONMTTokenizer():
 			logging.info('SPACE tokenizer')
 		else:
 			self.tokenizer = pyonmttok.Tokenizer(mode = 'none', spacer_annotate = True, sp_model_path = sp_model)
-			logging.info('SentencePiece tokenizer')
+			logging.info('SentencePiece tokenizer: {}'.format(sp_model))
 
 	def tokenize(self, text):
 		return self.tokenizer.tokenize(text)[0]
