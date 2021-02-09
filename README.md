@@ -3,8 +3,7 @@
 ## Clients
 
 Preprocessing:
-* `bpe_cli` : Learns BPE model
-* `vocab_cli` : Builds vocabulary
+* `sentencepiece_cli` : Learns SentencePiece model over raw (untokenized) text files
 
 Network:
 * `create_cli` : Creates network
@@ -18,58 +17,47 @@ Run clients with the -h option for a detailed description of available options.
 Hereinafter we considier `$TRAIN`, `$VALID` and `$TEST` variables containing suffixes of the respective train/valid/test files, with `$SS` and `$TT` variables indicating file extensions of source and target language sides.
 Train/Valid/Test files are formated with one sentence per line of untokenized (raw) text. 
 
-### (1) Tokenization
+### (1) Preprocessing
 
-Tokenization indicates the string transformations performed on raw text files before passed to the NMT network (typically to separate punctuation and to split words into subwords). 
-We use the python api (https://github.com/OpenNMT/Tokenizer) that can be installed via `pip install pyonmttok`.
-
-* Create first the tokenization config file `$TOK`. For instance:
+* Build tokenization (SentencePiece) model:
 ```
-mode: aggressive
-joiner_annotate: True
-segment_numbers: True
+cat $TRAIN.{$SS,$TT} | python3 sentencepiece_cli.py -sp_model $SP
 ```
+A single SentencePiece model `$SP.model` is built for both, source and target, sides of parallel data. 
+The script also outputs a vocabulary `$SP.vocab` containing the 30,000 most frequent words.
 
-For further information on tokenization options visit https://github.com/OpenNMT/Tokenizer/tree/master/bindings/python 
-
-
-* Build `$BPE` Model:
+You can use separate SentencePiece models for source and target data sides:
 ```
-cat $TRAIN.{$SS,$TT} | python3 bpe_cli.py -tok_config $TOK -bpe_model $BPE
-```
-A single BPE model is built for both, source and target, sides of parallel data.
-Previous to BPE learning, the input stream is tokenized as detailed in `$TOK`.
-The script outputs the BPE model `$BPE` and a new tokenization config file containing a reference to the BPE model `$BPE.tok_config`.
-To build separate models for source and target sides, run the same command using as input only source (or target) data.
-
-
-### (2) Vocabularies
-
-The network will only consider a limited set of source (and target) tokens. Such vocabularies can be built running:
-
-```
-cat $TRAIN.$SS | python3 vocab_cli.py -tok_config $BPE.tok_config > $VOC.$SS
-cat $TRAIN.$TT | python3 vocab_cli.py -tok_config $BPE.tok_config > $VOC.$TT
+cat $TRAIN.$SS | python3 sentencepiece_cli.py -sp_model $SP_SRC
+cat $TRAIN.$TT | python3 sentencepiece_cli.py -sp_model $SP_TGT
 ```
 
-Before computing vocabularies, the script tokenizes input streams following `$BPE.tok_config`. 
+Skip preprocessing step if your data is already tokenized.
 
-### (3) Create network
 
+### (2) Create network
+
+
+If you built a single `$SP` model/vocabulary:
 ```
-python3 ./create_cli.py -dnet $DNET -src_vocab $VOC.$SS -tgt_vocab $VOC.$TT -src_token $BPE.tok -tgt_token $BPE.tok
+python3 ./create_cli.py -dnet $DNET -src_vocab $SP.vocab -tgt_vocab $SP.vocab -src_token $SP.model -tgt_token $SP.model
 ```
 
-Creates the directory `$DNET` containing:
+Otherwise:
+```
+python3 ./create_cli.py -dnet $DNET -src_vocab $SP_SRC.vocab -tgt_vocab $SP_TGT.vocab -src_token $SP_SRC.model -tgt_token $SP_TGT.model
+```
+
+If you skipped preprocessing -src_tok and/or -tgt_tok options are not used.
+
+The script creates the directory `$DNET` containing:
 * A network description file: 
   * network
-* Copies vocabularies, tokenization options and BPE models:
+* Vocabularies and tokenization (SentencePiece) models:
   * src_voc
   * tgt_voc
-  * src_tok
-  * tgt_tok
-  * src_bpe
-  * tgt_bpe
+  * src_tok (if used -src_token)
+  * tgt_tok (if used -tgt_token)
 
 Default network options are:
 ```
@@ -83,7 +71,7 @@ Default network options are:
 -share_embeddings False
 ```
 
-### (4) Learning
+### (3) Learning
 ```
 python3 ./train_cli.py -dnet $DNET -src_train $TRAIN.$SS -tgt_train $TRAIN.$TT -src_valid $VALID.$SS -tgt_valid $VALID.$TT
 ```
@@ -118,7 +106,9 @@ Starts (or continues) learning using the given training/validation files. Defaul
 
 Network checkpoints are built in `$DNET` directory named `network.checkpoint_????????.pt`.
 
-### (5) Inference
+Remember that training and validation datasets are handled using the tokenization and vocabularies available in $DNET directory.
+
+### (4) Inference
 ```
 python3 ./translate_cli.py -dnet $DNET -i $TEST.$SS
 ```
@@ -150,6 +140,8 @@ Option -format specifies the fields to output for every example (TAB-separated):
 [H] hypothesis (detokenised)
 [v] hypothesis indexes
 ```
+
+Remember that test handled are indexed using the tokenization and vocabularies available in $DNET directory.
 
 
 
