@@ -59,8 +59,10 @@ sp_model = os.path.abspath(sp_model)
 ###
 learner = pyonmttok.SentencePieceLearner(vocab_size=vocab_size, character_coverage=character_coverage, keep_vocab=True)
 logging.info('Reading data')
+nlines = 0
 for l in sys.stdin:
+	nlines += 1
 	learner.ingest(l)
-logging.info('Learning sp model')
+logging.info('Learning sp model ({} lines)'.format(nlines))
 tokenizer = learner.learn(sp_model)
 logging.info('Built files {}.model and {}.vocab'.format(sp_model,sp_model))
