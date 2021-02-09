@@ -77,7 +77,7 @@ for n, (wrd, frq) in enumerate(sorted(Freq.items(), key=lambda item: item[1], re
     break
   print("{}\t{}".format(wrd,frq))
 
-logging.info("Vocabulary size = {}".format(n))
+logging.info("Vocabulary size = {}".format(n+3))
 
 
 
