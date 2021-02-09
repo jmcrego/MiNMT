@@ -158,9 +158,9 @@ if __name__ == '__main__':
     logging.error('cannot find target token file: {}'.format(o.dnet + '/tgt_tok'))
     sys.exit()
 
-  src_token = ONMTTokenizer(fyaml=o.dnet + '/src_tok')
+  src_token = ONMTTokenizer(sp_model=o.dnet + '/src_tok')
   src_vocab = Vocab(file=o.dnet + '/src_voc', ftok=src_token)
-  tgt_token = ONMTTokenizer(fyaml=o.dnet + '/tgt_tok')
+  tgt_token = ONMTTokenizer(sp_model=o.dnet + '/tgt_tok')
   tgt_vocab = Vocab(file=o.dnet + '/tgt_voc', ftok=tgt_token)
   assert src_vocab.idx_pad == tgt_vocab.idx_pad
   with open(o.dnet + '/network', 'r') as f:
