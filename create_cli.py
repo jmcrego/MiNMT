@@ -97,7 +97,7 @@ class Options():
       self.usage()
 
   def usage(self):
-    sys.stderr.write('''{} -dnet FILE [Options]
+    sys.stderr.write('''usage: {} -dnet FILE [Options]
    -dnet         DIR : network ouput directory [must not exist]
    -src_vocab   FILE : source SentencePiece vocab
    -tgt_vocab   FILE : target SentencePiece vocab
