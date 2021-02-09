@@ -96,7 +96,7 @@ class Options():
   def usage(self, messg=None):
     if messg is not None:
       sys.stderr.write(messg + '\n')
-    sys.stderr.write('''{} -dnet DIR -i FILE [Options]
+    sys.stderr.write('''usage: {} -dnet DIR -i FILE [Options]
    -dnet          DIR : network directory [must exist]
    -i            FILE : input file to translate
    -o            FILE : output file ({})
