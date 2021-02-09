@@ -28,13 +28,12 @@ def sentencepiece2vocab(ifile, ofile):
         logging.warning('Bad entry: {} [skipping]'.format(tok))
         continue
       vocab.append(tok)
-  logging.info('Read Vocab from file {}'.format(ifile))
 
   with open(ofile,'w') as f:
     for tok in vocab:
       f.write(tok+'\n')
 
-  logging.info('Read sp vocab from {} ~ written into {} ({} entries)'.format(ifile, ofile, len(vocab)))
+  logging.info('Read vocab from {} ~ Written into {} ({} entries)'.format(ifile, ofile, len(vocab)))
 
 
 ##############################################################################################################
