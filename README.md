@@ -32,6 +32,8 @@ cat $TRAIN.$SS | python3 sentencepiece_cli.py -sp_model $SP_SRC
 cat $TRAIN.$TT | python3 sentencepiece_cli.py -sp_model $SP_TGT
 ```
 
+Thus obtaining `$SP_SRC.model`, `$SP_SRC.vocab`, `$SP_TGT.model` and `$SP_TGT.vocab` files.
+
 Skip this preprocessing step if your data is already tokenized.
 
 
