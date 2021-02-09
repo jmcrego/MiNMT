@@ -15,10 +15,7 @@ def sentencepiece2vocab(ifile, ofile):
   with open(ifile,'r') as f:
     for l in f:
       toks = l.rstrip().split('\t')
-      if len(toks) != 2:
-        logging.warning('Bad entry: {} [Expected 2 columns]'.format(l))
-        continue
-      tok = toks[0]
+      tok = toks[0] ### get first column if there are more
       if tok == '<pad>' or tok == '<unk>' or tok == '<s>' or tok == '</s>' or tok == '<bos>' or tok == '<eos>' or tok == '<blank>':
         continue
       if tok in vocab:
