@@ -47,5 +47,5 @@ if sp_model is None:
 
 token = ONMTTokenizer(sp_model)
 for l in sys.stdin:
-  t, _ = token.tokenize(l.rstrip())
+  t = token.tokenize(l.rstrip())
   print(' '.join(t))
