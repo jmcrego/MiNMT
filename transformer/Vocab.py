@@ -6,11 +6,11 @@ import logging
 from collections import defaultdict
 
 def sentencepiece2vocab(ifile, ofile):
-  vocab = defaultdict()
-  vocab.append('<pad>') #### this does not appear in sentencepiece
-  vocab.append('<unk>')
-  vocab.append('<bos>')
-  vocab.append('<eos>')
+  vocab = set()
+  vocab.add('<pad>') #### this does not appear in sentencepiece
+  vocab.add('<unk>')
+  vocab.add('<bos>')
+  vocab.add('<eos>')
 
   with open(ifile,'r') as f:
     for l in f:
@@ -27,7 +27,7 @@ def sentencepiece2vocab(ifile, ofile):
       if ' ' in tok or len(tok) == 0:
         logging.warning('Bad entry: {} [skipping]'.format(tok))
         continue
-      vocab.append(tok)
+      vocab.add(tok)
 
   with open(ofile,'w') as f:
     for tok in vocab:
