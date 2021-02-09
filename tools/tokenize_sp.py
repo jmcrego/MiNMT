@@ -22,7 +22,6 @@ usage = '''usage: {} -sp_model FILE [-log_level LEVEL] < stdin
    -sp_model   FILE : SentencePiece model file
    -log_level LEVEL : log level [debug, info, warning, critical, error] (info)
    -h               : this help
-[Visit https://github.com/OpenNMT/Tokenizer/tree/master/bindings/python to modify options]
 '''.format(prog)
 
 while len(sys.argv):

@@ -52,8 +52,6 @@ if sp_model is None:
 	logging.error('error: missing -sp_model option')
 	sys.exit()
 
-#sp_model = os.path.abspath(sp_model)
-
 ###
 ### LEARN SP model
 ###
