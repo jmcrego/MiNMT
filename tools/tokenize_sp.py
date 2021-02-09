@@ -19,7 +19,7 @@ sp_model = None
 log_level = 'info'
 prog = sys.argv.pop(0)
 usage = '''usage: {} -sp_model FILE [-log_level LEVEL] < stdin
-   -sp_model   FILE : SentencePiece model file
+   -sp_model   FILE : SentencePiece model file (if not given 'space' tokenizer)
    -log_level LEVEL : log level [debug, info, warning, critical, error] (info)
    -h               : this help
 '''.format(prog)
@@ -40,11 +40,7 @@ while len(sys.argv):
 
 create_logger(None, log_level)
 
-#if sp_model is None:		
-#  logging.error('error: missing -sp_model option')    
-#  sys.exit()
-
-token = ONMTTokenizer(sp_model)
+token = ONMTTokenizer(sp_model) ### sp_model may be None => space tokenizer
 for l in sys.stdin:
   t = token.tokenize(l.rstrip())
   print(' '.join(t))
