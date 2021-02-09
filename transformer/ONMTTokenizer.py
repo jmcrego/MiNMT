@@ -9,7 +9,7 @@ import pyonmttok
 ####################################################################
 class ONMTTokenizer():
   def __init__(self, sp_model):
-    self.tokenizer = pyonmttok.Tokenizer(mode = None, sp_model_path = sp_model, joiner_annotate = True)
+    self.tokenizer = pyonmttok.Tokenizer(mode = 'space', sp_model_path = sp_model, joiner_annotate = True)
 
   def tokenize(self, text):
     return self.tokenizer.tokenize(text)[0]
