@@ -41,14 +41,14 @@ def sentencepiece2vocab(ifile, ofile):
 ### Vocab ####################################################################################################
 ##############################################################################################################
 class Vocab():
-  def __init__(self, file, ftok): 
+  def __init__(self, file, token): 
     super(Vocab, self).__init__()
 
     if not os.path.exists(file):
       logging.error('Missing {} vocab file'.format(file))
       sys.exit()
 
-    self.token = ftok
+    self.token = token
     self.idx_pad = 0 
     self.str_pad = '<pad>'
     self.idx_unk = 1 
