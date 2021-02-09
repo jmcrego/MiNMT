@@ -21,10 +21,10 @@ Train/Valid/Test files are formated with one sentence per line of untokenized (r
 
 * Build tokenization (SentencePiece) model:
 ```
-cat $TRAIN.{$SS,$TT} | python3 sentencepiece_cli.py -sp_model $SP
+cat $TRAIN.{$SS,$TT} | python3 sentencepiece_cli.py -sp_model $SP_JOINT
 ```
-A single SentencePiece model `$SP.model` is built for both, source and target, sides of parallel data. 
-The script also outputs a vocabulary `$SP.vocab` containing the 30,000 most frequent words.
+A single SentencePiece model `$SP_JOINT.model` is built for both, source and target, sides of parallel data. 
+The script also outputs a vocabulary `$SP_JOINT.vocab` containing the 30,000 most frequent words.
 
 You can use separate SentencePiece models/vocabularies for source and target data sides:
 ```
@@ -40,9 +40,9 @@ Skip this preprocessing step if your data is already tokenized.
 ### (2) Create network
 
 
-If you built a single `$SP` model/vocabulary:
+If you built a single model/vocabulary:
 ```
-python3 ./create_cli.py -dnet $DNET -src_vocab $SP.vocab -tgt_vocab $SP.vocab -src_token $SP.model -tgt_token $SP.model
+python3 ./create_cli.py -dnet $DNET -src_vocab $SP_JOINT.vocab -tgt_vocab $SP_JOINT.vocab -src_token $SP_JOINT.model -tgt_token $SP_JOINT.model
 ```
 
 Otherwise:
