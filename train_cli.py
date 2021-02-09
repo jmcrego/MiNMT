@@ -10,7 +10,7 @@ import yaml
 import numpy as np
 from transformer.Dataset import Dataset
 from transformer.Vocab import Vocab
-from transformer.ONMTTokenizer import ONMTTokenizer
+from tools.ONMTTokenizer import ONMTTokenizer
 from transformer.Model import Encoder_Decoder, load_checkpoint_or_initialise, save_checkpoint, load_checkpoint, numparameters
 from transformer.Optimizer import OptScheduler, LabelSmoothing_NLL, LabelSmoothing_KLDiv
 from transformer.Learning import Learning

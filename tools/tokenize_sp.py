@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import sys
 import logging
-from transformer.ONMTTokenizer import ONMTTokenizer
+from ONMTTokenizer import ONMTTokenizer
 
 def create_logger(logfile, loglevel):
   numeric_level = getattr(logging, loglevel.upper(), None)
