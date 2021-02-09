@@ -232,10 +232,10 @@ if __name__ == '__main__':
     logging.error('cannot find target token file: {}'.format(o.dnet + '/tgt_tok'))
     sys.exit()
 
-  src_token = ONMTTokenizer(fyaml=o.dnet + '/src_tok')
-  src_vocab = Vocab(src_token, file=o.dnet + '/src_voc')
-  tgt_token = ONMTTokenizer(fyaml=o.dnet + '/tgt_tok')
-  tgt_vocab = Vocab(tgt_token, file=o.dnet + '/tgt_voc')
+  src_token = ONMTTokenizer(sp_model=o.dnet + '/src_tok')
+  src_vocab = Vocab(file=o.dnet + '/src_voc')
+  tgt_token = ONMTTokenizer(sp_model=o.dnet + '/tgt_tok')
+  tgt_vocab = Vocab(file=o.dnet + '/tgt_voc')
   assert src_vocab.idx_pad == tgt_vocab.idx_pad, 'src/tgt vocabularies must have the same idx_pad'
   with open(o.dnet + '/network', 'r') as f:
     n = yaml.load(f, Loader=yaml.SafeLoader) #Loader=yaml.FullLoader)
