@@ -6,16 +6,16 @@ import yaml
 import logging
 
 def create_logger(logfile, loglevel):
-    numeric_level = getattr(logging, loglevel.upper(), None)
-    if not isinstance(numeric_level, int):
-        logging.error("Invalid log level={}".format(loglevel))
-        sys.exit()
-    if logfile is None or logfile == 'stderr':
-        logging.basicConfig(format='[%(asctime)s.%(msecs)03d] %(levelname)s %(message)s', datefmt='%Y-%m-%d_%H:%M:%S', level=numeric_level)
-        logging.debug('Created Logger level={}'.format(loglevel))
-    else:
-        logging.basicConfig(filename=logfile, format='[%(asctime)s.%(msecs)03d] %(levelname)s %(message)s', datefmt='%Y-%m-%d_%H:%M:%S', level=numeric_level)
-        logging.debug('Created Logger level={} file={}'.format(loglevel, logfile))
+  numeric_level = getattr(logging, loglevel.upper(), None)
+	if not isinstance(numeric_level, int):
+		logging.error("Invalid log level={}".format(loglevel))
+		sys.exit()
+	if logfile is None or logfile == 'stderr':
+		logging.basicConfig(format='[%(asctime)s.%(msecs)03d] %(levelname)s %(message)s', datefmt='%Y-%m-%d_%H:%M:%S', level=numeric_level)
+		logging.debug('Created Logger level={}'.format(loglevel))
+	else:
+		logging.basicConfig(filename=logfile, format='[%(asctime)s.%(msecs)03d] %(levelname)s %(message)s', datefmt='%Y-%m-%d_%H:%M:%S', level=numeric_level)
+		logging.debug('Created Logger level={} file={}'.format(loglevel, logfile))
 
 vocab_size = 30000
 character_coverage=0.98
@@ -49,8 +49,8 @@ while len(sys.argv):
 create_logger(None, log_level)
 
 if sp_model is None:		
-    logging.error('error: missing -sp_model option')
-    sys.exit()
+	logging.error('error: missing -sp_model option')
+	sys.exit()
 
 sp_model = os.path.abspath(sp_model)
 
@@ -60,9 +60,7 @@ sp_model = os.path.abspath(sp_model)
 learner = pyonmttok.SentencePieceLearner(vocab_size=vocab_size, character_coverage=character_coverage, keep_vocab=True)
 logging.info('Reading data')
 for l in sys.stdin:
-  learner.ingest(l)
+	learner.ingest(l)
 logging.info('Learning sp model')
 tokenizer = learner.learn(sp_model)
 logging.info('Built files {}.model and {}.vocab'.format(sp_model,sp_model))
-
-
