@@ -89,12 +89,12 @@ class Options():
     if self.tgt_vocab is None:
       logging.error('missing -tgt_vocab option')
       self.usage()
-    if self.src_token is None:
-      logging.error('missing -src_token option')
-      self.usage()
-    if self.tgt_token is None:
-      logging.error('missing -tgt_token option')
-      self.usage()
+    #if self.src_token is None:
+    #  logging.error('missing -src_token option')
+    #  self.usage()
+    #if self.tgt_token is None:
+    #  logging.error('missing -tgt_token option')
+    #  self.usage()
 
   def usage(self):
     sys.stderr.write('''usage: {} -dnet FILE [Options]
