@@ -19,7 +19,7 @@ Train/Valid/Test files are formated with one sentence per line of untokenized (r
 
 ### (1) Preprocessing
 
-* Build tokenization (SentencePiece) model:
+* Build a tokenization (SentencePiece) model:
 ```
 cat $TRAIN.{$SS,$TT} | python3 sentencepiece_cli.py -sp_model $SP_JOINT
 ```
