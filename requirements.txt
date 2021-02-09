@@ -1,0 +1,4 @@
+pyonmttok==1.*
+torch==1.*
+PyYAML==5.*
+tensorboard==2.*
