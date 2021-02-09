@@ -23,7 +23,7 @@ sp_model = None
 log_level = 'info'
 prog = sys.argv.pop(0)
 usage = '''usage: {} -sp_model FILE [-vocab_size INT] [-character_coverage FLOAT]
-	-sp_model            FILE : output model file
+	-sp_model            FILE : output model/vocab preffix
 	-vocab_size           INT : vocabulary size (default {})
 	-character_coverage FLOAT : coverage (default {})
 '''.format(prog,vocab_size,character_coverage)
@@ -58,11 +58,11 @@ sp_model = os.path.abspath(sp_model)
 ### LEARN SP model
 ###
 learner = pyonmttok.SentencePieceLearner(vocab_size=vocab_size, character_coverage=character_coverage, keep_vocab=True)
+logging.info('Reading data')
 for l in sys.stdin:
   learner.ingest(l)
-logging.info('Learning sp model: {}'.format(sp_model))
+logging.info('Learning sp model')
 tokenizer = learner.learn(sp_model)
-
-logging.info('Built file {}'.format(sp_model))
+logging.info('Built files {}.model and {}.vocab'.format(sp_model,sp_model))
 
 
