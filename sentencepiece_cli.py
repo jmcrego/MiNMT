@@ -2,7 +2,6 @@
 import pyonmttok
 import os
 import sys
-import yaml
 import logging
 
 def create_logger(logfile, loglevel):
