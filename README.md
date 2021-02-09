@@ -32,12 +32,12 @@ cat $TRAIN.$SS | python3 sentencepiece_cli.py -sp_model $SP_SRC
 cat $TRAIN.$TT | python3 sentencepiece_cli.py -sp_model $SP_TGT
 ```
 
-Thus obtaining `$SP_SRC.model`, `$SP_SRC.vocab`, `$SP_TGT.model` and `$SP_TGT.vocab` files.
+Thus obtaining `$SP_SRC.model`, `$SP_SRC.vocab`, `$SP_TGT.model` and `$SP_TGT.vocab`.
 
-Skip this preprocessing step if your data is already tokenized.
+You can also skip this preprocessing step if your data is already tokenized.
 In this case vocabularies must be created:
 
-A dingle vocabulary for both data sides:
+A single vocabulary for both data sides:
 ```
 cat $TRAIN.{$SS,$TT} | python3 tools/build_vocabulary.py > $VOC
 ```
