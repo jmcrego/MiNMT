@@ -45,7 +45,7 @@ if sp_model is None:
   sys.exit()
 
 
-token = pyonmttok.Tokenizer(mode = 'space', sp_model_path = sp_model, joiner_annotate = True)
+token = pyonmttok.Tokenizer(mode = None, sp_model_path = sp_model, joiner_annotate = True)
 #token = pyonmttok.Tokenizer(mode = 'space', sp_model_path = sp_model, spacer_annotate = True)
 for l in sys.stdin:
   t, _ = token.tokenize(l.rstrip())

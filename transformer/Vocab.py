@@ -11,7 +11,8 @@ def sentencepiece2vocab(ifile, ofile):
   vocab.append('<unk>')
   vocab.append('<bos>')
   vocab.append('<eos>')
-  with open(ifile,'r') as f: 
+
+  with open(ifile,'r') as f:
     for l in f:
       toks = l.rstrip().split('\t')
       if len(toks) != 2:
@@ -99,5 +100,4 @@ class Vocab():
     if s not in self: ### input is a string, i want the index
       return self.idx_unk
     return self.tok_to_idx[s]
-
 
