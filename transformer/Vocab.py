@@ -72,6 +72,7 @@ class Vocab():
     with open(file,'r') as f: 
       for l in f:
         tok = l.rstrip()
+        print(tok)
         self.idx_to_tok.append(tok)
         self.tok_to_idx[tok] = len(self.tok_to_idx)
     logging.debug('Read Vocab ({} entries) from file {}'.format(len(self.idx_to_tok), file))
@@ -95,7 +96,8 @@ class Vocab():
         logging.error("Key \'{}\' not found in vocab".format(s))
         sys.exit()
       return self.idx_to_tok[s] ### s exists in self.idx_to_tok
-    if s not in self: ### input is a string, i want the index
+    ### input is a string, i want the index
+    if s not in self: 
       return self.idx_unk
     return self.tok_to_idx[s]
 
