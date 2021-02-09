@@ -32,9 +32,8 @@ def file2idx(ftxt=None, vocab=None):
     toks.append(tok)
     idxs.append(idx)
     lens.append(len(idx))
-    logging.info(tok)
-    logging.info(idx)
-    logging.info(len(idx))
+    out = ['{}:{}'.format(tok[i],idxs[i]) for i in range(len(toks))]
+    print("{} {}".format(len(out), ' '.join(out)))
   logging.info('Read {} lines ~ {} tokens ~ {} OOVs [{:.1f}%] ~ {}'.format(len(lines), ntokens, nunks, 100.0*nunks/ntokens, ftxt))
   return toks, idxs, lens
 
