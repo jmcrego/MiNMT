@@ -6,16 +6,17 @@ import logging
 from collections import defaultdict
 
 def sentencepiece2vocab(ifile, ofile):
-  vocab = set()
-  vocab.add('<pad>') #### this does not appear in sentencepiece
-  vocab.add('<unk>')
-  vocab.add('<bos>')
-  vocab.add('<eos>')
+  vocab = defaultdict()
+  vocab['<pad>'] = 0 #### this does not appear in sentencepiece
+  vocab['<unk>'] = 1
+  vocab['<bos>'] = 2
+  vocab['<eos>'] = 3
 
   with open(ifile,'r') as f:
     for l in f:
-      toks = l.rstrip().split('\t')
-      tok = toks[0] ### get first column if there are more
+      tok = l.rstrip()
+      if tok.find('\t') >= 0:
+        tok = tok.split('\t')[0]
       if tok == '<pad>' or tok == '<unk>' or tok == '<s>' or tok == '</s>' or tok == '<bos>' or tok == '<eos>' or tok == '<blank>':
         continue
       if tok in vocab:
@@ -24,11 +25,11 @@ def sentencepiece2vocab(ifile, ofile):
       if ' ' in tok or len(tok) == 0:
         logging.warning('Bad entry: {} [skipping]'.format(tok))
         continue
-      vocab.add(tok)
+      vocab[tok] = len(vocab)
 
   with open(ofile,'w') as f:
-    for tok in vocab:
-      f.write(tok+'\n')
+    for wrd,key in sorted(Vocab.items(), key=lambda item: item[1], reverse=True)
+      f.write(wrd+'\n')
 
   logging.info('Read vocab from {} ~ Written into {} ({} entries)'.format(ifile, ofile, len(vocab)))
 
