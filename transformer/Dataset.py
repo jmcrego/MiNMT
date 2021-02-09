@@ -27,13 +27,13 @@ def file2idx(ftxt=None, vocab=None):
     for t in tok:
       idx.append(vocab[t])
       ntokens += 1
-      if t == vocab.idx_unk:
+      if idx[-1] == vocab.idx_unk:
         nunks += 1
     toks.append(tok)
     idxs.append(idx)
     lens.append(len(idx))
-    out = ['{}:{}'.format(tok[i],idx[i]) for i in range(len(tok))]
-    print("{} {}".format(len(out), ' '.join(out)))
+    #out = ['{}:{}'.format(tok[i],idx[i]) for i in range(len(tok))]
+    #print("{} {}".format(len(out), ' '.join(out)))
   logging.info('Read {} lines ~ {} tokens ~ {} OOVs [{:.1f}%] ~ {}'.format(len(lines), ntokens, nunks, 100.0*nunks/ntokens, ftxt))
   return toks, idxs, lens
 
