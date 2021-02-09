@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-import pyonmttok
 import sys
 import logging
+from transformer.ONMTTokenizer import ONMTTokenizer
 
 def create_logger(logfile, loglevel):
   numeric_level = getattr(logging, loglevel.upper(), None)
@@ -45,9 +45,7 @@ if sp_model is None:
   logging.error('error: missing -sp_model option')    
   sys.exit()
 
-
-token = pyonmttok.Tokenizer(mode = 'space', sp_model_path = sp_model, joiner_annotate = True)
-#token = pyonmttok.Tokenizer(mode = 'space', sp_model_path = sp_model, spacer_annotate = True)
+token = ONMTTokenizer(sp_model)
 for l in sys.stdin:
   t, _ = token.tokenize(l.rstrip())
   print(' '.join(t))
