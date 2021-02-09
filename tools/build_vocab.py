@@ -58,7 +58,7 @@ nwords = 0
 token = ONMTTokenizer(sp_model)
 for l in sys.stdin:
   nlines += 1
-  t = token.tokenize(l.rstrip()).split()
+  t = token.tokenize(l.rstrip())
 
   nlines += 1
   for word in t:
