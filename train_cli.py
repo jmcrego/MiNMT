@@ -225,12 +225,12 @@ if __name__ == '__main__':
   if not os.path.isfile(o.dnet + '/tgt_voc'):
     logging.error('cannot find target vocab file: {}'.format(o.dnet + '/tgt_voc'))
     sys.exit()
-  if not os.path.isfile(o.dnet + '/src_tok'):
-    logging.error('cannot find source token file: {}'.format(o.dnet + '/src_tok'))
-    sys.exit()
-  if not os.path.isfile(o.dnet + '/tgt_tok'):
-    logging.error('cannot find target token file: {}'.format(o.dnet + '/tgt_tok'))
-    sys.exit()
+  #if not os.path.isfile(o.dnet + '/src_tok'):
+  #  logging.error('cannot find source token file: {}'.format(o.dnet + '/src_tok'))
+  #  sys.exit()
+  #if not os.path.isfile(o.dnet + '/tgt_tok'):
+  #  logging.error('cannot find target token file: {}'.format(o.dnet + '/tgt_tok'))
+  #  sys.exit()
 
   src_token = ONMTTokenizer(sp_model=o.dnet + '/src_tok')
   src_vocab = Vocab(file=o.dnet + '/src_voc', token=src_token)
