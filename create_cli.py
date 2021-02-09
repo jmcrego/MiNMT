@@ -156,11 +156,11 @@ if __name__ == '__main__':
     f.write('dropout: {}\n'.format(opts.dropout))
     f.write('share_embeddings: {}\n'.format(opts.share_embeddings))
 
-  if self.src_token is not None:
+  if opts.src_token is not None:
     shutil.copy(opts.src_token, opts.dnet+'/src_tok')
     logging.info('copied source token {} into {}/src_tok'.format(opts.src_token, opts.dnet))
 
-  if self.tgt_token is not None:
+  if opts.tgt_token is not None:
     shutil.copy(opts.tgt_token, opts.dnet+'/tgt_tok')
     logging.info('copied target token {} into {}/tgt_tok'.format(opts.tgt_token, opts.dnet))
 
