@@ -20,10 +20,10 @@ def file2idx(ftxt=None, vocab=None):
     lines=f.read().splitlines()
 
   for l in lines:
-    idx = []
     tok = vocab.token.tokenize(l)
     tok.insert(0,vocab.str_bos)
     tok.append(vocab.str_eos)
+    idx = []
     for t in tok:
       idx.append(vocab[t])
       ntokens += 1
@@ -32,6 +32,9 @@ def file2idx(ftxt=None, vocab=None):
     toks.append(tok)
     idxs.append(idx)
     lens.append(len(idx))
+    logging.info(tok)
+    logging.info(idx)
+    logging.info(len(idx))
   logging.info('Read {} lines ~ {} tokens ~ {} OOVs [{:.1f}%] ~ {}'.format(len(lines), ntokens, nunks, 100.0*nunks/ntokens, ftxt))
   return toks, idxs, lens
 
