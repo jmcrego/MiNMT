@@ -67,8 +67,11 @@ for l in sys.stdin:
 
 logging.info("Read #lines={} #words={} vocab={}".format(nlines, nwords, len(Freq)))
 
+print('<unk>\t0')
+print('<s>\t0')
+print('</s>\t0')
 for n, (wrd, frq) in enumerate(sorted(Freq.items(), key=lambda item: item[1], reverse=True)):
-  if vocab_size is not None and n >= vocab_size:
+  if vocab_size is not None and n+3 >= vocab_size:
     break
   if min_freq is not None and frq < min_freq:
     break
