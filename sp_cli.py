@@ -57,7 +57,7 @@ sp_model = os.path.abspath(sp_model)
 ###
 ### LEARN SP model
 ###
-learner = pyonmttok.SentencePieceLearner(vocab_size=vocab_size, character_coverage=character_coverage)
+learner = pyonmttok.SentencePieceLearner(vocab_size=vocab_size, character_coverage=character_coverage, keep_vocab=True)
 for l in sys.stdin:
   learner.ingest(l)
 logging.info('Learning sp model: {}'.format(sp_model))
