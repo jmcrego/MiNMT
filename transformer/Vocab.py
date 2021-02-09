@@ -6,7 +6,7 @@ import logging
 from collections import defaultdict
 
 def sentencepiece2vocab(ifile, ofile):
-  vocab = []
+  vocab = defaultdict()
   vocab.append('<pad>') #### this does not appear in sentencepiece
   vocab.append('<unk>')
   vocab.append('<bos>')
