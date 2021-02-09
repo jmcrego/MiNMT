@@ -57,19 +57,6 @@ class Vocab():
     self.tok_to_idx = defaultdict()
     self.idx_to_tok = []
 
-    #0 <pad>
-    self.tok_to_idx[self.str_pad] = self.idx_pad
-    self.idx_to_tok.append(self.str_pad)
-    #1 <unk>
-    self.tok_to_idx[self.str_unk] = self.idx_unk
-    self.idx_to_tok.append(self.str_unk)
-    #2 <bos>
-    self.tok_to_idx[self.str_bos] = self.idx_bos
-    self.idx_to_tok.append(self.str_bos)
-    #3 <eos>
-    self.tok_to_idx[self.str_eos] = self.idx_eos
-    self.idx_to_tok.append(self.str_eos)
-
     with open(file,'r') as f: 
       for l in f:
         tok = l.rstrip()
