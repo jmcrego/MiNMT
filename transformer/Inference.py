@@ -227,12 +227,12 @@ class Inference():
       logP = torch.stack([logP_extended[b][inds] for b,inds in enumerate(kbest_inds)], dim=0).contiguous().view(bs*self.K,lt) #[bs,K,lt] => [bs*K,lt]
       #logging.info('hyps = {} logP = {}'.format(hyps.shape, logP.shape))
 
-      print('')
-      hyps_bs_k = hyps.view(bs,self.K,lt)
-      logP_bs_k = logP.view(bs,self.K,lt)
-      for b in range(hyps_bs_k.shape[0]):
-        for k in range(hyps_bs_k.shape[1]):
-          print('batch {} beam {}\tlogP={:.6f}\t{}'.format(b, k, sum(logP_bs_k[b,k]), ' '.join([self.tgt_vocab[t] for t in hyps_bs_k[b,k].tolist()]) ))
+#      print('')
+#      hyps_bs_k = hyps.view(bs,self.K,lt)
+#      logP_bs_k = logP.view(bs,self.K,lt)
+#      for b in range(hyps_bs_k.shape[0]):
+#        for k in range(hyps_bs_k.shape[1]):
+#          print('batch {} beam {}\tlogP={:.6f}\t{}'.format(b, k, sum(logP_bs_k[b,k]), ' '.join([self.tgt_vocab[t] for t in hyps_bs_k[b,k].tolist()]) ))
 
       ### FINALS ###
       index_of_finals = (hyps[:,-1]==self.idx_eos).nonzero(as_tuple=False).squeeze(-1) #[n] n being the number of final hyps found
