@@ -15,7 +15,7 @@ Run clients with the -h option for a detailed description of available options.
 ## Usage example:
 
 Hereinafter we considier `train.en, train.fr`, `valid.en, valid.fr` and `test.en, test.fr` files of the respective train/valid/test files.
-Train/Valid/Test files are formated with one sentence per line of untokenized (raw) text. 
+Files are formated with one sentence per line of untokenized (raw) text. 
 
 ### (1) Preprocessing
 
