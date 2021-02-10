@@ -84,11 +84,14 @@ Default network options are:
 ```
 
 ### (3) Learning
+
+Use the next command:
 ```
 python3 ./train_cli.py -dnet $DNET -src_train train.en -tgt_train train.fr -src_valid valid.en -tgt_valid valid.fr
 ```
+to starts (or continues) learning using the given training/validation files. 
 
-Starts (or continues) learning using the given training/validation files. Default learning options are:
+Default learning options are:
 ```
 -max_steps 0
 -max_epochs 0
@@ -121,11 +124,14 @@ Network checkpoints are built in `$DNET` directory named `network.checkpoint_???
 Remember that training and validation datasets are handled using the tokenization and vocabularies available in $DNET directory.
 
 ### (4) Inference
+
+Use the next command:
 ```
 python3 ./translate_cli.py -dnet $DNET -i test.en
 ```
+to translate the given input file using the last network checkpoint available in `$DNET`. 
 
-Translates the given input file using the last network checkpoint available in `$DNET`. Default inference options are:
+Default inference options are:
 ```
 -beam_size 4
 -n_best 1
