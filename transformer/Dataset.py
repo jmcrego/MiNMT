@@ -100,20 +100,6 @@ class Dataset():
     logging.info('Read dataset with {}-{} sentences {}-{}'.format(len(self.lines_src), len(self.lines_tgt), ftxt_src, ftxt_tgt))
 
 
-  def build_shards(self):
-    shards = []
-    shard = []
-    for pos in self.idxs_pos:
-      shard.append(pos)
-      if len(shard) == self.shard_size:
-        shards.append(shard)
-        shard = []
-    if len(shard) == self.shard_size:
-      shards.append(shard)
-      shard = []
-    return shards
-
-
   def build_batchs(self, lens, idxs_pos, idxs_src, idxs_tgt):
     batchs = []
     shard_ordered = np.argsort(lens) # sort by lens (lower to higher lenghts)
@@ -134,7 +120,7 @@ class Dataset():
     return batchs
 
 
-  def format_shard(self, shard):
+  def get_shard(self, shard):
     ### this ueturns examples in shard (list of pos) with corresponding [positions, lens, idxs_src, idxs_tgt]
     idxs_pos = []
     lens = []
@@ -209,7 +195,7 @@ class Dataset():
         shards.append(self.idxs_pos[i:i+self.shard_size])
 
     for shard in shards:
-      lens, idxs_pos, idxs_src, idxs_tgt = self.format_shard(shard)
+      lens, idxs_pos, idxs_src, idxs_tgt = self.get_shard(shard)
       n_shards += 1
       ####################
       ### build batchs ###
