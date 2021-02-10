@@ -39,12 +39,12 @@ In this case vocabularies must be created:
 
 A single vocabulary for both data sides:
 ```
-cat train.{en,fr} | python3 tools/build_vocabulary.py > VOC_joint
+cat train.{en,fr} | python3 tools/buildvoc.py > VOC_joint
 ```
 or
 ```
-cat train.en | python3 tools/build_vocabulary.py > VOC_en
-cat train.fr | python3 tools/build_vocabulary.py > VOC_fr
+cat train.en | python3 tools/buildvoc.py > VOC_en
+cat train.fr | python3 tools/buildvoc.py > VOC_fr
 ```
 
 
@@ -61,7 +61,7 @@ Otherwise:
 python3 ./create_cli.py -dnet $DNET -src_vocab SP_en.vocab -tgt_vocab SP_fr.vocab -src_token SP_en.model -tgt_token SP_fr.model
 ```
 
-Do not use `-src_tok` and/or `-tgt_tok` options if you skipped preprocessing.
+Do not use `-src_tok` and/or `-tgt_tok` options if you skipped preprocessing. Use `VOC_joint or VOC_en, VOC_fr` if you built vocabularies using `bulidvoc.py`
 
 The script creates the directory `$DNET` containing:
 * A network description file: 
