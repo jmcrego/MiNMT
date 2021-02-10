@@ -187,7 +187,6 @@ class Dataset():
     logging.info('Shuffled Dataset with {} examples'.format(len(self.idxs_pos)))
     n_shards = 0
     n_batchs = 0
-
     ###############################
     ### split dataset in shards ###
     ###############################
