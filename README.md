@@ -41,7 +41,7 @@ A single vocabulary for both data sides:
 ```
 cat train.{en,fr} | python3 tools/buildvoc.py > VOC_joint
 ```
-or
+or one vocabulary for each size:
 ```
 cat train.en | python3 tools/buildvoc.py > VOC_en
 cat train.fr | python3 tools/buildvoc.py > VOC_fr
