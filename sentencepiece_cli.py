@@ -25,8 +25,9 @@ usage = '''usage: {} -sp_model FILE [-vocab_size INT] [-character_coverage FLOAT
    -sp_model            FILE : output model/vocab preffix
    -vocab_size           INT : vocabulary size ({})
    -character_coverage FLOAT : character coverage ({})
+   -log_level          LEVEL : log level [debug, info, warning, critical, error] ({})
    -h                        : this help
-'''.format(prog,vocab_size,character_coverage)
+'''.format(prog,vocab_size,character_coverage,log_level)
 
 while len(sys.argv):
 	tok = sys.argv.pop(0)
