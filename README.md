@@ -153,7 +153,7 @@ Option -format specifies the fields to output for every example (TAB-separated):
 [v] hypothesis indexes
 ```
 
-Remember that test handled are indexed using the tokenization and vocabularies available in $DNET directory.
+Remember that test datasets are handled using the tokenization and vocabularies available in $DNET directory.
 
 
 
