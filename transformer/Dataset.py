@@ -101,6 +101,7 @@ class Dataset():
 
     with open(ftxt_src) as f:
       self.lines_src = f.read().splitlines()
+      self.idxs_src = [None] * len(self.lines_src)
 
     if self.shard_size == 0:
       self.shard_size = len(self.lines_src) ### all examples in one shard
@@ -108,6 +109,7 @@ class Dataset():
     if ftxt_tgt is not None:
       with open(ftxt_tgt) as f:
         self.lines_tgt = f.read().splitlines()
+        self.idxs_tgt = [None] * len(self.lines_tgt)
 
       if len(self.lines_src) != len(self.lines_tgt):
         logging.error('Different number of lines in parallel dataset {}-{}'.format(len(self.lines_src),len(self.lines_tgt)))
@@ -132,16 +134,26 @@ class Dataset():
       pos = self.idxs_pos[currline]
 
       ### SRC ###
-      tok_src = [self.vocab_src.str_bos] + self.token_src.tokenize(self.lines_src[pos]) + [self.vocab_src.str_eos]
-      idx_src = [self.vocab_src[t] for t in tok_src]
+      if self.idxs_src[pos] is None:
+        tok_src = [self.vocab_src.str_bos] + self.token_src.tokenize(self.lines_src[pos]) + [self.vocab_src.str_eos]
+        idx_src = [self.vocab_src[t] for t in tok_src]
+        self.idxs_src[pos] = idx_src
+      else:
+        idx_src = self.idxs_src[pos]
+
       if self.max_length and len(tok_src) > self.max_length:
         n_filtered += 1
         continue
 
       if self.lines_tgt is not None:
         ### TGT ###
-        tok_tgt = [self.vocab_tgt.str_bos] + self.token_tgt.tokenize(self.lines_tgt[pos]) + [self.vocab_tgt.str_eos] 
-        idx_tgt = [self.vocab_tgt[t] for t in tok_tgt]
+        if self.idxs_tgt[pos] is None:
+          tok_tgt = [self.vocab_tgt.str_bos] + self.token_tgt.tokenize(self.lines_tgt[pos]) + [self.vocab_tgt.str_eos] 
+          idx_tgt = [self.vocab_tgt[t] for t in tok_tgt]
+          self.idxs_tgt[pos] = idx_tgt
+        else:
+          idx_tgt = self.idxs_tgt[pos]
+
         if self.max_length and len(tok_tgt) > self.max_length:
           n_filtered += 1
           continue
@@ -174,14 +186,14 @@ class Dataset():
     ##########################
     np.random.shuffle(self.idxs_pos)
     logging.info('Shuffled Dataset with {} examples'.format(len(self.idxs_pos)))
-    #######################
-    ### traverse shards ###
-    #######################
+    ####################
+    ### build shards ###
+    ####################
     n_shards = 0
     n_batchs = 0
     lastline = -1
     while lastline < len(self.idxs_pos):
-      lastline, lens, idxs_pos, idxs_src, idxs_tgt = self.get_shard(lastline+1) ### get a shard following the order in self.idxs_pos
+      lastline, lens, idxs_pos, idxs_src, idxs_tgt = self.get_shard(lastline+1) 
       n_shards += 1
       ####################
       ### build batchs ###
