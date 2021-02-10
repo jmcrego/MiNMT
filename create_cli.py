@@ -6,18 +6,7 @@ import shutil
 import time
 import logging
 from transformer.Vocab import sentencepiece2vocab
-
-def create_logger(logfile, loglevel):
-    numeric_level = getattr(logging, loglevel.upper(), None)
-    if not isinstance(numeric_level, int):
-        logging.error("Invalid log level={}".format(loglevel))
-        sys.exit()
-    if logfile is None or logfile == 'stderr':
-        logging.basicConfig(format='[%(asctime)s.%(msecs)03d] %(levelname)s %(message)s', datefmt='%Y-%m-%d_%H:%M:%S', level=numeric_level)
-        logging.debug('Created Logger level={}'.format(loglevel))
-    else:
-        logging.basicConfig(filename=logfile, format='[%(asctime)s.%(msecs)03d] %(levelname)s %(message)s', datefmt='%Y-%m-%d_%H:%M:%S', level=numeric_level)
-        logging.debug('Created Logger level={} file={}'.format(loglevel, logfile))
+from tools.tools import create_logger
 
 ######################################################################
 ### Options ##########################################################
@@ -89,12 +78,6 @@ class Options():
     if self.tgt_vocab is None:
       logging.error('missing -tgt_vocab option')
       self.usage()
-    #if self.src_token is None:
-    #  logging.error('missing -src_token option')
-    #  self.usage()
-    #if self.tgt_token is None:
-    #  logging.error('missing -tgt_token option')
-    #  self.usage()
 
   def usage(self):
     sys.stderr.write('''usage: {} -dnet FILE [Options]
@@ -137,12 +120,6 @@ if __name__ == '__main__':
   if not os.path.isfile(opts.tgt_vocab):
     logging.error('cannot find target vocab file: {}'.format(opts.tgt_vocab))
     sys.exit()
-  #if not os.path.isfile(opts.src_token):
-  #  logging.error('cannot find source token file: {}'.format(opts.src_token))
-  #  sys.exit()
-  #if not os.path.isfile(opts.tgt_token):
-  #  logging.error('cannot find target token file: {}'.format(opts.tgt_token))
-  #  sys.exit()
 
   os.mkdir(opts.dnet)
   logging.info('created network directory: {}'.format(opts.dnet))

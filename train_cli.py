@@ -14,31 +14,7 @@ from tools.ONMTTokenizer import ONMTTokenizer
 from transformer.Model import Encoder_Decoder, load_checkpoint_or_initialise, save_checkpoint, load_checkpoint, numparameters
 from transformer.Optimizer import OptScheduler, LabelSmoothing_NLL, LabelSmoothing_KLDiv
 from transformer.Learning import Learning
-
-def load_dataset(src_vocab, tgt_vocab, fset, fsrc, ftgt, shard_size, max_length, batch_size, batch_type):
-  d = Dataset(src_vocab, tgt_vocab)
-  if fset is not None:
-    d.load_shards(fset)
-  elif fsrc is not None and ftgt is not None:
-    d.numberize(fsrc, ftgt)
-    d.split_in_shards(shard_size)
-  else:
-    return None
-
-  d.split_in_batches(max_length, batch_size, batch_type)
-  return d
-
-def create_logger(logfile, loglevel):
-  numeric_level = getattr(logging, loglevel.upper(), None)
-  if not isinstance(numeric_level, int):
-    logging.error("Invalid log level={}".format(loglevel))
-    sys.exit()
-  if logfile is None or logfile == 'stderr':
-    logging.basicConfig(format='[%(asctime)s.%(msecs)03d] %(levelname)s %(message)s', datefmt='%Y-%m-%d_%H:%M:%S', level=numeric_level)
-    logging.debug('Created Logger level={}'.format(loglevel))
-  else:
-    logging.basicConfig(filename=logfile, format='[%(asctime)s.%(msecs)03d] %(levelname)s %(message)s', datefmt='%Y-%m-%d_%H:%M:%S', level=numeric_level)
-    logging.debug('Created Logger level={} file={}'.format(loglevel, logfile))
+from tools.tools import create_logger
 
 ######################################################################
 ### Options ##########################################################
