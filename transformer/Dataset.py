@@ -147,7 +147,6 @@ class Dataset():
         self.idxs_src[pos] = idx_src
       else:
         idx_src = self.idxs_src[pos]
-        logging.info('repeated pos={}'.format(pos))
 
       if self.max_length and len(idx_src) > self.max_length:
         n_filtered += 1
@@ -200,10 +199,15 @@ class Dataset():
     n_shards = 0
     n_batchs = 0
     firstline = 0
+    pos_sofar = set()
     while firstline < len(self.idxs_pos):
       lens, idxs_pos, idxs_src, idxs_tgt = self.get_shard(firstline) 
       firstline += len(lens) 
       n_shards += 1
+      for pos in idxs_pos:
+        if pos in pos_sofar:
+          print('repeated pos={}'.format(pos))
+        pos_sofar.add(pos)
       ####################
       ### build batchs ###
       ####################
