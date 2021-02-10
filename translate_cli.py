@@ -159,9 +159,9 @@ if __name__ == '__main__':
   #  sys.exit()
 
   src_token = ONMTTokenizer(sp_model=o.dnet + '/src_tok') ### the file may not exist => space tokenizer
-  src_vocab = Vocab(file=o.dnet + '/src_voc', token=src_token)
+  src_vocab = Vocab(file=o.dnet + '/src_voc')
   tgt_token = ONMTTokenizer(sp_model=o.dnet + '/tgt_tok') ### the file may not exist => space tokenizer
-  tgt_vocab = Vocab(file=o.dnet + '/tgt_voc', token=tgt_token)
+  tgt_vocab = Vocab(file=o.dnet + '/tgt_voc')
   assert src_vocab.idx_pad == tgt_vocab.idx_pad
   with open(o.dnet + '/network', 'r') as f:
     n = yaml.load(f, Loader=yaml.SafeLoader) #Loader=yaml.FullLoader)
@@ -178,7 +178,7 @@ if __name__ == '__main__':
   ##################
   ### load test ####
   ##################
-  test = Dataset(src_vocab, o.input, tgt_vocab, None, o.shard_size, o.batch_size, o.batch_type, o.max_length)
+  test = Dataset(src_vocab, src_token, o.input, tgt_vocab, tgt_token, None, o.shard_size, o.batch_size, o.batch_type, o.max_length)
 
   ##################
   ### Inference ####

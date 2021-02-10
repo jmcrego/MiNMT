@@ -3,12 +3,10 @@
 import sys
 import os
 import logging
-#import operator
-import pickle
 import numpy as np
 from collections import defaultdict
 
-def file2idx(ftxt=None, vocab=None):
+def file2idx(ftxt=None, vocab=None, token=None):
   if vocab is None or ftxt is None:
     return None, None, None
   toks = []
@@ -20,7 +18,7 @@ def file2idx(ftxt=None, vocab=None):
     lines=f.read().splitlines()
 
   for l in lines:
-    tok = vocab.token.tokenize(l)
+    tok = token.tokenize(l)
     tok.insert(0,vocab.str_bos)
     tok.append(vocab.str_eos)
     idx = []
@@ -95,7 +93,7 @@ class Batch():
 ### Dataset ##################################################################################################
 ##############################################################################################################
 class Dataset():
-  def __init__(self, vocab_src, ftxt_src, vocab_tgt, ftxt_tgt=None, shard_size=100000, batch_size=64, batch_type='sentences', max_length=100):    
+  def __init__(self, vocab_src, token_src, ftxt_src, vocab_tgt, token_tgt, ftxt_tgt=None, shard_size=100000, batch_size=64, batch_type='sentences', max_length=100):    
     super(Dataset, self).__init__()
     assert vocab_src.idx_pad == vocab_tgt.idx_pad
     assert vocab_src.idx_bos == vocab_tgt.idx_bos
@@ -105,14 +103,14 @@ class Dataset():
     self.batch_size = batch_size
     self.max_length = max_length
     self.idx_pad = vocab_src.idx_pad
-    _, self.idxs_src, self.lens_src = file2idx(ftxt_src, vocab_src) #no need to save txts_src
+    _, self.idxs_src, self.lens_src = file2idx(ftxt_src, vocab_src, token_src) #no need to save txts_src
     self.pos_lens = [i for i in range(len(self.idxs_src))] #[nsents, 1]
     self.pos_lens = np.column_stack((self.pos_lens,self.lens_src)) #[nsents, 2]
     if ftxt_tgt is None: #not a bitext
       self.idxs_tgt = None
       self.lens_tgt = None
       return
-    _, self.idxs_tgt, self.lens_tgt = file2idx(ftxt_tgt, vocab_tgt) #no need to save txts_tgt
+    _, self.idxs_tgt, self.lens_tgt = file2idx(ftxt_tgt, vocab_tgt, token_tgt) #no need to save txts_tgt
     if len(self.lens_src) != len(self.lens_tgt):
       logging.error('Different number of lines in parallel dataset {}-{}'.format(len(self.lens_src),len(self.lens_tgt)))
       sys.exit()
@@ -134,7 +132,7 @@ class Dataset():
     shards = []
     curr_shard = []
     for i in range(self.pos_lens.shape[0]):
-      ### filter if lenght > max_length
+      ### filter if length > max_length
       if self.max_length > 0 and (self.pos_lens[i][1] > self.max_length or (self.pos_lens.ndim == 3 and self.pos_lens[i][2] > self.max_length)):
         n_filtered += 1
         continue
