@@ -187,14 +187,15 @@ class Dataset():
     logging.info('Shuffled Dataset with {} examples'.format(len(self.idxs_pos)))
     n_shards = 0
     n_batchs = 0
-    ####################
-    ### build shards ###
-    ####################
-    shards = [] #split dataset in shards
-    for i in range(0, len(self.idxs_pos), self.shard_size):  
-        shards.append(self.idxs_pos[i:i+self.shard_size])
 
+    ###############################
+    ### split dataset in shards ###
+    ###############################
+    shards = [self.idxs_pos[i:i+self.shard_size] for i in range(0, len(self.idxs_pos), self.shard_size)]
     for shard in shards:
+      ###################
+      ### build shard ###
+      ###################
       lens, idxs_pos, idxs_src, idxs_tgt = self.get_shard(shard)
       n_shards += 1
       ####################
