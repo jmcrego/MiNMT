@@ -122,7 +122,7 @@ class Dataset():
 
     self.idxs_pos = [i for i in range(len(self.lines_src))]
 
-    logging.info('Read dataset with {}-{} sentences'.format(len(self.lines_src), len(self.lines_tgt)))
+    logging.info('Read dataset with {}-{} sentences {}-{}'.format(len(self.lines_src), len(self.lines_tgt), ftxt_src, ftxt_tgt))
 
 
   def get_shard(self, firstline):
