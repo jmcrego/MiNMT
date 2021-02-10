@@ -59,8 +59,6 @@ token = ONMTTokenizer(sp_model)
 for l in sys.stdin:
   nlines += 1
   t = token.tokenize(l.rstrip())
-
-  nlines += 1
   for word in t:
     nwords += 1
     Freq[word] += 1
