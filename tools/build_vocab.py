@@ -54,7 +54,6 @@ create_logger(None, log_level)
 Freq = defaultdict(int)
 nlines = 0
 nwords = 0
-
 token = ONMTTokenizer(sp_model)
 for l in sys.stdin:
   nlines += 1
