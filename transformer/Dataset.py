@@ -25,6 +25,7 @@ def file2idx(ftxt=None, vocab=None, token=None):
   logging.info('Read {} lines ~ {} tokens ~ {} OOVs [{:.2f}%] ~ {}'.format(len(lines), ntokens, nunks, 100.0*nunks/ntokens, ftxt))
   return toks, idxs
 
+
 def sort_shard(shard):
   shard = np.asarray(shard) #[shard_size, 2] 
   shard_sorted = np.argsort(shard[:,1]) # sort by lsrc (lower to higher lenghts)
@@ -91,77 +92,114 @@ class Dataset():
     self.batch_type = batch_type
     self.batch_size = batch_size
     self.max_length = max_length
-    self.idxs_src = None
-    self.idxs_tgt = None
+    self.vocab_src = vocab_src
+    self.vocab_tgt = vocab_tgt
+    self.token_src = token_src
+    self.token_tgt = token_tgt
+    self.lines_src = None
+    self.lines_tgt = None
 
-    _, self.idxs_src = file2idx(ftxt_src, vocab_src, token_src) #no need to save txts_src
+    with open(ftxt_src) as f:
+      self.lines_src = f.read().splitlines()
+
     if self.shard_size == 0:
-      self.shard_size = len(self.idxs_src) ### all examples fit in one shard
+      self.shard_size = len(self.lines_src) ### all examples in one shard
 
-    if ftxt_tgt is None: 
-      return
+    if ftxt_tgt is not None:
+      with open(ftxt_tgt) as f:
+        self.lines_tgt = f.read().splitlines()
 
-    _, self.idxs_tgt = file2idx(ftxt_tgt, vocab_tgt, token_tgt) #no need to save txts_tgt
-    if len(self.idx_src) != len(self.idx_tgt):
-      logging.error('Different number of lines in parallel dataset {}-{}'.format(len(self.idx_src),len(self.idx_tgt)))
-      sys.exit()
+      if len(self.lines_src) != len(self.lines_tgt):
+        logging.error('Different number of lines in parallel dataset {}-{}'.format(len(self.lines_src),len(self.lines_tgt)))
+        sys.exit()
+
+    logging.info('Read dataset with {}-{} sentences'.format(len(self.lines_src), len(self.lines_tgt)))
+
+
+  def get_shard(self, firstline):
+    idxs_pos = []
+    lens = []
+    idxs_src = []
+    idxs_tgt = []
+    n_filtered = 0
+    n_src_tokens = 0
+    n_src_unks = 0
+    n_tgt_tokens = 0
+    n_tgt_unks = 0
+    for currline in range(firstline, len(self.idxs_pos)):
+      pos = self.idxs_pos[currline]
+
+      ### SRC ###
+      tok_src = [self.vocab_src.str_bos] + self.token_src.tokenize(self.lines_src[pos]) + [self.vocab_src.str_eos]
+      idx_src = [self.vocab_src[t] for t in tok_src]
+      if self.max_length and len(tok_src) > self.max_length:
+        continue
+
+      if self.lines_tgt is not None:
+        ### TGT ###
+        tok_tgt = [self.vocab_tgt.str_bos] + self.token_tgt.tokenize(self.lines_tgt[pos]) + [self.vocab_tgt.str_eos] 
+        idx_tgt = [self.vocab_tgt[t] for t in tok_tgt]
+        if self.max_length and len(tok_tgt) > self.max_length:
+          continue
+      ###################
+      ### ADD example ###
+      ###################
+      idxs_pos.append(pos)
+      idxs_src.append(idx_src)
+      lens.append(len(idx_src))
+      n_src_tokens += len(idx_src)
+      n_src_unks += sum([i==self.vocab_src.idx_unk for i in idx_src])
+      #print(['{}:{}'.format(tok[i],idx[i]) for i in range(len(tok))])
+
+      if self.lines_tgt is not None:
+        idxs_tgt.append(idx_tgt)
+        n_tgt_tokens += len(idx_tgt)
+        n_tgt_unks += sum([i==self.vocab_tgt.idx_unk for i in idx_tgt])
+        #print(['{}:{}'.format(tok[i],idx[i]) for i in range(len(tok))])
+
+      if len(idxs_src) == self.shard_size:
+        break
+
+    logging.info('Built shard {}-{} lines ~ {}-{} tokens ~ {}-{} OOVs ~ {} filtered examples'.format(len(idxs_src), len(idxs_tgt), n_src_tokens, n_tgt_tokens, n_src_unks, n_tgt_unks, n_filtered))
+    return currline, lens, idxs_pos, idxs_src, idxs_tgt
 
 
   def __iter__(self):
     ##########################
     ### randomize all data ###
     ##########################
-    idxs_pos = [i for i in range(len(self.idxs_src))]
+    self.idxs_pos = [i for i in range(len(self.idxs_src))]
     np.random.shuffle(self.idxs_pos)
     logging.info('Shuffled Dataset with {} examples'.format(self.idxs_pos.shape[0]))
-    #############################################
-    ### build shards with shard_size examples ###
-    #############################################
-    n_examples = 0
-    n_filtered = 0
+    #######################
+    ### traverse shards ###
+    #######################
     n_shards = 0
     n_batchs = 0
-    curr_shard = []
-    for i,pos in enumerate(self.idxs_pos): ### for all examples
-      ###
-      ### filter example if lengths > max_length
-      ###
-      idx_src = self.idxs_src[pos]
-      idx_tgt = self.idxs_tgt[pos] if self.idxs_tgt is not None else []
-      if self.max_length > 0:
-        if len(idx_src) > self.max_length or len(idx_tgt) > self.max_length:
-          n_filtered += 1
-          continue
-      ###
-      ### add example to curr_shard
-      ###
-      n_examples += 1
-      curr_shard.append([pos, len(idx_src)]) 
-      ###
-      ### check if shard is full or is the last example
-      ###
-      if len(curr_shard) == self.shard_size or i == self.idxs_pos[0]-1:
-        shard = sort_shard(curr_shard) ### examples in curr_shard are sorted by length
-        curr_shard = []
-        n_shards += 1
-        #############################################
-        ### build batchs with batch_size examples ###
-        #############################################
-        b = Batch(self.batch_size, self.batch_type) #empty batch
-        for pos in shard:
-          idx_src = self.idxs_src[pos]
-          idx_tgt = self.idxs_tgt[pos] if self.idxs_tgt is not None else []
-          if not b.add(pos, idx_src, idx_tgt): ### cannot continue adding in current batch b
+    lastline = -1
+    while lastline < len(self.idxs_pos):
+      lastline, lens, idxs_pos, idxs_src, idxs_tgt = self.get_shard(lastline+1)
+      n_shards += 1
+      ####################
+      ### build batchs ###
+      ####################
+      shard_ordered = np.argsort(lens) # sort by lens (lower to higher lenghts)
+      b = Batch(self.batch_size, self.batch_type) #empty batch
+      for i in shard_ordered:
+        pos = idxs_pos[i]
+        idx_src = idxs_src[pos]
+        idx_tgt = idxs_tgt[pos] if len(idxs_tgt) else []
+        if not b.add(pos, idx_src, idx_tgt): ### cannot continue adding in current batch b
+          if len(b):
+            yield b.batch()
             n_batchs += 1
-            if len(b):
-              yield b.batch()
-            ### start a new batch with current example [idx_src, idx_tgt]
-            b = Batch(self.batch_size, self.batch_type) 
-            if not b.add(pos, idx_src, idx_tgt):
-              logging.warning('Example {} does not fit in empty batch [Discarded]'.format(pos))
-        if len(b): ### last batch
-          n_batchs += 1
-          yield b.batch()
+          ### start a new batch with current example [idx_src, idx_tgt]
+          b = Batch(self.batch_size, self.batch_type) 
+          if not b.add(pos, idx_src, idx_tgt):
+            logging.warning('Example {} does not fit in empty batch [Discarded]'.format(pos))
+      if len(b): ### last batch
+        yield b.batch()
+        n_batchs += 1
 
-    logging.info('Dataset with {} examples ~ {} shards ~ {} batchs [{} filtered examples]'.format(n_examples,n_shards,n_batchs,n_filtered))
+    logging.info('End dataset iteration: {} shards {} batchs'.format(n_shards,n_batchs))
 
