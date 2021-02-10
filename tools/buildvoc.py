@@ -13,7 +13,7 @@ if __name__ == '__main__':
   min_freq = None
   log_level = 'info'
   prog = sys.argv.pop(0)
-  usage = '''usage: {} [-vocab_size INT] [-sp_model FILE] [-log_level LEVEL] < stdin
+  usage = '''usage: {} [-vocab_size INT] [-sp_model FILE] [-log_level LEVEL] < stdin > stdout
    -vocab_size  INT : vocabulary size ({})
    -min_freq    INT : minimum token frequency ({})
    -sp_model   FILE : SentencePiece model file
