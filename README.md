@@ -34,7 +34,7 @@ cat train.fr | python3 sentencepiece_cli.py -sp_model SP_fr
 
 Thus obtaining `SP_en.model`, `SP_en.vocab`, `SP_fr.model` and `SP_fr.vocab`.
 
-* If your data is already tokenized you can skip the previous step. Vocabularies must be created:
+* Skip the previous step if your data is already tokenized. You only need to build vocabularies:
 
 A single vocabulary for both data sides:
 ```
