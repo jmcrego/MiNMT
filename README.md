@@ -47,7 +47,7 @@ cat train.fr | python3 tools/buildvoc.py > VOC_fr
 ```
 
 
-### (2) Create network
+### (2) Create the network
 
 
 If you built a single model/vocabulary:
