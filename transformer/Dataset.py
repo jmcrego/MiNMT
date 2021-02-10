@@ -190,8 +190,8 @@ class Dataset():
       b = Batch(self.batch_size, self.batch_type) #empty batch
       for i in shard_ordered:
         pos = idxs_pos[i]
-        idx_src = idxs_src[pos]
-        idx_tgt = idxs_tgt[pos] if len(idxs_tgt) else []
+        idx_src = idxs_src[i]
+        idx_tgt = idxs_tgt[i] if len(idxs_tgt) else []
         if not b.add(pos, idx_src, idx_tgt): ### cannot continue adding in current batch b
           if len(b):
             yield b.batch()
