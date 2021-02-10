@@ -97,7 +97,7 @@ class Dataset():
     self.token_src = token_src
     self.token_tgt = token_tgt
 
-    ### corpora structures
+    ### original corpora
     self.lines_src = None
     self.lines_tgt = None
     self.idxs_src = None
@@ -125,9 +125,8 @@ class Dataset():
     logging.info('Read dataset with {}-{} sentences {}-{}'.format(len(self.lines_src), len(self.lines_tgt), ftxt_src, ftxt_tgt))
 
 
-  def get_shard(self, firstline):
-    ### this function builds a shard following self.idxs_pos starting on firstline
-    ### it returns up to self.shard_size examples with corresponding [positions, lens, idxs_src, idxs_tgt]
+  def get_shard(self, shard):
+    ### this ueturns examples in shard (list of pos) with corresponding [positions, lens, idxs_src, idxs_tgt]
     idxs_pos = []
     lens = []
     idxs_src = []
@@ -137,9 +136,7 @@ class Dataset():
     n_src_unks = 0
     n_tgt_tokens = 0
     n_tgt_unks = 0
-    for i in range(firstline, len(self.idxs_pos)):
-      pos = self.idxs_pos[i]
-
+    for pos in shard:
       ### SRC ###
       if self.idxs_src[pos] is None:
         tok_src = [self.vocab_src.str_bos] + self.token_src.tokenize(self.lines_src[pos]) + [self.vocab_src.str_eos]
@@ -187,46 +184,70 @@ class Dataset():
     return lens, idxs_pos, idxs_src, idxs_tgt
 
 
+  def get_batchs(self, lens, idxs_pos, idxs_src, idxs_tgt):
+    batchs = []
+    shard_ordered = np.argsort(lens) # sort by lens (lower to higher lenghts)
+    b = Batch(self.batch_size, self.batch_type) #empty batch
+    for i in shard_ordered:
+      idx_pos = idxs_pos[i]
+      idx_src = idxs_src[i]
+      idx_tgt = idxs_tgt[i] if len(idxs_tgt) else []
+      if not b.add(idx_pos, idx_src, idx_tgt): ### cannot continue adding in current batch b
+        if len(b):
+          batchs.append(b)
+        ### start a new batch with current example [idx_src, idx_tgt]
+        b = Batch(self.batch_size, self.batch_type) 
+        if not b.add(idx_pos, idx_src, idx_tgt):
+          logging.warning('Example {} does not fit in empty batch [Discarded]'.format(idx_pos))
+    if len(b): ### last batch
+      batchs.append(b)
+    return batchs
+
+  def get_shards(self):
+    shards = []
+    shard = []
+    for pos in self.idxs_pos:
+      shard.append(pos)
+      if len(shard) == self.shard_size:
+        shards.append(shard)
+        shard = []
+    if len(shard) == self.shard_size:
+      shards.append(shard)
+      shard = []
+    return shards
+
   def __iter__(self):
     ##########################
     ### randomize all data ###
     ##########################
     np.random.shuffle(self.idxs_pos)
     logging.info('Shuffled Dataset with {} examples'.format(len(self.idxs_pos)))
-    ####################
-    ### build shards ###
-    ####################
+
     n_shards = 0
     n_batchs = 0
-    firstline = 0
-    pos_sofar = set()
-    while firstline < len(self.idxs_pos):
-      lens, idxs_pos, idxs_src, idxs_tgt = self.get_shard(firstline) 
-      firstline += len(lens) 
+    ####################
+    ### build batchs ###
+    ####################
+    shards = self.get_shards()
+    for shard in shards:
+      lens, idxs_pos, idxs_src, idxs_tgt = self.get_shard(shard)
       n_shards += 1
+
+      pos_sofar = set()
       for pos in idxs_pos:
         if pos in pos_sofar:
           print('repeated pos={}'.format(pos))
         pos_sofar.add(pos)
+
       ####################
       ### build batchs ###
       ####################
-      shard_ordered = np.argsort(lens) # sort by lens (lower to higher lenghts)
-      b = Batch(self.batch_size, self.batch_type) #empty batch
-      for i in shard_ordered:
-        pos = idxs_pos[i]
-        idx_src = idxs_src[i]
-        idx_tgt = idxs_tgt[i] if len(idxs_tgt) else []
-        if not b.add(pos, idx_src, idx_tgt): ### cannot continue adding in current batch b
-          if len(b):
-            yield b.batch()
-            n_batchs += 1
-          ### start a new batch with current example [idx_src, idx_tgt]
-          b = Batch(self.batch_size, self.batch_type) 
-          if not b.add(pos, idx_src, idx_tgt):
-            logging.warning('Example {} does not fit in empty batch [Discarded]'.format(pos))
-      if len(b): ### last batch
-        yield b.batch()
+      batchs = get_batchs(lens, idxs_pos, idxs_src, idxs_tgt)
+      idxs_batchs = [i for i in len(batchs)]
+      np.random.shuffle(idxs_batchs)
+      logging.info('Shuffled {} batchs in shard'.format(len(idxs_batchs)))
+      for i in idxs_batchs:
+        yield batchs[i].batch()
         n_batchs += 1
 
     logging.info('End dataset iteration: {} shards {} batchs'.format(n_shards,n_batchs))
