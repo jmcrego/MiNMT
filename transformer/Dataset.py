@@ -183,7 +183,7 @@ class Dataset():
       if len(idxs_src) == self.shard_size:
         break
 
-    logging.info('Built shard with {}-{} lines ~ {}-{} tokens ~ {}-{} OOVs ~ {} filtered examples'.format(len(idxs_src), len(idxs_tgt), n_src_tokens, n_tgt_tokens, n_src_unks, n_tgt_unks, n_filtered))
+    logging.info('Built shard with {}-{} examples ~ {}-{} tokens ~ {}-{} OOVs ~ {} filtered examples'.format(len(idxs_src), len(idxs_tgt), n_src_tokens, n_tgt_tokens, n_src_unks, n_tgt_unks, n_filtered))
     return lens, idxs_pos, idxs_src, idxs_tgt
 
 
