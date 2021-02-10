@@ -115,7 +115,7 @@ class Learning():
 
         if self.report_every and self.optScheduler._step % self.report_every == 0: ### report
           loss_per_tok, ms_per_step = score.report()
-          logging.info('LearningStep: {} epoch: {} batch: {} of {} steps/sec: {:.2f} lr: {:.6f} loss: {:.3f}'.format(self.optScheduler._step, n_epoch, n_batch, len(trainset), 1000.0/ms_per_step, self.optScheduler._rate, loss_per_tok))
+          logging.info('Learning step: {} epoch: {} batch: {} steps/sec: {:.2f} lr: {:.6f} loss: {:.3f}'.format(self.optScheduler._step, n_epoch, n_batch, 1000.0/ms_per_step, self.optScheduler._rate, loss_per_tok))
           #self.writer.add_scalar('Loss/train', loss_per_tok, self.optScheduler._step)
           self.writer.add_scalar('Loss/train', loss_token.item(), self.optScheduler._step)
           self.writer.add_scalar('LearningRate', self.optScheduler._rate, self.optScheduler._step)
@@ -161,7 +161,7 @@ class Learning():
 
     toc = time.time()
     loss = 1.0*valid_loss/n_batch if n_batch else 0.0
-    logging.info('Validation LearningStep: {} #batchs: {} sec: {:.2f} loss: {:.3f}'.format(self.optScheduler._step, n_batch, toc-tic, loss))
+    logging.info('Validation step: {} #batchs: {} sec: {:.2f} loss: {:.3f}'.format(self.optScheduler._step, n_batch, toc-tic, loss))
     self.writer.add_scalar('Loss/valid', loss, self.optScheduler._step)
     return loss
 
