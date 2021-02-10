@@ -7,33 +7,23 @@ import numpy as np
 from collections import defaultdict
 
 def file2idx(ftxt=None, vocab=None, token=None):
-  if vocab is None or ftxt is None:
-    return None, None, None
   toks = []
   idxs = []
-  lens = []
   ntokens = 0
   nunks = 0
   with open(ftxt) as f:
     lines=f.read().splitlines()
 
   for l in lines:
-    tok = token.tokenize(l)
-    tok.insert(0,vocab.str_bos)
-    tok.append(vocab.str_eos)
-    idx = []
-    for t in tok:
-      idx.append(vocab[t])
-      ntokens += 1
-      if idx[-1] == vocab.idx_unk:
-        nunks += 1
+    tok = [vocab.str_bos] + token.tokenize(l) + [vocab.str_eos] 
+    idx = [vocab[t] for t in tok]
     toks.append(tok)
     idxs.append(idx)
-    lens.append(len(idx))
-    #out = ['{}:{}'.format(tok[i],idx[i]) for i in range(len(tok))]
-    #print("{} {}".format(len(out), ' '.join(out)))
+    ntokens += len(idx)
+    nunks += sum([i==vocab.idx_unk for i in idx])
+    print(['{}:{}'.format(tok[i],idx[i]) for i in range(len(tok))])
   logging.info('Read {} lines ~ {} tokens ~ {} OOVs [{:.2f}%] ~ {}'.format(len(lines), ntokens, nunks, 100.0*nunks/ntokens, ftxt))
-  return toks, idxs, lens
+  return toks, idxs
 
 def sort_shard(shard):
   shard = np.asarray(shard) #[<=shard_size, 3] (3 corresponds to [pos, len_src, len_tgt])
@@ -109,20 +99,27 @@ class Dataset():
     self.batch_size = batch_size
     self.max_length = max_length
     self.idx_pad = vocab_src.idx_pad
+    self.idxs_src = None
+    self.lens_src = None
+    self.idxs_tgt = None
+    self.lens_tgt = None
+    self.pos_lens = None
+
     _, self.idxs_src, self.lens_src = file2idx(ftxt_src, vocab_src, token_src) #no need to save txts_src
-    self.pos_lens = [i for i in range(len(self.idxs_src))] #[nsents, 1]
-    self.pos_lens = np.column_stack((self.pos_lens,self.lens_src)) #[nsents, 2]
+    self.pos_lens = [i for i in range(len(self.idxs_src))]           #[nsents, 1]
+    self.pos_lens = np.column_stack((self.pos_lens,self.lens_src))   #[nsents, 2]
+
+    if ftxt_tgt is not None: ### bitext
+      _, self.idxs_tgt, self.lens_tgt = file2idx(ftxt_tgt, vocab_tgt, token_tgt) #no need to save txts_tgt
+      self.pos_lens = np.column_stack((self.pos_lens,self.lens_tgt)) #[nsents, 3]
+      if len(self.lens_src) != len(self.lens_tgt):
+        logging.error('Different number of lines in parallel dataset {}-{}'.format(len(self.lens_src),len(self.lens_tgt)))
+        sys.exit()
+
     if self.shard_size == 0:
-      self.shard_size = self.pos_lens.shape[0] ### all examples in one shard
-    if ftxt_tgt is None: #not a bitext
-      self.idxs_tgt = None
-      self.lens_tgt = None
-      return
-    _, self.idxs_tgt, self.lens_tgt = file2idx(ftxt_tgt, vocab_tgt, token_tgt) #no need to save txts_tgt
-    if len(self.lens_src) != len(self.lens_tgt):
-      logging.error('Different number of lines in parallel dataset {}-{}'.format(len(self.lens_src),len(self.lens_tgt)))
-      sys.exit()
-    self.pos_lens = np.column_stack((self.pos_lens,self.lens_tgt)) #[nsents, 3]
+      self.shard_size = self.pos_lens.shape[0] ### all examples fit in one shard
+
+
 
   def build_shards_batchs(self):
     ######################
