@@ -181,7 +181,7 @@ class Dataset():
     np.random.shuffle(idx_batch)
     logging.info('Shuffled {} batchs'.format(len(idx_batch)))
     for idx in idx_batch:
-      logging.debug('batch = {}'.format(idx_batch[idx]))
+      logging.debug('batch = {}'.format(self.batchs[idx]))
       yield self.batchs[idx]
 
 '''
