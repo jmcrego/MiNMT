@@ -1,4 +1,4 @@
-# Minimalistic Transformer implementation for Machine Translation using Pytorch
+# Minimalistic Transformer implementation using Pytorch for Neural Machine Translation 
 
 ## Clients
 
