@@ -165,7 +165,6 @@ if __name__ == '__main__':
     logging.info('copied target token {} into {}/tgt_tok'.format(opts.tgt_token, opts.dnet))
 
   sentencepiece2vocab(opts.src_vocab, opts.dnet+'/src_voc')
-
   sentencepiece2vocab(opts.tgt_vocab, opts.dnet+'/tgt_voc')
 
   toc = time.time()
