@@ -96,8 +96,13 @@ class Dataset():
     self.vocab_tgt = vocab_tgt
     self.token_src = token_src
     self.token_tgt = token_tgt
+
+    ### corpora structures
     self.lines_src = None
     self.lines_tgt = None
+    self.idxs_src = None
+    self.idxs_tgt = None
+    self.idxs_pos = None ### order in which corpora is traversed to build shards/batches
 
     with open(ftxt_src) as f:
       self.lines_src = f.read().splitlines()
@@ -121,6 +126,8 @@ class Dataset():
 
 
   def get_shard(self, firstline):
+    ### this function builds a shard following self.idxs_pos starting on firstline
+    ### it returns up to self.shard_size examples with corresponding [positions, lens, idxs_src, idxs_tgt]
     idxs_pos = []
     lens = []
     idxs_src = []
@@ -177,7 +184,7 @@ class Dataset():
         break
 
     logging.info('Built shard with {}-{} lines ~ {}-{} tokens ~ {}-{} OOVs ~ {} filtered examples'.format(len(idxs_src), len(idxs_tgt), n_src_tokens, n_tgt_tokens, n_src_unks, n_tgt_unks, n_filtered))
-    return currline, lens, idxs_pos, idxs_src, idxs_tgt
+    return lens, idxs_pos, idxs_src, idxs_tgt
 
 
   def __iter__(self):
@@ -191,9 +198,10 @@ class Dataset():
     ####################
     n_shards = 0
     n_batchs = 0
-    lastline = -1
-    while lastline < len(self.idxs_pos):
-      lastline, lens, idxs_pos, idxs_src, idxs_tgt = self.get_shard(lastline+1) 
+    firstline = 0
+    while firstline < len(self.idxs_pos):
+      lens, idxs_pos, idxs_src, idxs_tgt = self.get_shard(firstline) 
+      firstline += len(lens) 
       n_shards += 1
       ####################
       ### build batchs ###
