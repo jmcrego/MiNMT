@@ -204,7 +204,11 @@ class Dataset():
     ####################
     ### build batchs ###
     ####################
-    shards = self.build_shards()
+    shards = []
+    for i in range(0, len(self.idxs_pos), self.shard_size):  
+        shards.append(self.idxs_pos[i:i+self.shard_size])
+        print(i,len(shards[-1]))
+
     for shard in shards:
       lens, idxs_pos, idxs_src, idxs_tgt = self.format_shard(shard)
       n_shards += 1
