@@ -6,32 +6,6 @@ import logging
 import numpy as np
 from collections import defaultdict
 
-def file2idx(ftxt=None, vocab=None, token=None):
-  toks = []
-  idxs = []
-  ntokens = 0
-  nunks = 0
-  with open(ftxt) as f:
-    lines=f.read().splitlines()
-
-  for l in lines:
-    tok = [vocab.str_bos] + token.tokenize(l) + [vocab.str_eos] 
-    idx = [vocab[t] for t in tok]
-    toks.append(tok)
-    idxs.append(idx)
-    ntokens += len(idx)
-    nunks += sum([i==vocab.idx_unk for i in idx])
-    print(['{}:{}'.format(tok[i],idx[i]) for i in range(len(tok))])
-  logging.info('Read {} lines ~ {} tokens ~ {} OOVs [{:.2f}%] ~ {}'.format(len(lines), ntokens, nunks, 100.0*nunks/ntokens, ftxt))
-  return toks, idxs
-
-
-def sort_shard(shard):
-  shard = np.asarray(shard) #[shard_size, 2] 
-  shard_sorted = np.argsort(shard[:,1]) # sort by lsrc (lower to higher lenghts)
-  shard = shard[shard_sorted]
-  return shard[:,0] #returns only pos (lens are not used)
-
 ##############################################################################################################
 ### Batch ####################################################################################################
 ##############################################################################################################
@@ -110,6 +84,7 @@ class Dataset():
 
     if self.shard_size == 0:
       self.shard_size = len(self.lines_src) ### all examples in one shard
+      logging.info('shard_size set to {}'.format(self.shard_size))
 
     if ftxt_tgt is not None:
       with open(ftxt_tgt) as f:
@@ -123,6 +98,40 @@ class Dataset():
     self.idxs_pos = [i for i in range(len(self.lines_src))]
 
     logging.info('Read dataset with {}-{} sentences {}-{}'.format(len(self.lines_src), len(self.lines_tgt), ftxt_src, ftxt_tgt))
+
+
+  def build_shards(self):
+    shards = []
+    shard = []
+    for pos in self.idxs_pos:
+      shard.append(pos)
+      if len(shard) == self.shard_size:
+        shards.append(shard)
+        shard = []
+    if len(shard) == self.shard_size:
+      shards.append(shard)
+      shard = []
+    return shards
+
+
+  def build_batchs(self, lens, idxs_pos, idxs_src, idxs_tgt):
+    batchs = []
+    shard_ordered = np.argsort(lens) # sort by lens (lower to higher lenghts)
+    b = Batch(self.batch_size, self.batch_type) #empty batch
+    for i in shard_ordered:
+      idx_pos = idxs_pos[i]
+      idx_src = idxs_src[i]
+      idx_tgt = idxs_tgt[i] if len(idxs_tgt) else []
+      if not b.add(idx_pos, idx_src, idx_tgt): ### cannot continue adding in current batch b
+        if len(b):
+          batchs.append(b)
+        ### start a new batch with current example [idx_src, idx_tgt]
+        b = Batch(self.batch_size, self.batch_type) 
+        if not b.add(idx_pos, idx_src, idx_tgt):
+          logging.warning('Example {} does not fit in empty batch [Discarded]'.format(idx_pos))
+    if len(b): ### last batch
+      batchs.append(b)
+    return batchs
 
 
   def format_shard(self, shard):
@@ -184,68 +193,28 @@ class Dataset():
     return lens, idxs_pos, idxs_src, idxs_tgt
 
 
-  def get_batchs(self, lens, idxs_pos, idxs_src, idxs_tgt):
-    batchs = []
-    shard_ordered = np.argsort(lens) # sort by lens (lower to higher lenghts)
-    b = Batch(self.batch_size, self.batch_type) #empty batch
-    for i in shard_ordered:
-      idx_pos = idxs_pos[i]
-      idx_src = idxs_src[i]
-      idx_tgt = idxs_tgt[i] if len(idxs_tgt) else []
-      if not b.add(idx_pos, idx_src, idx_tgt): ### cannot continue adding in current batch b
-        if len(b):
-          batchs.append(b)
-        ### start a new batch with current example [idx_src, idx_tgt]
-        b = Batch(self.batch_size, self.batch_type) 
-        if not b.add(idx_pos, idx_src, idx_tgt):
-          logging.warning('Example {} does not fit in empty batch [Discarded]'.format(idx_pos))
-    if len(b): ### last batch
-      batchs.append(b)
-    return batchs
-
-  def get_shards(self):
-    shards = []
-    shard = []
-    for pos in self.idxs_pos:
-      shard.append(pos)
-      if len(shard) == self.shard_size:
-        shards.append(shard)
-        shard = []
-    if len(shard) == self.shard_size:
-      shards.append(shard)
-      shard = []
-    return shards
-
   def __iter__(self):
     ##########################
     ### randomize all data ###
     ##########################
     np.random.shuffle(self.idxs_pos)
     logging.info('Shuffled Dataset with {} examples'.format(len(self.idxs_pos)))
-
     n_shards = 0
     n_batchs = 0
     ####################
     ### build batchs ###
     ####################
-    pos_sofar = set()
-    shards = self.get_shards()
+    shards = self.build_shards()
     for shard in shards:
       lens, idxs_pos, idxs_src, idxs_tgt = self.format_shard(shard)
       n_shards += 1
-
-      for pos in idxs_pos:
-        if pos in pos_sofar:
-          print('repeated pos={}'.format(pos))
-        pos_sofar.add(pos)
-
       ####################
       ### build batchs ###
       ####################
-      batchs = self.get_batchs(lens, idxs_pos, idxs_src, idxs_tgt)
+      batchs = self.build_batchs(lens, idxs_pos, idxs_src, idxs_tgt)
       idxs_batchs = [i for i in range(len(batchs))]
       np.random.shuffle(idxs_batchs)
-      logging.info('Shuffled {} batchs in shard'.format(len(idxs_batchs)))
+      logging.info('Shuffled shard with {} batchs'.format(len(idxs_batchs)))
       for i in idxs_batchs:
         yield batchs[i].batch()
         n_batchs += 1
