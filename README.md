@@ -1,4 +1,4 @@
-# Minimalistic Transformer implementation using Pytorch performing Machine Translation 
+# Minimalistic NMT implementation using Transformer in Pytorch
 
 ## Clients
 
