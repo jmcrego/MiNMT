@@ -137,8 +137,8 @@ class Dataset():
     n_src_unks = 0
     n_tgt_tokens = 0
     n_tgt_unks = 0
-    for currline in range(firstline, len(self.idxs_pos)):
-      pos = self.idxs_pos[currline]
+    for i in range(firstline, len(self.idxs_pos)):
+      pos = self.idxs_pos[i]
 
       ### SRC ###
       if self.idxs_src[pos] is None:
@@ -147,8 +147,9 @@ class Dataset():
         self.idxs_src[pos] = idx_src
       else:
         idx_src = self.idxs_src[pos]
+        logging.info('repeated pos={}'.format(pos))
 
-      if self.max_length and len(tok_src) > self.max_length:
+      if self.max_length and len(idx_src) > self.max_length:
         n_filtered += 1
         continue
 
@@ -161,7 +162,7 @@ class Dataset():
         else:
           idx_tgt = self.idxs_tgt[pos]
 
-        if self.max_length and len(tok_tgt) > self.max_length:
+        if self.max_length and len(idx_tgt) > self.max_length:
           n_filtered += 1
           continue
       ###################
