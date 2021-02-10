@@ -175,15 +175,16 @@ class Dataset():
   def __len__(self):
     return len(self.batchs)
 
-#  def __iter__(self):
-#    self.build_shards_batchs()
-#    idx_batch = [i for i in range(len(self.batchs))]
-#    np.random.shuffle(idx_batch)
-#    logging.info('Shuffled {} batchs'.format(len(idx_batch)))
-#    for idx in idx_batch:
-#      logging.debug('batch = {}'.format(self.batchs[idx]))
-#      yield self.batchs[idx]
+  def __iter__(self):
+    self.build_shards_batchs()
+    idx_batch = [i for i in range(len(self.batchs))]
+    np.random.shuffle(idx_batch)
+    logging.info('Shuffled {} batchs'.format(len(idx_batch)))
+    for idx in idx_batch:
+      logging.debug('batch = {}'.format(self.batchs[idx]))
+      yield self.batchs[idx]
 
+'''
   def __iter__(self):
     ##########################
     ### randomize all data ###
@@ -241,5 +242,5 @@ class Dataset():
           yield b.batch()
 
     logging.info('Dataset with {} examples ~ {} shards ~ {} batchs [{} filtered examples]'.format(n_examples,n_shards,n_batchs,n_filtered))
-
+'''
 
