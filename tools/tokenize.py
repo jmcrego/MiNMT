@@ -18,7 +18,7 @@ def create_logger(logfile, loglevel):
 sp_model = None
 log_level = 'info'
 prog = sys.argv.pop(0)
-usage = '''usage: {} -sp_model FILE [-log_level LEVEL] < stdin
+usage = '''usage: {} -sp_model FILE [-log_level LEVEL] < stdin > stdout
    -sp_model   FILE : SentencePiece model file (if not given 'space' tokenizer)
    -log_level LEVEL : log level [debug, info, warning, critical, error] (info)
    -h               : this help
