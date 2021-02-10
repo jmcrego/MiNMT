@@ -14,37 +14,37 @@ Run clients with the -h option for a detailed description of available options.
 
 ## Usage example:
 
-Hereinafter we considier `$TRAIN`, `$VALID` and `$TEST` variables containing suffixes of the respective train/valid/test files, with `$SS` and `$TT` variables indicating file extensions of source and target language sides.
+Hereinafter we considier `train.en, train.fr`, `valid.en, valid.fr` and `test.fr` files of the respective train/valid/test files.
 Train/Valid/Test files are formated with one sentence per line of untokenized (raw) text. 
 
 ### (1) Preprocessing
 
 * Build a tokenization (SentencePiece) model and vocabulary:
 ```
-cat $TRAIN.{$SS,$TT} | python3 sentencepiece_cli.py -sp_model $SP_JOINT
+cat train.{en,fr} | python3 sentencepiece_cli.py -sp_model SP_joint
 ```
-The script outputs `$SP_JOINT.model` and `$SP_JOINT.vocab` files for both, source and target, sides of parallel data. 
+The script outputs `SP_joint.model` and `SP_joint.vocab` files for both, source and target, sides of parallel data. 
 By default, the vocabulary contains the 30,000 most frequent words.
 
 You can use separate SentencePiece models/vocabularies for source and target data sides:
 ```
-cat $TRAIN.$SS | python3 sentencepiece_cli.py -sp_model $SP_SRC
-cat $TRAIN.$TT | python3 sentencepiece_cli.py -sp_model $SP_TGT
+cat train.en | python3 sentencepiece_cli.py -sp_model SP_en
+cat train.fr | python3 sentencepiece_cli.py -sp_model SP_fr
 ```
 
-Thus obtaining `$SP_SRC.model`, `$SP_SRC.vocab`, `$SP_TGT.model` and `$SP_TGT.vocab`.
+Thus obtaining `SP_en.model`, `SP_en.vocab`, `SP_fr.model` and `SP_fr.vocab`.
 
 You can also skip this preprocessing step if your data is already tokenized.
 In this case vocabularies must be created:
 
 A single vocabulary for both data sides:
 ```
-cat $TRAIN.{$SS,$TT} | python3 tools/build_vocabulary.py > $VOC
+cat train.{en,fr} | python3 tools/build_vocabulary.py > VOC_joint
 ```
 or
 ```
-cat $TRAIN.$SS | python3 tools/build_vocabulary.py > $VOC.$SS
-cat $TRAIN.$TT | python3 tools/build_vocabulary.py > $VOC.$TT
+cat train.en | python3 tools/build_vocabulary.py > VOC_en
+cat train.fr | python3 tools/build_vocabulary.py > VOC_fr
 ```
 
 
@@ -53,12 +53,12 @@ cat $TRAIN.$TT | python3 tools/build_vocabulary.py > $VOC.$TT
 
 If you built a single model/vocabulary:
 ```
-python3 ./create_cli.py -dnet $DNET -src_vocab $SP_JOINT.vocab -tgt_vocab $SP_JOINT.vocab -src_token $SP_JOINT.model -tgt_token $SP_JOINT.model
+python3 ./create_cli.py -dnet $DNET -src_vocab SP_joint.vocab -tgt_vocab SP_joint.vocab -src_token SP_joint.model -tgt_token SP_joint.model
 ```
 
 Otherwise:
 ```
-python3 ./create_cli.py -dnet $DNET -src_vocab $SP_SRC.vocab -tgt_vocab $SP_TGT.vocab -src_token $SP_SRC.model -tgt_token $SP_TGT.model
+python3 ./create_cli.py -dnet $DNET -src_vocab SP_en.vocab -tgt_vocab SP_fr.vocab -src_token SP_en.model -tgt_token SP_fr.model
 ```
 
 Do not use `-src_tok` and/or `-tgt_tok` options if you skipped preprocessing.
@@ -86,7 +86,7 @@ Default network options are:
 
 ### (3) Learning
 ```
-python3 ./train_cli.py -dnet $DNET -src_train $TRAIN.$SS -tgt_train $TRAIN.$TT -src_valid $VALID.$SS -tgt_valid $VALID.$TT
+python3 ./train_cli.py -dnet $DNET -src_train train.en -tgt_train train.fr -src_valid valid.en -tgt_valid valid.fr
 ```
 
 Starts (or continues) learning using the given training/validation files. Default learning options are:
@@ -123,7 +123,7 @@ Remember that training and validation datasets are handled using the tokenizatio
 
 ### (4) Inference
 ```
-python3 ./translate_cli.py -dnet $DNET -i $TEST.$SS
+python3 ./translate_cli.py -dnet $DNET -i test.en
 ```
 
 Translates the given input file using the last network checkpoint available in `$DNET`. Default inference options are:
