@@ -243,7 +243,7 @@ class Dataset():
       ### build batchs ###
       ####################
       batchs = self.get_batchs(lens, idxs_pos, idxs_src, idxs_tgt)
-      idxs_batchs = [i for i in len(batchs)]
+      idxs_batchs = [i for i in range(len(batchs))]
       np.random.shuffle(idxs_batchs)
       logging.info('Shuffled {} batchs in shard'.format(len(idxs_batchs)))
       for i in idxs_batchs:
