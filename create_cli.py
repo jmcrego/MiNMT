@@ -7,6 +7,7 @@ import time
 import logging
 from transformer.Vocab import sentencepiece2vocab
 from tools.tools import create_logger
+import numpy as np
 
 ######################################################################
 ### Options ##########################################################
