@@ -6,7 +6,7 @@ Preprocessing:
 * `sentencepiece_cli` : Learns SentencePiece model over raw (untokenized) text files
 
 Network:
-* `create_cli` : Creates network
+* `create_cli` : Creates the NMT network
 * `learn_cli` : Runs learning 
 * `translate_cli`: Runs inference
 
