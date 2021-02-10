@@ -125,7 +125,7 @@ class Dataset():
     logging.info('Read dataset with {}-{} sentences {}-{}'.format(len(self.lines_src), len(self.lines_tgt), ftxt_src, ftxt_tgt))
 
 
-  def get_shard(self, shard):
+  def format_shard(self, shard):
     ### this ueturns examples in shard (list of pos) with corresponding [positions, lens, idxs_src, idxs_tgt]
     idxs_pos = []
     lens = []
@@ -228,12 +228,12 @@ class Dataset():
     ####################
     ### build batchs ###
     ####################
+    pos_sofar = set()
     shards = self.get_shards()
     for shard in shards:
-      lens, idxs_pos, idxs_src, idxs_tgt = self.get_shard(shard)
+      lens, idxs_pos, idxs_src, idxs_tgt = self.format_shard(shard)
       n_shards += 1
 
-      pos_sofar = set()
       for pos in idxs_pos:
         if pos in pos_sofar:
           print('repeated pos={}'.format(pos))
