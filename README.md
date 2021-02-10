@@ -19,7 +19,7 @@ Files are formated with one sentence per line of untokenized (raw) text.
 
 ### (1) Preprocessing
 
-* (1.a) Build a tokenization (SentencePiece) model and vocabulary:
+* Build a tokenization (SentencePiece) model and vocabulary:
 ```
 cat train.{en,fr} | python3 sentencepiece_cli.py -sp_model SP_joint
 ```
@@ -34,7 +34,7 @@ cat train.fr | python3 sentencepiece_cli.py -sp_model SP_fr
 
 Thus obtaining `SP_en.model`, `SP_en.vocab`, `SP_fr.model` and `SP_fr.vocab`.
 
-* (1.b) You can also skip this preprocessing step if your data is already tokenized.
+You can skip this preprocessing step if your data is already tokenized.
 In this case vocabularies must be created:
 
 A single vocabulary for both data sides:
