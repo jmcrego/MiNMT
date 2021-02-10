@@ -17,6 +17,8 @@ def create_logger(logfile, loglevel):
     logging.basicConfig(filename=logfile, format='[%(asctime)s.%(msecs)03d] %(levelname)s %(message)s', datefmt='%Y-%m-%d_%H:%M:%S', level=numeric_level)
     logging.debug('Created Logger level={} file={}'.format(loglevel, logfile))
 
+
+
 if __name__ == '__main__':
 
   sp_model = None
@@ -75,8 +77,7 @@ if __name__ == '__main__':
     if min_freq is not None and frq < min_freq:
       break
     print("{}\t{}".format(wrd,frq))
-
-logging.info("Vocabulary size = {}".format(n+3))
+  logging.info("Vocabulary size = {}".format(n+3))
 
 
 
