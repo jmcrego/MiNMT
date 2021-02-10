@@ -89,7 +89,7 @@ Use the next command:
 ```
 python3 ./train_cli.py -dnet $DNET -src_train train.en -tgt_train train.fr -src_valid valid.en -tgt_valid valid.fr
 ```
-to starts (or continues) learning using the given training/validation files. 
+to start (or continues) learning using the given training/validation files. 
 
 Default learning options are:
 ```
