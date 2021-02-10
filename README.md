@@ -1,4 +1,6 @@
-# Minimalistic NMT implementation using Transformer in Pytorch
+# Minimalistic NMT implementation using Transformer
+
+In Pytorch
 
 ## Clients
 
