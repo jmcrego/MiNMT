@@ -135,6 +135,7 @@ class Dataset():
       tok_src = [self.vocab_src.str_bos] + self.token_src.tokenize(self.lines_src[pos]) + [self.vocab_src.str_eos]
       idx_src = [self.vocab_src[t] for t in tok_src]
       if self.max_length and len(tok_src) > self.max_length:
+        n_filtered += 1
         continue
 
       if self.lines_tgt is not None:
@@ -142,6 +143,7 @@ class Dataset():
         tok_tgt = [self.vocab_tgt.str_bos] + self.token_tgt.tokenize(self.lines_tgt[pos]) + [self.vocab_tgt.str_eos] 
         idx_tgt = [self.vocab_tgt[t] for t in tok_tgt]
         if self.max_length and len(tok_tgt) > self.max_length:
+          n_filtered += 1
           continue
       ###################
       ### ADD example ###
@@ -162,7 +164,7 @@ class Dataset():
       if len(idxs_src) == self.shard_size:
         break
 
-    logging.info('Built shard {}-{} lines ~ {}-{} tokens ~ {}-{} OOVs ~ {} filtered examples'.format(len(idxs_src), len(idxs_tgt), n_src_tokens, n_tgt_tokens, n_src_unks, n_tgt_unks, n_filtered))
+    logging.info('Built shard with {}-{} lines ~ {}-{} tokens ~ {}-{} OOVs ~ {} filtered examples'.format(len(idxs_src), len(idxs_tgt), n_src_tokens, n_tgt_tokens, n_src_unks, n_tgt_unks, n_filtered))
     return currline, lens, idxs_pos, idxs_src, idxs_tgt
 
 
