@@ -113,6 +113,8 @@ class Dataset():
         logging.error('Different number of lines in parallel dataset {}-{}'.format(len(self.lines_src),len(self.lines_tgt)))
         sys.exit()
 
+    self.idxs_pos = [i for i in range(len(self.lines_src))]
+
     logging.info('Read dataset with {}-{} sentences'.format(len(self.lines_src), len(self.lines_tgt)))
 
 
@@ -168,9 +170,8 @@ class Dataset():
     ##########################
     ### randomize all data ###
     ##########################
-    self.idxs_pos = [i for i in range(len(self.idxs_src))]
     np.random.shuffle(self.idxs_pos)
-    logging.info('Shuffled Dataset with {} examples'.format(self.idxs_pos.shape[0]))
+    logging.info('Shuffled Dataset with {} examples'.format(len(self.idxs_pos)))
     #######################
     ### traverse shards ###
     #######################
@@ -178,7 +179,7 @@ class Dataset():
     n_batchs = 0
     lastline = -1
     while lastline < len(self.idxs_pos):
-      lastline, lens, idxs_pos, idxs_src, idxs_tgt = self.get_shard(lastline+1)
+      lastline, lens, idxs_pos, idxs_src, idxs_tgt = self.get_shard(lastline+1) ### get a shard following the order in self.idxs_pos
       n_shards += 1
       ####################
       ### build batchs ###
