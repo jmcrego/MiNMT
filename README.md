@@ -61,7 +61,7 @@ Otherwise:
 python3 ./create_cli.py -dnet $DNET -src_vocab SP_en.vocab -tgt_vocab SP_fr.vocab -src_token SP_en.model -tgt_token SP_fr.model
 ```
 
-Do not use `-src_tok` and/or `-tgt_tok` options if you skipped preprocessing. Use `VOC_joint or VOC_en, VOC_fr` if you built vocabularies using `bulidvoc.py`
+Do not use `-src_tok` and/or `-tgt_tok` options if you skipped preprocessing. Use `-src_vocab` and `-tgt_vocab` with the corresponding vocabularies if you used `bulidvoc.py`
 
 The script creates the directory `$DNET` containing:
 * A network description file: 
