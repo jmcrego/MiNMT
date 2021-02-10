@@ -28,7 +28,6 @@ usage = '''usage: {} [-vocab_size INT] [-sp_model FILE] [-log_level LEVEL] < std
    -sp_model   FILE : SentencePiece model file
    -log_level LEVEL : log level [debug, info, warning, critical, error] ({})
    -h               : this help
-[Visit https://github.com/OpenNMT/Tokenizer/tree/master/bindings/python to modify options]
 '''.format(prog,vocab_size,min_freq,log_level)
 
 while len(sys.argv):
@@ -61,7 +60,6 @@ for l in sys.stdin:
   for word in t:
     nwords += 1
     Freq[word] += 1
-
 logging.info("Read #lines={} #words={} vocab={}".format(nlines, nwords, len(Freq)))
 
 print('<unk>\t0')
