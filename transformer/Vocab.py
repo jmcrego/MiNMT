@@ -77,7 +77,7 @@ class Vocab():
 
         self.idx_to_tok.append(tok)
         self.tok_to_idx[tok] = len(self.tok_to_idx)
-    logging.debug('Read Vocab ({} entries) from file {}'.format(len(self.idx_to_tok), file))
+    logging.info('Read Vocab ({} entries) {}'.format(len(self.idx_to_tok), file))
 
 
   def __len__(self):
