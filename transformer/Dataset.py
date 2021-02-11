@@ -44,7 +44,7 @@ class Batch():
   def __len__(self):
     return len(self.idxs_pos)
 
-  def idxs_pos(self):
+  def get_pos(self):
     return self.idxs_pos
 
 ##############################################################################################################
@@ -111,7 +111,7 @@ class Dataset():
       if not b.fits(lsrc,ltgt): ### cannot add in current batch b
         if len(b):
           ### save batch
-          batchs.append(b.idxs_pos())
+          batchs.append(b.get_pos())
           ### start a new batch 
           b = Batch(self.batch_size, self.batch_type) #empty batch
 
@@ -124,7 +124,7 @@ class Dataset():
 
     if len(b): 
       ### save batch
-      batchs.append(b.idxs_pos())
+      batchs.append(b.get_pos())
 
     return batchs
 
