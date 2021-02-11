@@ -201,12 +201,6 @@ if __name__ == '__main__':
   if not os.path.isfile(o.dnet + '/tgt_voc'):
     logging.error('cannot find target vocab file: {}'.format(o.dnet + '/tgt_voc'))
     sys.exit()
-  #if not os.path.isfile(o.dnet + '/src_tok'):
-  #  logging.error('cannot find source token file: {}'.format(o.dnet + '/src_tok'))
-  #  sys.exit()
-  #if not os.path.isfile(o.dnet + '/tgt_tok'):
-  #  logging.error('cannot find target token file: {}'.format(o.dnet + '/tgt_tok'))
-  #  sys.exit()
 
   src_token = ONMTTokenizer(sp_model=o.dnet + '/src_tok') ### the file may not exist => space tokenizer
   src_vocab = Vocab(file=o.dnet + '/src_voc')
@@ -243,6 +237,12 @@ if __name__ == '__main__':
   else:
     valid =None
   train = Dataset(src_vocab, src_token, o.src_train, tgt_vocab, tgt_token, o.tgt_train, o.shard_size, o.batch_size, o.batch_type, o.max_length)
+
+  for pos, batch_src, batch_tgt in train:
+    print('batch')
+    for i in range(len(self.batch_src)):
+      print("{}\t{}\t{}".format(self.pos[i], ' '.join(self.batch_src[i]), ' '.join(self.batch_tgt[i])))
+  sys.exit()
 
   #############
   ### learn ###
