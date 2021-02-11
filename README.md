@@ -1,6 +1,8 @@
-# Minimalistic Neural MT network implementation using Transformers
+# Minimalistic NMT network implementation using Transformers
 
-Pytorch.
+* PyTorch framework
+* OpenNMT tokenizer
+* TensorBorad visualizations
 
 ## Clients
 
