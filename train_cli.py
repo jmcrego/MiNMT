@@ -240,7 +240,6 @@ if __name__ == '__main__':
 
   n = 0
   for pos, batch_src, batch_tgt in train:
-    print('batch {}'.format(n))
     for i in range(len(batch_src)):
       print( "{}\t{}\t{}\t{}".format(n, pos[i], batch_src[i], batch_tgt[i]) )
     n += 1
