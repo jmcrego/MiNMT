@@ -2,7 +2,7 @@
 
 * PyTorch framework
 * OpenNMT tokenizer
-* TensorBorad visualizations
+* TensorBoard visualizations
 
 ## Clients
 
