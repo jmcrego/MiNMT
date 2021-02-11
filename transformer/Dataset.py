@@ -97,8 +97,10 @@ class Dataset():
 
 
   def build_batchs(self, lens, idxs_pos):
+    assert len(lens) == len(idxs_pos)
     batchs = []
     ordered = np.argsort(lens) # sort by lens (lower to higher lenghts)
+    idxs_pos = np.asarray(idxs_pos)
     idxs_pos = idxs_pos[ordered]
 
     b = Batch(self.batch_size, self.batch_type) #empty batch
