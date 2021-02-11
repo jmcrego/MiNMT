@@ -210,5 +210,5 @@ class Dataset():
         yield batchs[i].batch()
         n_batchs += 1
 
-    logging.info('Finished Dataset iteration after {} shards {} batchs {}-{}'.format(n_shards,n_batchs, self.ftxt_src, self.ftxt_tgt))
+    #logging.info('Finished Dataset iteration after {} shards {} batchs {}-{}'.format(n_shards,n_batchs, self.ftxt_src, self.ftxt_tgt))
 
