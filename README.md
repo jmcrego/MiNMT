@@ -72,8 +72,8 @@ The script creates the directory `$DNET` containing:
 * Vocabularies and tokenization (SentencePiece) models:
   * src_voc
   * tgt_voc
-  * src_tok (if used -src_token)
-  * tgt_tok (if used -tgt_token)
+  * src_tok (optional)
+  * tgt_tok (optional)
 
 Default network options are:
 ```
