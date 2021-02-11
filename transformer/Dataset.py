@@ -70,6 +70,8 @@ class Dataset():
     self.vocab_tgt = vocab_tgt
     self.token_src = token_src
     self.token_tgt = token_tgt
+    self.ftxt_src = ftxt_src
+    self.ftxt_tgt = ftxt_tgt
 
     ### original corpora
     self.lines_src = None
@@ -114,7 +116,7 @@ class Dataset():
         ### start a new batch with current example [idx_src, idx_tgt]
         b = Batch(self.batch_size, self.batch_type) 
         if not b.add(idx_pos, idx_src, idx_tgt):
-          logging.warning('Example {} does not fit in empty batch [Discarded]'.format(idx_pos))
+          logging.warning('Example {} does not fit in empty batch [Discarded] {}-{}'.format(idx_pos,self.ftxt_src,self.ftxt_tgt))
     if len(b): ### last batch
       batchs.append(b)
     return batchs
@@ -175,7 +177,7 @@ class Dataset():
       if len(idxs_src) == self.shard_size:
         break
 
-    logging.info('Built shard with {}-{} examples ~ {}-{} tokens ~ {}-{} OOVs ~ {} filtered examples'.format(len(idxs_src), len(idxs_tgt), n_src_tokens, n_tgt_tokens, n_src_unks, n_tgt_unks, n_filtered))
+    logging.info('Built shard with {}-{} examples ~ {}-{} tokens ~ {}-{} OOVs ~ {} filtered examples {}-{}'.format(len(idxs_src), len(idxs_tgt), n_src_tokens, n_tgt_tokens, n_src_unks, n_tgt_unks, n_filtered, self.ftxt_src, self.ftxt_tgt))
     return lens, idxs_pos, idxs_src, idxs_tgt
 
 
@@ -208,5 +210,5 @@ class Dataset():
         yield batchs[i].batch()
         n_batchs += 1
 
-    logging.info('End dataset iteration: {} shards {} batchs'.format(n_shards,n_batchs))
+    logging.info('Finished Dataset iteration after {} shards {} batchs {}-{}'.format(n_shards,n_batchs, self.ftxt_src, self.ftxt_tgt))
 

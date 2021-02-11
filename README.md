@@ -1,4 +1,4 @@
-# Minimalistic NMT implementation using Transformer
+# Minimalistic Neural MT network implementation using Transformers
 
 Pytorch.
 
