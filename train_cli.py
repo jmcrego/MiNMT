@@ -241,7 +241,7 @@ if __name__ == '__main__':
   n = 0
   for pos, batch_src, batch_tgt in train:
     for i in range(len(batch_src)):
-      print( "{}\t{}\t{}\t{}".format(n, pos[i], batch_src[i], batch_tgt[i]) )
+      print( "{}\t{}\t{}\t{}\t{}\t{}".format(n, pos[i], len(batch_src[i]), len(batch_tgt[i]), batch_src[i], batch_tgt[i]) )
     n += 1
   sys.exit()
 
