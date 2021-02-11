@@ -89,7 +89,7 @@ Default network options are:
 
 ### (3) Learning
 
-Use the next command
+Use the command
 ```
 python3 ./train_cli.py -dnet $DNET -src_train train.en -tgt_train train.fr -src_valid valid.en -tgt_valid valid.fr
 ```
@@ -129,7 +129,7 @@ Remember that training and validation datasets are handled using the tokenizatio
 
 ### (4) Inference
 
-Use the next command
+Use the command
 ```
 python3 ./translate_cli.py -dnet $DNET -i test.en
 ```
