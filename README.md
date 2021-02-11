@@ -1,4 +1,4 @@
-# Minimalistic NMT network implementation using Transformers
+# Minimalistic NMT network using Transformers
 
 * PyTorch framework
 * OpenNMT tokenizer
