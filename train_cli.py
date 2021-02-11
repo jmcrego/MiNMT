@@ -240,8 +240,15 @@ if __name__ == '__main__':
 
   n = 0
   for pos, batch_src, batch_tgt in train:
+    max_lsrc = 0
+    max_ltgt = 0
     for i in range(len(batch_src)):
       print( "{}\t{}\t{}\t{}\t{}\t{}".format(n, pos[i], len(batch_src[i]), len(batch_tgt[i]), batch_src[i], batch_tgt[i]) )
+      if max_lsrc < len(batch_src[i]):
+        max_lsrc = len(batch_src[i])
+      if max_ltgt < len(batch_tgt[i]):
+        max_ltgt = len(batch_tgt[i])
+    print("batch[{}] ntoks_src={} ntoks_tgt={}".format(i, max_lsrc*len(batch_src), max_ltgt*len(batch_tgt)))
     n += 1
   sys.exit()
 
