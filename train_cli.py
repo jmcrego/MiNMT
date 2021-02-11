@@ -248,7 +248,7 @@ if __name__ == '__main__':
         max_lsrc = len(batch_src[i])
       if max_ltgt < len(batch_tgt[i]):
         max_ltgt = len(batch_tgt[i])
-    print("batch[{}] ntoks_src={} ntoks_tgt={}".format(i, max_lsrc*len(batch_src), max_ltgt*len(batch_tgt)))
+    print("batch[{}] ntoks_src={} ntoks_tgt={} nlines={}".format(i, max_lsrc*len(batch_src), max_ltgt*len(batch_tgt), len(batch_src)) )
     n += 1
   sys.exit()
 
