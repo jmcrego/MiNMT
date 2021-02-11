@@ -241,7 +241,7 @@ if __name__ == '__main__':
   for pos, batch_src, batch_tgt in train:
     print('batch')
     for i in range(len(batch_src)):
-      print( "{}\t{}\t{}".format(pos[i], ' '.join(batch_src[i]), ' '.join(batch_tgt[i]) ))
+      print( "{}\t{}\t{}".format(pos[i], batch_src[i], batch_tgt[i]) )
   sys.exit()
 
   #############
