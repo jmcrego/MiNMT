@@ -57,9 +57,9 @@ class Inference():
         src, self.msk_src = prepare_source(batch_src, self.tgt_vocab.idx_pad, self.device) #src is [bs, ls] msk_src is [bs,1,ls]
         self.z_src = self.model.encode(src, self.msk_src) #[bs,ls,ed]
         ### decode batch step-by-step
-        if self.K == 1 and False:
-          finals = self.translate_greedy()
-          #finals = self.translate_greedy_nobatchs()
+        if self.K == 1:
+          #finals = self.translate_greedy()
+          finals = self.translate_greedy_nobatchs()
         else:
           finals = self.translate_beam()
         for b in range(len(finals)):
