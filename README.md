@@ -1,7 +1,7 @@
 # Minimalistic implementation of a NMT network using Transformers
 
 * PyTorch framework
-* OpenNMT tokenizer
+* OpenNMT SentencePiece tokenizer
 * TensorBoard visualizations
 
 ## Clients
