@@ -126,10 +126,6 @@ class Inference():
     while True:
       lt = hyps.shape[1]
 
-      ###############
-      ### ADVANCE ###
-      ###############
-
       ### DECODE ###
       y_next = self.model.decode(self.z_src, hyps, self.msk_src, msk_tgt=None)[:,-1,:] #[bs,lt,Vt] => [bs,Vt]
  
@@ -188,10 +184,6 @@ class Inference():
         self.z_src = self.z_src.repeat_interleave(repeats=self.K, dim=0) #[bs,ls,ed] => [bs*K,ls,ed]
         self.msk_src = self.msk_src.repeat_interleave(repeats=self.K, dim=0) #[bs,1,ls] => [bs*K,1,ls]
         #logging.info('z_src = {} msk_src = {}'.format(self.z_src.shape, self.msk_src.shape))
-
-      ###############
-      ### ADVANCE ###
-      ###############
 
       ### DECODE ###
       y_next = self.model.decode(self.z_src, hyps, self.msk_src, msk_tgt=None)[:,-1,:] #[I,lt,Vt] => [I,Vt]
