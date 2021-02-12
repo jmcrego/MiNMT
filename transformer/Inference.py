@@ -57,7 +57,7 @@ class Inference():
         src, self.msk_src = prepare_source(batch_src, self.tgt_vocab.idx_pad, self.device) #src is [bs, ls] msk_src is [bs,1,ls]
         self.z_src = self.model.encode(src, self.msk_src) #[bs,ls,ed]
 
-        for i in len(pos):
+        for i in range(len(pos)):
           logging.debug('{}\t{}\t{}'.format(pos[i], self.src[i], len(self.msk_src[i,0])))
 
         ### decode batch step-by-step
