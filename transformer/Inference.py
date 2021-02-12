@@ -83,10 +83,6 @@ class Inference():
     while True:
       lt = hyps.shape[0]
 
-      ###############
-      ### ADVANCE ###
-      ###############
-
       ### DECODE ###
       y_next = self.model.decode(self.z_src, hyps, self.msk_src, msk_tgt=None)[:,-1,:] #[1,lt,Vt] => [1,Vt]
  
