@@ -151,9 +151,7 @@ class Dataset():
         if self.max_length and len(self.idxs_tgt[pos]) > self.max_length:
           n_filtered += 1
           continue
-      ###################
       ### ADD example ###
-      ###################
       idxs_pos.append(pos)
       idxs_len.append(len(self.idxs_src[pos]))
 
@@ -174,27 +172,17 @@ class Dataset():
 
 
   def __iter__(self):
-    ##########################
     ### randomize all data ###
-    ##########################
     idxs_pos = [i for i in range(len(self.txts_src))]
     np.random.shuffle(idxs_pos)
     logging.info('Shuffled Dataset with {} examples'.format(len(idxs_pos)))
-    ###############################
     ### split dataset in shards ###
-    ###############################
     shards = [idxs_pos[i:i+self.shard_size] for i in range(0, len(idxs_pos), self.shard_size)]
-    #######################
     ### traverse shards ###
-    #######################
     for shard in shards: #each shard is a list of positions referring the original corpus
-      ####################
       ### format shard ###
-      ####################
       lens, shard_pos = self.get_shard(shard)
-      ####################
       ### build batchs ###
-      ####################
       batchs = self.build_batchs(lens, shard_pos)
       idx_batchs = [i for i in range(len(batchs))]
       np.random.shuffle(idx_batchs)
