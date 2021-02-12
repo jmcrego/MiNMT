@@ -56,6 +56,10 @@ class Inference():
         ### encode batch
         src, self.msk_src = prepare_source(batch_src, self.tgt_vocab.idx_pad, self.device) #src is [bs, ls] msk_src is [bs,1,ls]
         self.z_src = self.model.encode(src, self.msk_src) #[bs,ls,ed]
+
+        for i in len(pos):
+          logging.debug('{}\t{}\t{}'.format(pos[i], self.src[i], len(self.msk_src[i,0])))
+
         ### decode batch step-by-step
         if self.K == 1:
           if src.shape[0] == 1:
@@ -150,10 +154,6 @@ class Inference():
       hyps = torch.stack([hyps_extended[b][ind] for b,ind in enumerate(ind_best)], dim=0).contiguous().view(bs,lt) #[bs,1,lt] => [bs,lt]
       logP = torch.stack([logP_extended[b][ind] for b,ind in enumerate(ind_best)], dim=0).contiguous().view(bs,lt) #[bs,1,lt] => [bs,lt]
 
-      #print('')
-      #for b in range(hyps.shape[0]):
-      #  print('batch {}\tlogP={:.6f}\t{}'.format(b,sum(logP[b]), ' '.join([self.tgt_vocab[t] for t in hyps[b].tolist()]) ))
-
       ### FINALS ###
       index_of_finals = (hyps[:,-1]==self.idx_eos).nonzero(as_tuple=False).squeeze(-1) #[n] n being the number of final hyps found
       for b in index_of_finals:
@@ -217,12 +217,7 @@ class Inference():
       logP = torch.stack([logP_extended[b][inds] for b,inds in enumerate(kbest_inds)], dim=0).contiguous().view(bs*self.K,lt) #[bs,K,lt] => [bs*K,lt]
       #logging.info('hyps = {} logP = {}'.format(hyps.shape, logP.shape))
 
-#      print('')
-#      hyps_bs_k = hyps.view(bs,self.K,lt)
-#      logP_bs_k = logP.view(bs,self.K,lt)
-#      for b in range(hyps_bs_k.shape[0]):
-#        for k in range(hyps_bs_k.shape[1]):
-#          print('batch {} beam {}\tlogP={:.6f}\t{}'.format(b, k, sum(logP_bs_k[b,k]), ' '.join([self.tgt_vocab[t] for t in hyps_bs_k[b,k].tolist()]) ))
+      #self.print_beam(bs, lt)
 
       ### FINALS ###
       index_of_finals = (hyps[:,-1]==self.idx_eos).nonzero(as_tuple=False).squeeze(-1) #[n] n being the number of final hyps found
@@ -242,6 +237,12 @@ class Inference():
       if sum([len(d) for d in finals]) == bs*self.K:
         return finals
 
+  def print_beam(self, bs, lt):
+    hyps_bs_k = hyps.view(bs,self.K,lt)
+    logP_bs_k = logP.view(bs,self.K,lt)
+    for b in range(hyps_bs_k.shape[0]):
+      for k in range(hyps_bs_k.shape[1]):
+        logging.debug('batch {} beam {}\tlogP={:.6f}\t{}'.format(b, k, sum(logP_bs_k[b,k]), ' '.join([self.tgt_vocab[t] for t in hyps_bs_k[b,k].tolist()]) ))
 
 
   def format_hyp(self, i, n, c, hyp_idx, src_idx): 
