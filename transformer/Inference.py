@@ -58,8 +58,10 @@ class Inference():
         self.z_src = self.model.encode(src, self.msk_src) #[bs,ls,ed]
         ### decode batch step-by-step
         if self.K == 1:
-          #finals = self.translate_greedy()
-          finals = self.translate_greedy_nobatchs()
+          if src.shape[0] == 1:
+            finals = self.translate_greedy_nobatchs()
+          else:
+            finals = self.translate_greedy()
         else:
           finals = self.translate_beam()
         for b in range(len(finals)):
