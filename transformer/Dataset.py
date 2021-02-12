@@ -196,6 +196,6 @@ class Dataset():
           idxs_src.append(self.idxs_src[pos]) 
           if self.idxs_tgt is not None:
             idxs_tgt.append(self.idxs_tgt[pos])
-          logging.debug('{}\t{}'.format(pos, self.idxs_src[pos]))
+          logging.debug('{}\t{}\tl={}'.format(pos, self.idxs_src[pos], len(self.idxs_src[pos])))
         yield [batch_pos, idxs_src, idxs_tgt]
 
