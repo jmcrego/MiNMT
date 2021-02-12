@@ -85,7 +85,7 @@ class Dataset():
         assert len(self.txts_src) != len(self.txts_tgt), 'Different number of lines in parallel dataset {}-{}'.format(len(self.txts_src),len(self.txtes_tgt))
 
 
-    logging.info('Read dataset with {}-{} sentences {}-{}'.format(len(self.txts_src), len(self.txts_tgt), ftxt_src, ftxt_tgt))
+    logging.info('Read dataset with {} sentences {}-{}'.format(len(self.txts_src), ftxt_src, ftxt_tgt))
 
 
   def build_batchs(self, lens, idxs_pos):
@@ -151,6 +151,7 @@ class Dataset():
         if self.max_length and len(self.idxs_tgt[pos]) > self.max_length:
           n_filtered += 1
           continue
+
       ### ADD example ###
       idxs_pos.append(pos)
       idxs_len.append(len(self.idxs_src[pos]))
@@ -179,7 +180,7 @@ class Dataset():
     ### split dataset in shards ###
     shards = [idxs_pos[i:i+self.shard_size] for i in range(0, len(idxs_pos), self.shard_size)]
     ### traverse shards ###
-    for shard in shards: #each shard is a list of positions referring the original corpus
+    for shard in shards: #each shard is a list of positions in the original corpus
       ### format shard ###
       lens, shard_pos = self.get_shard(shard)
       ### build batchs ###
