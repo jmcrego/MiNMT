@@ -150,7 +150,7 @@ Default inference options are
 -batch_type sentences
 ```
 
-Option -format specifies the fields to output for every example (TAB-separated):
+Option `-format` specifies the fields to output for every example (TAB-separated):
 ```
 [i] index in test set (sentences are sorted to minimize padding)
 [n] rank in n-best
@@ -163,7 +163,7 @@ Option -format specifies the fields to output for every example (TAB-separated):
 [v] hypothesis indexes
 ```
 
-Remember that test datasets are handled using the tokenization and vocabularies available in $DNET directory.
+Remember that test datasets are handled using the tokenization and vocabularies available in `$DNET` directory.
 
 
 
