@@ -1,4 +1,4 @@
-# Minimalistic implementation of a NMT network using Transformers
+# Minimalistic implementation of a NMT toolkit using Transformers
 
 * PyTorch framework
 * OpenNMT SentencePiece tokenizer
@@ -18,7 +18,7 @@ Run clients with the -h option for a detailed description of available options.
 
 ## Usage example:
 
-Hereinafter we considier `train.en, train.fr`, `valid.en, valid.fr` and `test.en, test.fr` files of the respective train/valid/test files.
+Hereinafter we consider `train.en, train.fr`, `valid.en, valid.fr` and `test.en, test.fr` files of the respective train/valid/test files.
 Files are formated with one sentence per line of untokenized (raw) text. 
 
 ### (1) Preprocessing
