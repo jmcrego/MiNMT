@@ -58,7 +58,7 @@ class Inference():
         self.z_src = self.model.encode(src, self.msk_src) #[bs,ls,ed]
 
         for i in range(len(pos)):
-          logging.debug('{}\t{}\t{}'.format(pos[i], self.src[i], len(self.msk_src[i,0])))
+          logging.debug('{}\t{}\t{}'.format(pos[i], src[i], len(self.msk_src[i,0])))
 
         ### decode batch step-by-step
         if self.K == 1:
