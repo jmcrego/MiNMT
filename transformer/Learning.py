@@ -57,7 +57,7 @@ class Score():
     tnow = time.time()
     if self.ntoks and self.nsteps:
       loss_per_tok = self.loss / (1.0*self.ntoks)
-      ms_epoch = 1000.0 * tnow - self.msec_epoch
+      ms_epoch = 1000.0 * (tnow - self.msec_epoch)
     else:
       loss_per_tok = 0.
       ms_epoch = 0.
