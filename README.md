@@ -38,7 +38,7 @@ cat train.fr | python3 sentencepiece_cli.py -sp_model SP_fr
 
 Thus obtaining `SP_en.model`, `SP_en.vocab`, `SP_fr.model` and `SP_fr.vocab`.
 
-* Skip the previous step if your data is already tokenized. You won't use a tokenizer but still vocabularies are needed:
+* Skip the previous step if your data is already tokenized. However, vocabularies are needed:
 
 To build a single vocabulary for both data sides:
 ```
@@ -64,7 +64,7 @@ Otherwise:
 python3 ./create_cli.py -dnet $DNET -src_vocab SP_en.vocab -tgt_vocab SP_fr.vocab -src_token SP_en.model -tgt_token SP_fr.model
 ```
 
-Do not use `-src_tok` and/or `-tgt_tok` options if you skipped preprocessing. Use `-src_vocab` and `-tgt_vocab` with the corresponding vocabularies if you used `tools/buildvoc.py`
+Do not use `-src_tok` nor `-tgt_tok` options if you skipped the tokenizer. 
 
 The script creates the directory `$DNET` containing:
 * A network description file: 
@@ -72,8 +72,8 @@ The script creates the directory `$DNET` containing:
 * Vocabularies and tokenization (SentencePiece) models:
   * src_voc
   * tgt_voc
-  * src_tok (optional)
-  * tgt_tok (optional)
+  * src_tok (if given)
+  * tgt_tok (if given)
 
 Default network options are:
 ```
