@@ -38,13 +38,13 @@ cat train.fr | python3 sentencepiece_cli.py -sp_model SP_fr
 
 Thus obtaining `SP_en.model`, `SP_en.vocab`, `SP_fr.model` and `SP_fr.vocab`.
 
-* Skip the previous step if your data is already tokenized. You only need to build vocabularies:
+* Skip the previous step if your data is already tokenized. You won't use a tokenizer but still vocabularies are needed:
 
-A single vocabulary for both data sides:
+To build a single vocabulary for both data sides:
 ```
 cat train.{en,fr} | python3 tools/buildvoc.py > VOC_joint
 ```
-or one vocabulary for each size:
+or one vocabulary for each side:
 ```
 cat train.en | python3 tools/buildvoc.py > VOC_en
 cat train.fr | python3 tools/buildvoc.py > VOC_fr
