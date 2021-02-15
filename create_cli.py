@@ -5,7 +5,7 @@ import os
 import shutil
 import time
 import logging
-from transformer.Vocab import sentencepiece2vocab
+from tools.SentencePiece import SentencePiece
 from tools.tools import create_logger
 import numpy as np
 
@@ -26,8 +26,6 @@ class Options():
     self.share_embeddings = False
 
     self.dnet = None
-    self.src_vocab = None
-    self.tgt_vocab = None
     self.src_token = None
     self.tgt_token = None
 
@@ -56,14 +54,10 @@ class Options():
         self.share_embeddings = True
       elif tok=="-dnet" and len(argv):
         self.dnet = argv.pop(0)
-      elif tok=="-src_vocab" and len(argv):
-        self.src_vocab = argv.pop(0)
-      elif tok=="-tgt_vocab" and len(argv):
-        self.tgt_vocab = argv.pop(0)
-      elif tok=="-src_token" and len(argv):
-        self.src_token = argv.pop(0)
-      elif tok=="-tgt_token" and len(argv):
-        self.tgt_token = argv.pop(0)
+      elif tok=="-src_spm" and len(argv):
+        self.src_spm = argv.pop(0)
+      elif tok=="-tgt_spm" and len(argv):
+        self.tgt_spm = argv.pop(0)
       elif tok=="-log_file" and len(argv):
         log_file = argv.pop(0)
       elif tok=="-log_level" and len(argv):
@@ -73,20 +67,18 @@ class Options():
     if self.dnet is None:
       logging.error('missing -dnet option')
       self.usage()
-    if self.src_vocab is None:
-      logging.error('missing -src_vocab option')
+    if self.src_spm is None:
+      logging.error('missing -src_spm option')
       self.usage()
-    if self.tgt_vocab is None:
-      logging.error('missing -tgt_vocab option')
+    if self.tgt_spm is None:
+      logging.error('missing -tgt_spm option')
       self.usage()
 
   def usage(self):
     sys.stderr.write('''usage: {} -dnet FILE [Options]
    -dnet         DIR : network ouput directory [must not exist]
-   -src_vocab   FILE : source SentencePiece vocab
-   -tgt_vocab   FILE : target SentencePiece vocab
-   -src_token   FILE : source SentencePiece model
-   -tgt_token   FILE : target SentencePiece model
+   -src_spm     FILE : source SentencePiece model
+   -tgt_spm     FILE : target SentencePiece model
 
    -emb_dim      INT : model embedding dimension ({})
    -qk_dim       INT : query/key embedding dimension ({})
@@ -115,11 +107,11 @@ if __name__ == '__main__':
   if os.path.exists(opts.dnet):
     logging.error('cannot create network directory: {}'.format(opts.dnet))
     sys.exit()
-  if not os.path.isfile(opts.src_vocab):
-    logging.error('cannot find source vocab file: {}'.format(opts.src_vocab))
+  if not os.path.isfile(opts.src_spm):
+    logging.error('cannot find source spm file: {}'.format(opts.src_spm))
     sys.exit()
-  if not os.path.isfile(opts.tgt_vocab):
-    logging.error('cannot find target vocab file: {}'.format(opts.tgt_vocab))
+  if not os.path.isfile(opts.tgt_spm):
+    logging.error('cannot find target spm file: {}'.format(opts.tgt_spm))
     sys.exit()
 
   os.mkdir(opts.dnet)
@@ -134,16 +126,11 @@ if __name__ == '__main__':
     f.write('dropout: {}\n'.format(opts.dropout))
     f.write('share_embeddings: {}\n'.format(opts.share_embeddings))
 
-  if opts.src_token is not None:
-    shutil.copy(opts.src_token, opts.dnet+'/src_tok')
-    logging.info('copied source token {} into {}/src_tok'.format(opts.src_token, opts.dnet))
+  shutil.copy(opts.src_spm, opts.dnet+'/src_spm')
+  logging.info('copied source spm {} into {}/src_spm'.format(opts.src_spm, opts.dnet))
 
-  if opts.tgt_token is not None:
-    shutil.copy(opts.tgt_token, opts.dnet+'/tgt_tok')
-    logging.info('copied target token {} into {}/tgt_tok'.format(opts.tgt_token, opts.dnet))
-
-  sentencepiece2vocab(opts.src_vocab, opts.dnet+'/src_voc')
-  sentencepiece2vocab(opts.tgt_vocab, opts.dnet+'/tgt_voc')
+  shutil.copy(opts.tgt_spm, opts.dnet+'/tgt_spm')
+  logging.info('copied target spm {} into {}/tgt_spm'.format(opts.tgt_spm, opts.dnet))
 
   toc = time.time()
   logging.info('Done ({:.2f} seconds)'.format(toc-tic))
