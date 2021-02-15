@@ -49,19 +49,15 @@ python3 ./create_cli.py -dnet $DNET -src_spm SP_joint.model -tgt_spm SP_joint.mo
 
 Otherwise:
 ```
-python3 ./create_cli.py -dnet $DNET -src_spe SP_en.model -tgt_model SP_fr.model
+python3 ./create_cli.py -dnet $DNET -src_spm SP_en.model -tgt_spm SP_fr.model
 ```
-
-Do not use `-src_tok` nor `-tgt_tok` options if you skipped the tokenizer. 
 
 The script creates the directory `$DNET` containing:
 * A network description file: 
   * network
 * Vocabularies and tokenization (SentencePiece) models:
-  * src_voc
-  * tgt_voc
-  * src_tok (if given)
-  * tgt_tok (if given)
+  * src_spm
+  * tgt_spm
 
 Default network options are:
 ```
