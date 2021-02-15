@@ -58,6 +58,7 @@ The script creates the directory `$DNET` containing:
 * SentencePiece models:
   * src_spm
   * tgt_spm
+  
 (source and target vocabularies are contained in SentencePiece model files)
 
 Default network options are:
