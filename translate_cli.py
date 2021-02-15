@@ -7,10 +7,9 @@ import logging
 import torch
 import yaml
 from transformer.Dataset import Dataset
-from transformer.Vocab import Vocab
-from tools.ONMTTokenizer import ONMTTokenizer
 from transformer.Model import Encoder_Decoder, load_checkpoint_or_initialise, save_checkpoint, load_checkpoint, numparameters
 from transformer.Inference import Inference
+from tools.tools import SentencePiece
 from tools.tools import create_logger
 
 ######################################################################
@@ -134,18 +133,16 @@ if __name__ == '__main__':
   if not os.path.isfile(o.dnet + '/network'):
     logging.error('cannot find network file: {}'.format(o.dnet + '/network'))
     sys.exit()
-  if not os.path.isfile(o.dnet + '/src_voc'):
-    logging.error('cannot find source vocab file: {}'.format(o.dnet + '/src_voc'))
+  if not os.path.isfile(o.dnet + '/src_spm'):
+    logging.error('cannot find source spm file: {}'.format(o.dnet + '/src_spm'))
     sys.exit()
-  if not os.path.isfile(o.dnet + '/tgt_voc'):
-    logging.error('cannot find target vocab file: {}'.format(o.dnet + '/tgt_voc'))
+  if not os.path.isfile(o.dnet + '/tgt_spm'):
+    logging.error('cannot find target spm file: {}'.format(o.dnet + '/tgt_spm'))
     sys.exit()
 
-  src_token = ONMTTokenizer(sp_model=o.dnet + '/src_tok') ### the file may not exist => space tokenizer
-  src_vocab = Vocab(file=o.dnet + '/src_voc')
-  tgt_token = ONMTTokenizer(sp_model=o.dnet + '/tgt_tok') ### the file may not exist => space tokenizer
-  tgt_vocab = Vocab(file=o.dnet + '/tgt_voc')
-  assert src_vocab.idx_pad == tgt_vocab.idx_pad
+  src_spm = SentencePiece(sp_model=o.dnet + '/src_spm')
+  tgt_spm = SentencePiece(sp_model=o.dnet + '/tgt_spm')
+  assert src_spm.idx_pad == tgt_spm.idx_pad, 'src/tgt vocabularies must have the same idx_pad'
   with open(o.dnet + '/network', 'r') as f:
     n = yaml.load(f, Loader=yaml.SafeLoader) #Loader=yaml.FullLoader)
   logging.info("Network = {}".format(n))
@@ -154,14 +151,14 @@ if __name__ == '__main__':
   ### load model ###
   ##################
   device = torch.device('cuda' if o.cuda and torch.cuda.is_available() else 'cpu')
-  model = Encoder_Decoder(n['n_layers'], n['ff_dim'], n['n_heads'], n['emb_dim'], n['qk_dim'], n['v_dim'], n['dropout'], n['share_embeddings'], len(src_vocab), len(tgt_vocab), src_vocab.idx_pad).to(device)
+  model = Encoder_Decoder(n['n_layers'], n['ff_dim'], n['n_heads'], n['emb_dim'], n['qk_dim'], n['v_dim'], n['dropout'], n['share_embeddings'], len(src_spm), len(tgt_spm), src_spm.idx_pad).to(device)
   logging.info('Built model (#params, size) = ({}) in device {}'.format(', '.join([str(f) for f in numparameters(model)]), next(model.parameters()).device ))
   model = load_checkpoint(o.dnet + '/network', model, device)
 
   ##################
   ### load test ####
   ##################
-  test = Dataset(src_vocab, src_token, o.input, tgt_vocab, tgt_token, None, o.shard_size, o.batch_size, o.batch_type, o.max_length)
+  test = Dataset(src_spm, tgt_spm, o.input, None, o.shard_size, o.batch_size, o.batch_type, o.max_length)
 
   ##################
   ### Inference ####
