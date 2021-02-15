@@ -2,8 +2,8 @@
 import sys
 import os
 import glob
-from tools.SentencePiece import SentencePiece
-from tools.tools import create_logger
+from SentencePiece import SentencePiece
+from tools import create_logger
 
 if __name__ == '__main__':
 
