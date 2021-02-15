@@ -30,7 +30,7 @@ python3 tools/spm_train.py -sp_model SP_enfr -i train.{en,fr}
 The script outputs `SP_enfr.model` and `SP_enfr.vocab` files for both, source and target, sides of parallel data. 
 By default, the vocabulary contains the 30,000 most frequent words. The vocabulary is not further needed, already contained in the model file.
 
-You can use separate SentencePiece models (vocabularies) for each translation sides:
+You can use separate SentencePiece models (vocabularies) for each translation side:
 ```
 python3 tools/spm_train.py -sp_model SP_en -i train.en
 python3 tools/spm_train.py -sp_model SP_fr -i train.fr
