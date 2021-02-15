@@ -11,7 +11,7 @@ Preprocessing:
 
 Network:
 * `create_cli` : Creates the NMT network
-* `learn_cli` : Runs learning 
+* `train_cli` : Runs learning 
 * `translate_cli`: Runs inference
 
 Run clients with the -h option for a detailed description of available options.
