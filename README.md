@@ -7,7 +7,7 @@
 ## Clients
 
 Preprocessing:
-* `tools/spm_train.py` : Learns SentencePiece model over raw (untokenized) text files
+* `tools/spm_train.py` : Learns the SentencePiece model over raw (untokenized) text files
 
 Network:
 * `create_cli` : Creates the NMT network
