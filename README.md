@@ -147,7 +147,7 @@ Option `-format` specifies the fields to output for every example (TAB-separated
 [v] hypothesis indexes
 ```
 
-Remember that test datasets are handled using the tokenization and vocabularies available in `$DNET` directory.
+Test datasets are handled using the `src_spm` and `tgt_spm` SentencePiece models existing in `$DNET` directory.
 
 
 
