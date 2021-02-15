@@ -41,7 +41,7 @@ Visit: https://github.com/google/sentencepiece/blob/master/python/README.md
 
   create_logger('stderr','info')
   sp = SentencePiece(sp_model=sp_model)
-  lines = sp.encode(fin=fin, out_type=out_type)
+  _, lines = sp.encode(fin=fin, out_type=str if out_type=='str' else int)
   for l in lines:
     if out_type == 'str':
       print(' '.join(l))

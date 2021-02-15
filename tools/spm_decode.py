@@ -41,6 +41,6 @@ Visit: https://github.com/google/sentencepiece/blob/master/python/README.md
 
   create_logger('stderr','info')
   sp = SentencePiece(sp_model=sp_model)
-  lines = sp.decode(fin=fin, in_type=in_type)
+  _, lines = sp.decode(fin=fin, in_type=str if in_type=='str' else int)
   for l in lines:
     print(l)
