@@ -55,9 +55,10 @@ python3 ./create_cli.py -dnet $DNET -src_spm SP_en.model -tgt_spm SP_fr.model
 The script creates the directory `$DNET` containing:
 * A network description file: 
   * network
-* Vocabularies and tokenization (SentencePiece) models:
+* SentencePiece models:
   * src_spm
   * tgt_spm
+(source and target vocabularies are contained in SentencePiece model files)
 
 Default network options are:
 ```
