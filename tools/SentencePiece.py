@@ -40,6 +40,7 @@ class SentencePiece():
 			assert self.sp.piece_to_id(self.str_unk) == 1, '<unk> must exist in vocab with id=1 while found id={}'.format(self.sp.piece_to_id(self.str_unk))
 			assert self.sp.piece_to_id(self.str_bos) == 2, '<bos> must exist in vocab with id=2 while found id={}'.format(self.sp.piece_to_id(self.str_bos))
 			assert self.sp.piece_to_id(self.str_eos) == 3, '<eos> must exist in vocab with id=3 while found id={}'.format(self.sp.piece_to_id(self.str_eos))
+			logging.info('Read SentencePiece model with {} tokens ~ {}'.format(len(self.sp), sp_model))
 
 	def train(self, sp_model, fins, vocab_size=30000, character_coverage=0.9995, input_sentence_size=1000000, shuffle_input_sentence=True, max_sentence_length=200):
 		if sp_model is not None:
