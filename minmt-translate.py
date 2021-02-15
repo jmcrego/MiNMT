@@ -163,7 +163,7 @@ if __name__ == '__main__':
   ##################
   ### Inference ####
   ##################
-  inference = Inference(model, src_vocab, tgt_vocab, src_token, tgt_token, o, device)
+  inference = Inference(model, src_spm, tgt_spm, o, device)
   inference.translate(test,o.output)
 
   toc = time.time()
