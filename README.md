@@ -146,7 +146,7 @@ Option `-format` specifies the fields to output for every sentence (TAB-separate
 [v] hypothesis (indexes)
 ```
 
-Test datasets are handled using the `src_spm` and `tgt_spm` SentencePiece models existing in `$DNET` directory.
+Same as Train/Validation datasets, test datasets are handled using `src_spm` and `tgt_spm` SentencePiece models existing in `$DNET` directory.
 
 
 
