@@ -74,11 +74,10 @@ Default network options are:
 
 ### (3) Learning
 
-Use the command
+To start (or continue) learning, run the command:
 ```
 python3 minmt-train.py -dnet $DNET -src_train train.en -tgt_train train.fr -src_valid valid.en -tgt_valid valid.fr
 ```
-to start (or continue) learning using the given training/validation files. 
 
 Default learning options are
 ```
@@ -114,11 +113,10 @@ Remember that training and validation datasets are handled using the tokenizatio
 
 ### (4) Inference
 
-Use the command
+To translate an input file (using the last network checkpoint), run the command:
 ```
 python3 minmt-translate.py -dnet $DNET -i test.en
 ```
-to translate the given input file using the last network checkpoint available in `$DNET`. 
 
 Default inference options are
 ```
