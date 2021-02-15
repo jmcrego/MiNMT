@@ -13,7 +13,7 @@ from transformer.Model import Encoder_Decoder, load_checkpoint_or_initialise, sa
 from transformer.Optimizer import OptScheduler, LabelSmoothing_NLL, LabelSmoothing_KLDiv
 from transformer.Learning import Learning
 from tools.SentencePiece import SentencePiece
-from tools.tools import create_logger
+from tools.Tools import create_logger
 
 ######################################################################
 ### Options ##########################################################
