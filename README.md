@@ -139,7 +139,7 @@ Default inference options are
 
 Option `-format` specifies the fields to output for every example (TAB-separated):
 ```
-[i] index in test set (sentences are sorted to minimize padding)
+[i] index of sentence in test set
 [n] rank in n-best
 [c] global hypothesis cost
 [s] source sentence
