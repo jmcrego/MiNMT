@@ -7,7 +7,7 @@
 ## Clients
 
 Preprocessing:
-* `sentencepiece_cli` : Learns SentencePiece model over raw (untokenized) text files
+* `tools/spm_train.py` : Learns SentencePiece model over raw (untokenized) text files
 
 Network:
 * `create_cli` : Creates the NMT network
@@ -25,30 +25,18 @@ Files are formated with one sentence per line of untokenized (raw) text.
 
 * Build a tokenization (SentencePiece) model and vocabulary:
 ```
-cat train.{en,fr} | python3 sentencepiece_cli.py -sp_model SP_joint
+cat train.{en,fr} | python3 tools/spm_train.py -sp_model SP_joint
 ```
 The script outputs `SP_joint.model` and `SP_joint.vocab` files for both, source and target, sides of parallel data. 
-By default, the vocabulary contains the 30,000 most frequent words.
+By default, the vocabulary contains the 30,000 most frequent words. The vocabulary is not further needed, already contained in the model file.
 
-You can use separate SentencePiece models/vocabularies for source and target data sides:
+You can use separate SentencePiece model/vocabulary for source and target data sides:
 ```
 cat train.en | python3 sentencepiece_cli.py -sp_model SP_en
 cat train.fr | python3 sentencepiece_cli.py -sp_model SP_fr
 ```
 
-Thus obtaining `SP_en.model`, `SP_en.vocab`, `SP_fr.model` and `SP_fr.vocab`.
-
-* Skip the previous step if your data is already tokenized. However, vocabularies are needed:
-
-To build a single vocabulary for both data sides:
-```
-cat train.{en,fr} | python3 tools/buildvoc.py > VOC_joint
-```
-or one vocabulary for each side:
-```
-cat train.en | python3 tools/buildvoc.py > VOC_en
-cat train.fr | python3 tools/buildvoc.py > VOC_fr
-```
+Thus producing `SP_en.model`, `SP_en.vocab`, `SP_fr.model` and `SP_fr.vocab`.
 
 
 ### (2) Create the network
@@ -56,12 +44,12 @@ cat train.fr | python3 tools/buildvoc.py > VOC_fr
 
 If you built a single model/vocabulary:
 ```
-python3 ./create_cli.py -dnet $DNET -src_vocab SP_joint.vocab -tgt_vocab SP_joint.vocab -src_token SP_joint.model -tgt_token SP_joint.model
+python3 ./create_cli.py -dnet $DNET -src_spm SP_joint.model -tgt_spm SP_joint.model
 ```
 
 Otherwise:
 ```
-python3 ./create_cli.py -dnet $DNET -src_vocab SP_en.vocab -tgt_vocab SP_fr.vocab -src_token SP_en.model -tgt_token SP_fr.model
+python3 ./create_cli.py -dnet $DNET -src_spe SP_en.model -tgt_model SP_fr.model
 ```
 
 Do not use `-src_tok` nor `-tgt_tok` options if you skipped the tokenizer. 
