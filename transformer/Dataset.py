@@ -48,11 +48,11 @@ class Batch():
 ### Dataset ##################################################################################################
 ##############################################################################################################
 class Dataset():
-  def __init__(self, vocab_src, token_src, ftxt_src, vocab_tgt, token_tgt, ftxt_tgt=None, shard_size=100000, batch_size=64, batch_type='sentences', max_length=100):    
+  def __init__(self, spm_src, spm_tgt, ftxt_src, ftxt_tgt=None, shard_size=100000, batch_size=64, batch_type='sentences', max_length=100):    
     super(Dataset, self).__init__()
-    assert vocab_src.idx_pad == vocab_tgt.idx_pad
-    assert vocab_src.idx_bos == vocab_tgt.idx_bos
-    assert vocab_src.idx_eos == vocab_tgt.idx_eos
+    assert spm_src.idx_pad == spm_tgt.idx_pad
+    assert spm_src.idx_bos == spm_tgt.idx_bos
+    assert spm_src.idx_eos == spm_tgt.idx_eos
     ### dataset options
     self.shard_size = shard_size
     self.batch_type = batch_type
@@ -61,31 +61,28 @@ class Dataset():
     ### file/tokeniztion/vocabularies
     self.ftxt_src = ftxt_src
     self.ftxt_tgt = ftxt_tgt
-    self.vocab_src = vocab_src
-    self.vocab_tgt = vocab_tgt
-    self.token_src = token_src
-    self.token_tgt = token_tgt
+    self.spm_src = spm_src
+    self.spm_tgt = spm_tgt
     ### original corpora
-    self.txts_src = None
-    self.txts_tgt = None
-    self.idxs_src = None
-    self.idxs_tgt = None
+    self.txts_src = None #list of strings (original sentences)
+    self.txts_tgt = None #list of strings (original sentences)
+    self.idxs_src = None #list of list of ints
+    self.idxs_tgt = None #list of list of ints
 
-    with open(ftxt_src) as f:
-      self.txts_src = f.read().splitlines()
-      self.idxs_src = [None] * len(self.txts_src)
-      if self.shard_size == 0:
-        self.shard_size = len(self.txts_src)
-        logging.info('shard_size set to {}'.format(self.shard_size))
+    if ftxt_src is not None:
+      logging.info('Reading {}'.format(ftxt_src))
+      self.txts_src, self.idxs_src = self.spm_src.encode(ftxt_src,int)
 
     if ftxt_tgt is not None:
-      with open(ftxt_tgt) as f:
-        self.txts_tgt = f.read().splitlines()
-        self.idxs_tgt = [None] * len(self.txts_tgt)
-        assert len(self.txts_src) != len(self.txts_tgt), 'Different number of lines in parallel dataset {}-{}'.format(len(self.txts_src),len(self.txtes_tgt))
+      logging.info('Reading {}'.format(ftxt_tgt))
+      self.txts_tgt, self.idxs_tgt = self.spm_tgt.encode(ftxt_tgt,int)
+      assert len(self.txts_src) == len(self.txts_tgt), 'Different number of lines in parallel dataset {}:{}'.format(len(self.txts_src),len(self.txts_tgt))
 
+    if self.shard_size == 0:
+      self.shard_size = len(self.txts_src)
+      logging.info('shard_size set to {}'.format(self.shard_size))
 
-    logging.info('Read dataset with {} sentences {}-{}'.format(len(self.txts_src), ftxt_src, ftxt_tgt))
+    logging.info('Read Dataset with {} sentences {}:{}'.format(len(self.txts_src), ftxt_src, ftxt_tgt))
 
 
   def build_batchs(self, lens, idxs_pos):
@@ -97,8 +94,8 @@ class Dataset():
     batchs = []
     b = Batch(self.batch_size, self.batch_type) #empty batch
     for pos in idxs_pos:
-      lsrc = len(self.idxs_src[pos])
-      ltgt = len(self.idxs_tgt[pos]) if self.idxs_tgt is not None else 0
+      lsrc = len(self.idxs_src[pos]) + 2
+      ltgt = len(self.idxs_tgt[pos]) + 2 if self.idxs_tgt is not None else 0
 
       if not b.fits(lsrc,ltgt): ### cannot add in current batch b
         if len(b):
@@ -112,7 +109,7 @@ class Dataset():
         b.add(pos,lsrc,ltgt)
       else:
         ### discard current example
-        logging.warning('Example {} does not fit in empty batch [Discarded] {}-{}'.format(pos,self.ftxt_src,self.ftxt_tgt))
+        logging.warning('Example {} does not fit in empty batch [Discarded] {}:{}'.format(pos,self.ftxt_src,self.ftxt_tgt))
 
     if len(b): 
       ### save last batch
@@ -123,7 +120,6 @@ class Dataset():
 
   def get_shard(self, shard):
     ### for pos in shard:
-    ### tokenizes and finds indexes into self.idxs_src, self.idxs_tgt if not done
     ### filter out examples (self.length) and returns (len, pos) of those kept
     idxs_len = []
     idxs_pos = []
@@ -133,21 +129,11 @@ class Dataset():
     n_src_unks = 0
     n_tgt_unks = 0
     for pos in shard:
-      ### SRC ###
-      if self.idxs_src[pos] is None:
-        tok_src = [self.vocab_src.str_bos] + self.token_src.tokenize(self.txts_src[pos]) + [self.vocab_src.str_eos]
-        self.idxs_src[pos] = [self.vocab_src[t] for t in tok_src]
-
       if self.max_length and len(self.idxs_src[pos]) > self.max_length:
         n_filtered += 1
         continue
 
       if self.txts_tgt is not None:
-        ### TGT ###
-        if self.idxs_tgt[pos] is None:
-          tok_tgt = [self.vocab_tgt.str_bos] + self.token_tgt.tokenize(self.txts_tgt[pos]) + [self.vocab_tgt.str_eos] 
-          self.idxs_tgt[pos] = [self.vocab_tgt[t] for t in tok_tgt]
-
         if self.max_length and len(self.idxs_tgt[pos]) > self.max_length:
           n_filtered += 1
           continue
@@ -157,18 +143,18 @@ class Dataset():
       idxs_len.append(len(self.idxs_src[pos]))
 
       n_src_tokens += len(self.idxs_src[pos])
-      n_src_unks += sum([i==self.vocab_src.idx_unk for i in self.idxs_src[pos]])
+      n_src_unks += sum([i==self.spm_src.idx_unk for i in self.idxs_src[pos]])
       #print(['{}:{}'.format(tok[i],idx[i]) for i in range(len(tok))])
 
       if self.txts_tgt is not None:
         n_tgt_tokens += len(self.idxs_tgt[pos])
-        n_tgt_unks += sum([i==self.vocab_tgt.idx_unk for i in self.idxs_tgt[pos]])
+        n_tgt_unks += sum([i==self.spm_tgt.idx_unk for i in self.idxs_tgt[pos]])
         #print(['{}:{}'.format(tok[i],idx[i]) for i in range(len(tok))])
 
       if len(idxs_pos) == self.shard_size:
         break
 
-    logging.info('Built shard with {} examples ~ {}-{} tokens ~ {}-{} OOVs ~ {} filtered examples {}-{}'.format(len(idxs_pos), n_src_tokens, n_tgt_tokens, n_src_unks, n_tgt_unks, n_filtered, self.ftxt_src, self.ftxt_tgt))
+    logging.info('Built shard with {} examples ~ {}:{} tokens ~ {}:{} OOVs ~ {} filtered examples {}:{}'.format(len(idxs_pos), n_src_tokens, n_tgt_tokens, n_src_unks, n_tgt_unks, n_filtered, self.ftxt_src, self.ftxt_tgt))
     return idxs_len, idxs_pos
 
 
@@ -193,8 +179,13 @@ class Dataset():
         idxs_src = []
         idxs_tgt = []
         for pos in batch_pos:
-          idxs_src.append(self.idxs_src[pos]) 
+          idxs_src.append([self.spm_src.idx_bos] + self.idxs_src[pos] + [self.spm_src.idx_eos]) 
           if self.idxs_tgt is not None:
-            idxs_tgt.append(self.idxs_tgt[pos])
+            idxs_tgt.append([self.spm_tgt.idx_bos] + self.idxs_tgt[pos] + [self.spm_tgt.idx_eos])
         yield [batch_pos, idxs_src, idxs_tgt]
+
+
+
+
+
 
