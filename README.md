@@ -79,7 +79,7 @@ To start (or continue) learning, run the command:
 python3 minmt-train.py -dnet $DNET -src_train train.en -tgt_train train.fr -src_valid valid.en -tgt_valid valid.fr
 ```
 
-Default learning options are
+Default learning options are:
 ```
 -max_steps 0
 -max_epochs 0
@@ -118,7 +118,7 @@ To translate an input file (using the last network checkpoint), run the command:
 python3 minmt-translate.py -dnet $DNET -i test.en
 ```
 
-Default inference options are
+Default inference options are:
 ```
 -beam_size 4
 -n_best 1
