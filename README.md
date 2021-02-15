@@ -10,9 +10,9 @@ Preprocessing:
 * `tools/spm_train.py` : Learns the SentencePiece model over raw (untokenized) text files
 
 Network:
-* `create_cli` : Creates the NMT network
-* `train_cli` : Runs learning 
-* `translate_cli`: Runs inference
+* `minmt-setup.py` : Creates the NMT network
+* `minmt-train.py` : Runs learning 
+* `minmt-translate.py`: Runs inference
 
 Run clients with the -h option for a detailed description of available options.
 
@@ -44,12 +44,12 @@ Thus producing `SP_en.model`, `SP_en.vocab`, `SP_fr.model` and `SP_fr.vocab`.
 
 If you built a single model/vocabulary:
 ```
-python3 ./create_cli.py -dnet $DNET -src_spm SP_enfr.model -tgt_spm SP_enfr.model
+python3 minmt-setup.py -dnet $DNET -src_spm SP_enfr.model -tgt_spm SP_enfr.model
 ```
 
 Otherwise:
 ```
-python3 ./create_cli.py -dnet $DNET -src_spm SP_en.model -tgt_spm SP_fr.model
+python3 minmt-setup.py -dnet $DNET -src_spm SP_en.model -tgt_spm SP_fr.model
 ```
 
 The script creates the directory `$DNET` containing:
@@ -77,7 +77,7 @@ Default network options are:
 
 Use the command
 ```
-python3 ./train_cli.py -dnet $DNET -src_train train.en -tgt_train train.fr -src_valid valid.en -tgt_valid valid.fr
+python3 minmt-train.py -dnet $DNET -src_train train.en -tgt_train train.fr -src_valid valid.en -tgt_valid valid.fr
 ```
 to start (or continue) learning using the given training/validation files. 
 
@@ -117,7 +117,7 @@ Remember that training and validation datasets are handled using the tokenizatio
 
 Use the command
 ```
-python3 ./translate_cli.py -dnet $DNET -i test.en
+python3 minmt-translate.py -dnet $DNET -i test.en
 ```
 to translate the given input file using the last network checkpoint available in `$DNET`. 
 
