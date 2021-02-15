@@ -70,7 +70,7 @@ class Score():
 ##############################################################################################################
 
 class Learning():
-  def __init__(self, model, optScheduler, criter, suffix, idx_pad, ol): 
+  def __init__(self, model, optScheduler, criter, suffix, idx_pad, ol):
     super(Learning, self).__init__()
     self.model = model
     self.optScheduler = optScheduler
