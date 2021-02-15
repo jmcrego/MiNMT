@@ -137,17 +137,17 @@ Default inference options are
 -batch_type sentences
 ```
 
-Option `-format` specifies the fields to output for every example (TAB-separated):
+Option `-format` specifies the fields to output for every sentence (TAB-separated):
 ```
 [i] index of sentence in test set
 [n] rank in n-best
 [c] global hypothesis cost
-[s] source sentence
-[S] source sentence (detokenised)
-[u] source indexes
-[h] hypothesis
+[s] input sentence (tokenised)
+[S] input sentence (detokenised)
+[u] input sentence (indexes)
+[h] hypothesis (tokenised)
 [H] hypothesis (detokenised)
-[v] hypothesis indexes
+[v] hypothesis (indexes)
 ```
 
 Test datasets are handled using the `src_spm` and `tgt_spm` SentencePiece models existing in `$DNET` directory.
