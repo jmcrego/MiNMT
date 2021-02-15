@@ -143,10 +143,10 @@ Option `-format` specifies the fields to output for every sentence (TAB-separate
 [n] rank in n-best
 [c] global hypothesis cost
 [s] input sentence (tokenised)
-[S] input sentence (detokenised)
+[S] input sentence (raw)
 [u] input sentence (indexes)
 [h] hypothesis (tokenised)
-[H] hypothesis (detokenised)
+[H] hypothesis (raw)
 [v] hypothesis (indexes)
 ```
 
