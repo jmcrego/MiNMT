@@ -1,6 +1,6 @@
 # Minimalistic implementation of a NMT toolkit using Transformers
 
-* PyTorch framework
+* PyTorch framework (https://pytorch.org)
 * Google SentencePiece (https://github.com/google/sentencepiece)
 * TensorBoard visualizations
 
@@ -25,15 +25,15 @@ Files are formated with one sentence per line of untokenized (raw) text.
 
 * Build a tokenization (SentencePiece) model and vocabulary:
 ```
-cat train.{en,fr} | python3 tools/spm_train.py -sp_model SP_joint
+python3 tools/spm_train.py -sp_model SP_joint -i train.{en,fr}
 ```
 The script outputs `SP_joint.model` and `SP_joint.vocab` files for both, source and target, sides of parallel data. 
 By default, the vocabulary contains the 30,000 most frequent words. The vocabulary is not further needed, already contained in the model file.
 
 You can use two separate SentencePiece model/vocabulary for source and target data sides:
 ```
-cat train.en | python3 sentencepiece_cli.py -sp_model SP_en
-cat train.fr | python3 sentencepiece_cli.py -sp_model SP_fr
+python3 sentencepiece_cli.py -sp_model SP_en -i train.en
+python3 sentencepiece_cli.py -sp_model SP_fr -i train.fr
 ```
 
 Thus producing `SP_en.model`, `SP_en.vocab`, `SP_fr.model` and `SP_fr.vocab`.
