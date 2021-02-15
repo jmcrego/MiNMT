@@ -76,7 +76,7 @@ class Dataset():
     if ftxt_tgt is not None:
       logging.info('Reading {}'.format(ftxt_tgt))
       self.txts_tgt, self.idxs_tgt = self.spm_tgt.encode(ftxt_tgt,int)
-      assert len(self.txts_src) == len(self.txts_tgt), 'Different number of lines in parallel dataset {}:{}'.format(len(self.txts_src),len(self.txts_tgt))
+      assert len(self.txts_src) == len(self.txts_tgt), 'Different number of lines in parallel dataset ~ {}:{}'.format(len(self.txts_src),len(self.txts_tgt))
 
     if self.shard_size == 0:
       self.shard_size = len(self.txts_src)
@@ -109,7 +109,7 @@ class Dataset():
         b.add(pos,lsrc,ltgt)
       else:
         ### discard current example
-        logging.warning('Example {} does not fit in empty batch [Discarded] {}:{}'.format(pos,self.ftxt_src,self.ftxt_tgt))
+        logging.warning('Example {} does not fit in empty batch [Discarded] ~ {}:{}'.format(pos,self.ftxt_src,self.ftxt_tgt))
 
     if len(b): 
       ### save last batch
@@ -154,7 +154,7 @@ class Dataset():
       if len(idxs_pos) == self.shard_size:
         break
 
-    logging.info('Built shard with {} examples ~ {}:{} tokens ~ {}:{} OOVs [{:.2f}%:{:.2f}%] ~ {} filtered examples {}:{}'.format(len(idxs_pos), n_src_tokens, n_tgt_tokens, n_src_unks, n_tgt_unks, 100.0*n_src_unks/n_src_tokens, 100.0*n_tgt_unks/n_tgt_tokens, n_filtered, self.ftxt_src, self.ftxt_tgt))
+    logging.info('Built shard with {} examples ~ {}:{} tokens ~ {}:{} OOVs [{:.2f}%:{:.2f}%] ~ {} filtered examples ~ {}:{}'.format(len(idxs_pos), n_src_tokens, n_tgt_tokens, n_src_unks, n_tgt_unks, 100.0*n_src_unks/n_src_tokens, 100.0*n_tgt_unks/n_tgt_tokens, n_filtered, self.ftxt_src, self.ftxt_tgt))
     return idxs_len, idxs_pos
 
 
@@ -162,7 +162,7 @@ class Dataset():
     ### randomize all data ###
     idxs_pos = [i for i in range(len(self.txts_src))]
     np.random.shuffle(idxs_pos)
-    logging.info('Shuffled Dataset with {} examples'.format(len(idxs_pos)))
+    logging.info('Shuffled Dataset with {} examples ~ {}:{}'.format(len(idxs_pos), self.ftxt_src, self.ftxt_tgt))
     ### split dataset in shards ###
     shards = [idxs_pos[i:i+self.shard_size] for i in range(0, len(idxs_pos), self.shard_size)]
     ### traverse shards ###
@@ -173,7 +173,7 @@ class Dataset():
       batchs = self.build_batchs(lens, shard_pos)
       idx_batchs = [i for i in range(len(batchs))]
       np.random.shuffle(idx_batchs)
-      logging.info('Shuffled shard with {} batchs'.format(len(idx_batchs)))
+      logging.info('Shuffled Shard with {} batchs ~ {}:{}'.format(len(idx_batchs), self.ftxt_src, self.ftxt_tgt))
       for i in idx_batchs:
         batch_pos = batchs[i]
         idxs_src = []
