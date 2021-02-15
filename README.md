@@ -38,7 +38,7 @@ python3 tools/spm_train.py -sp_model SP_fr -i train.fr
 
 Thus producing `SP_en.model`, `SP_en.vocab`, `SP_fr.model` and `SP_fr.vocab`.
 
-You can use the original spm_train binary (https://github.com/google/sentencepiece) with your preferred options making sure that you use: `--pad_id=0`, `--pad_piece='<pad>'`, `--unk_id=1`, `--unk_piece='<unk>'`, `--bos_id=2`, `--bos_piece='<bos>'`, `--eos_id=3`, `--eos_piece='<eos>'`.
+You can use the original spm_train binary (https://github.com/google/sentencepiece) with your preferred options making sure that you set: `--pad_id=0`, `--pad_piece='<pad>'`, `--unk_id=1`, `--unk_piece='<unk>'`, `--bos_id=2`, `--bos_piece='<bos>'`, `--eos_id=3`, `--eos_piece='<eos>'`.
 
 ### (2) Create the network
 
@@ -54,11 +54,9 @@ python3 minmt-setup.py -dnet $DNET -src_spm SP_en.model -tgt_spm SP_fr.model
 ```
 
 The script creates the directory `$DNET` containing:
-* A network description file: 
-  * network
-* SentencePiece models:
-  * src_spm
-  * tgt_spm
+* network (the network description file)
+* src_spm (source-side SentencePiece model)
+* tgt_spm (target-side SentencePiece model)
 
 (source and target vocabularies are contained in SentencePiece models)
 
