@@ -25,9 +25,9 @@ Files are formated with one sentence per line of untokenized (raw) text.
 
 * Build a tokenization (SentencePiece) model and vocabulary:
 ```
-python3 tools/spm_train.py -sp_model SP_joint -i train.{en,fr}
+python3 tools/spm_train.py -sp_model SP_enfr -i train.{en,fr}
 ```
-The script outputs `SP_joint.model` and `SP_joint.vocab` files for both, source and target, sides of parallel data. 
+The script outputs `SP_enfr.model` and `SP_enfr.vocab` files for both, source and target, sides of parallel data. 
 By default, the vocabulary contains the 30,000 most frequent words. The vocabulary is not further needed, already contained in the model file.
 
 You can use separate SentencePiece models (vocabularies) for each translation sides:
@@ -44,7 +44,7 @@ Thus producing `SP_en.model`, `SP_en.vocab`, `SP_fr.model` and `SP_fr.vocab`.
 
 If you built a single model/vocabulary:
 ```
-python3 ./create_cli.py -dnet $DNET -src_spm SP_joint.model -tgt_spm SP_joint.model
+python3 ./create_cli.py -dnet $DNET -src_spm SP_enfr.model -tgt_spm SP_enfr.model
 ```
 
 Otherwise:
