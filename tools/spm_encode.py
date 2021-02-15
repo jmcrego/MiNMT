@@ -47,3 +47,4 @@ Visit: https://github.com/google/sentencepiece/blob/master/python/README.md
       print(' '.join(l))
     else:
       print(' '.join([str(x) for x in l]))
+
