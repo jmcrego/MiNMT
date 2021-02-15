@@ -1,7 +1,7 @@
 # Minimalistic implementation of a NMT toolkit using Transformers
 
 * PyTorch framework
-* OpenNMT SentencePiece tokenizer
+* Google SentencePiece (https://github.com/google/sentencepiece)
 * TensorBoard visualizations
 
 ## Clients
