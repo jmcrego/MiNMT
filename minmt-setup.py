@@ -24,10 +24,10 @@ class Options():
     self.n_layers = 6
     self.dropout = 0.1
     self.share_embeddings = False
-
+    self.tokenizer = 'space'
     self.dnet = None
-    self.src_token = None
-    self.tgt_token = None
+    self.src_spm = None
+    self.tgt_spm = None
 
     log_file = 'stderr'
     log_level = 'info'
@@ -58,6 +58,8 @@ class Options():
         self.src_spm = argv.pop(0)
       elif tok=="-tgt_spm" and len(argv):
         self.tgt_spm = argv.pop(0)
+      elif tok=="-tokenizer" and len(argv):
+        self.tokenizer = argv.pop(0)
       elif tok=="-log_file" and len(argv):
         log_file = argv.pop(0)
       elif tok=="-log_level" and len(argv):
@@ -88,11 +90,12 @@ class Options():
    -n_layers     INT : number of encoder layers ({})
    -dropout    FLOAT : dropout value ({})
    -share_embeddings : share source/target embeddings ({})
+   -tokenizer STRING : sentencepiece/space ({})
 
    -log_file    FILE : log file  (stderr)
    -log_level STRING : log level [debug, info, warning, critical, error] (info)
    -h                : this help
-'''.format(self.prog, self.emb_dim, self.qk_dim, self.v_dim, self.ff_dim, self.n_heads, self.n_layers, self.dropout, self.share_embeddings))
+'''.format(self.prog, self.emb_dim, self.qk_dim, self.v_dim, self.ff_dim, self.n_heads, self.n_layers, self.dropout, self.share_embeddings, self.tokenizer))
     sys.exit()
 
 ######################################################################
@@ -125,6 +128,7 @@ if __name__ == '__main__':
     f.write('n_layers: {}\n'.format(opts.n_layers))
     f.write('dropout: {}\n'.format(opts.dropout))
     f.write('share_embeddings: {}\n'.format(opts.share_embeddings))
+    f.write('tokenizer: {}\n'.format(opts.tokenizer))
 
   shutil.copy(opts.src_spm, opts.dnet+'/src_spm')
   logging.info('copied source spm {} into {}/src_spm'.format(opts.src_spm, opts.dnet))

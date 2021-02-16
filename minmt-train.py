@@ -12,7 +12,7 @@ from transformer.Dataset import Dataset
 from transformer.Model import Encoder_Decoder, load_checkpoint_or_initialise, save_checkpoint, load_checkpoint, numparameters
 from transformer.Optimizer import OptScheduler, LabelSmoothing_NLL, LabelSmoothing_KLDiv
 from transformer.Learning import Learning
-from tools.SentencePiece import SentencePiece
+from tools.SentencePiece import SentencePiece, Space
 from tools.Tools import create_logger
 
 ######################################################################
@@ -202,12 +202,21 @@ if __name__ == '__main__':
     logging.error('cannot find target spm file: {}'.format(o.dnet + '/tgt_spm'))
     sys.exit()
 
-  src_spm = SentencePiece(sp_model=o.dnet + '/src_spm')
-  tgt_spm = SentencePiece(sp_model=o.dnet + '/tgt_spm')
-  assert src_spm.idx_pad == tgt_spm.idx_pad, 'src/tgt vocabularies must have the same idx_pad'
   with open(o.dnet + '/network', 'r') as f:
     n = yaml.load(f, Loader=yaml.SafeLoader) #Loader=yaml.FullLoader)
   logging.info("Network = {}".format(n))
+
+  if n['tokenizer'] == 'sentencepiece':
+    src_spm = SentencePiece(sp_model=o.dnet + '/src_spm')
+    tgt_spm = SentencePiece(sp_model=o.dnet + '/tgt_spm')
+  elif n['tokenizer'] == 'space':
+    src_spm = Space(sp_model=o.dnet + '/src_spm')
+    tgt_spm = Space(sp_model=o.dnet + '/tgt_spm')
+  else:
+    logging.error('Bad tokenizer optioin {}'.format(n['tokenizer']))
+    sys.exit()
+
+  assert src_spm.idx_pad == tgt_spm.idx_pad, 'src/tgt vocabularies must have the same idx_pad'
 
   #############################
   ### load model/optim/loss ###

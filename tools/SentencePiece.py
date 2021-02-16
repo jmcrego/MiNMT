@@ -2,6 +2,7 @@
 import sys
 import logging
 import sentencepiece as spm
+from collections import defaultdict
 
 def fd2list(fin, type=None):
 	### read file
@@ -21,6 +22,80 @@ def fd2list(fin, type=None):
 	if fin is not None:
 		fd.close()
 	return lines
+
+class Space():
+	def __init__(self, sp_model=None):
+		self.idx_pad = 0 
+		self.str_pad = '<pad>'
+		self.idx_unk = 1 
+		self.str_unk = '<unk>'
+		self.idx_bos = 2
+		self.str_bos = '<bos>'
+		self.idx_eos = 3
+		self.str_eos = '<eos>'
+		self.tok_to_idx = defaultdict()
+		self.idx_to_tok = []
+
+		if sp_model is not None:
+			### read vocab from sp_model
+			with open(sp_model,'r') as f: 
+				for l in f:
+					tok = l.rstrip()
+					if tok in self.tok_to_idx:
+						continue
+					if ' ' in tok or len(tok) == 0:
+						logging.warning('Bad vocab entry: {} [skipping]'.format(tok))
+						continue
+					self.idx_to_tok.append(tok)
+					self.tok_to_idx[tok] = len(self.tok_to_idx)
+			logging.debug('Read Vocab ({} entries) from file {}'.format(len(self.idx_to_tok), sp_model))
+			assert self.tok_to_idx[self.str_pad] == 0, '<pad> must exist in vocab with id=0 while found id={}'.format(self.tok_to_idx[self.str_pad])
+			assert self.tok_to_idx[self.str_unk] == 1, '<unk> must exist in vocab with id=1 while found id={}'.format(self.tok_to_idx[self.str_unk])
+			assert self.tok_to_idx[self.str_bos] == 2, '<bos> must exist in vocab with id=2 while found id={}'.format(self.tok_to_idx[self.str_bos])
+			assert self.tok_to_idx[self.str_eos] == 3, '<eos> must exist in vocab with id=3 while found id={}'.format(self.tok_to_idx[self.str_eos])
+			logging.info('Read Space vocab with {} tokens ~ {}'.format(len(self.tok_to_idx), sp_model))
+
+	def encode(self, fin, out_type=int):
+		raw_lines = fd2list(fin, type=None) #list of strings
+		tok_lines = []
+		for l in raw_lines:
+			tok_line = []
+			for tok in l.rstrip().split():
+				idx = self.tok_to_idx[tok] if tok in self.tok_to_idx else self.idx_unk
+				tok_line.append(idx)
+			tok_lines.append(tok_line)
+		assert len(raw_lines) == len(tok_lines), 'error: different length raw_lines/tok_lines!' 
+		return raw_lines, tok_lines
+
+	def decode(self, fin, in_type=int):
+		assert False, 'not implemented'
+		if isinstance(fin, str):
+			tok_lines = fd2list(fin, type=in_type) #list of list of strings_or_ints
+			raw_lines = self.sp.decode(tok_lines)
+		else:
+			tok_lines = fin
+			return self.sp.decode(tok_lines)
+		return tok_lines, raw_lines
+
+	def __len__(self):
+		return len(self.idx_to_tok)
+
+	def __contains__(self, s): ### implementation of the method used when invoking : entry in vocab
+		if type(s) == int: 
+			return s < len(self.idx_to_tok) ### testing an index
+		return s in self.tok_to_idx ### testing a string
+
+	def __getitem__(self, s): ### implementation of the method used when invoking : vocab[entry]
+		if type(s) == int: ### return a string
+			return self.idx_to_tok[s]
+		if s in self.tok_to_idx: ### return an index
+			return self.tok_to_idx[s] 
+		else:
+			return self.idx_unk
+
+
+
+
 
 class SentencePiece():
 	def __init__(self, sp_model=None):
@@ -72,5 +147,4 @@ class SentencePiece():
 		if type(s) == int: 
 			return self.sp.id_to_piece(s) ### return a string
 		return self.sp.piece_to_id(s) ### return an index
-
 
