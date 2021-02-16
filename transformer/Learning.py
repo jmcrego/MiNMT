@@ -147,10 +147,10 @@ class Learning():
 
   def validate(self, validset, device):
     tic = time.time()
+    valid_loss = 0.
+    n_batch = 0
     with torch.no_grad():
       self.model.eval()
-      valid_loss = 0.
-      n_batch = 0
       for _, batch_src, batch_tgt in validset:
         n_batch += 1
         src, msk_src = prepare_source(batch_src, self.idx_pad, device)
