@@ -54,9 +54,10 @@ class SentencePiece():
 	def decode(self, fin, in_type=int):
 		if isinstance(fin, str):
 			tok_lines = fd2list(fin, type=in_type) #list of list of strings_or_ints
+			raw_lines = self.sp.decode(tok_lines)
 		else:
 			tok_lines = fin
-		raw_lines = self.sp.decode(tok_lines)
+			return self.sp.decode(tok_lines)
 		return tok_lines, raw_lines
 
 	def __len__(self):
