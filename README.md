@@ -31,7 +31,9 @@ All files are formated with one sentence per line of untokenized (raw) text.
 python3 tools/spm_train.py -sp_model SP_enfr -i train.{en,fr}
 ```
 The script outputs `SP_enfr.model` and `SP_enfr.vocab` files for both, source and target, sides of parallel data. 
-By default, the vocabulary contains the 30,000 most frequent words. The vocabulary is not further needed, already contained in the model file.
+By default, the vocabulary contains the 30,000 most frequent words. 
+
+Note that the vocabulary is not further needed as already contained in the model file.
 
 You can use separate SentencePiece models (vocabularies) for each translation side:
 ```
