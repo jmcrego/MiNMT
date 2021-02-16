@@ -69,7 +69,7 @@ class Inference():
         for b in range(len(finals)):
           for n, (hyp, logp) in enumerate(sorted(finals[b].items(), key=lambda kv: kv[1], reverse=True)):
             hyp = list(map(int,hyp.split(' ')))
-            print(batch_src[0])
+            print(batch_src[b])
             print(hyp)
             sys.exit()
             fh.write(self.format_hyp(pos[b],n,logp,hyp,batch_src[b]) + '\n')
