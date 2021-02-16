@@ -2,6 +2,7 @@
 
 A framework developed for research purposes, aiming to be a clean and minimalistic code base achieving similar accuracy than other state-of-the art frameworks.
 
+MiNMT is built on:
 * PyTorch framework (https://pytorch.org)
 * Google SentencePiece (https://github.com/google/sentencepiece)
 * TensorBoard visualizations
