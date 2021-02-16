@@ -114,6 +114,14 @@ class Learning():
         score.step(loss_batch.item(), torch.sum(ref != self.idx_pad))
 
         if self.report_every and self.optScheduler._step % self.report_every == 0: ### report
+          #if True:
+          #  hyp0 = torch.nn.functional.log_softmax(pred, dim=-1)[0,:,:].squeeze() #[bs, lt, vt] => [1, lt, vt] => [lt, vt]
+          #  _, ind = torch.topk(hyp0, k=1, dim=-1)      #[lt, 1]
+          #  logging.info('SRC{}: {}'.format(n_batch,batch_src[0]))
+          #  logging.info('REF{}: {}'.format(n_batch,batch_tgt[0]))
+          #  logging.info('HYP{}: {}'.format(n_batch,ind.squeeze().tolist()))
+          #  sys.exit()
+
           loss_per_tok, ms_per_step = score.report()
           logging.info('Learning step: {} epoch: {} batch: {} steps/sec: {:.2f} lr: {:.6f} loss: {:.3f}'.format(self.optScheduler._step, n_epoch, n_batch, 1000.0/ms_per_step, self.optScheduler._rate, loss_per_tok))
           #self.writer.add_scalar('Loss/train', loss_per_tok, self.optScheduler._step)
