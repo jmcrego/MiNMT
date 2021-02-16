@@ -69,9 +69,6 @@ class Inference():
         for b in range(len(finals)):
           for n, (hyp, logp) in enumerate(sorted(finals[b].items(), key=lambda kv: kv[1], reverse=True)):
             hyp = list(map(int,hyp.split(' ')))
-            print(batch_src[b])
-            print(hyp)
-            sys.exit()
             fh.write(self.format_hyp(pos[b],n,logp,hyp,batch_src[b]) + '\n')
             fh.flush()
             if n+1 >= self.N:
@@ -250,12 +247,15 @@ class Inference():
     #i is the position in the input sentence
     #n is the position in the nbest 
     #c is the hypothesis overall cost (sum_logP_norm)
-    #hyp_idx hypothesis (list of idxs)
-    #src_idx source (list of idxs)
+    #hyp_idx hypothesis (list of ints)
+    #src_idx source (list of ints)
     while src_idx[-1] == self.src_spm.idx_pad: # eliminate <pad> tokens from src_idx
       src_idx = src_idx[:-1]
     hyp_str = [self.tgt_spm[idx] for idx in hyp_idx[1:-1]]
     src_str = [self.src_spm[idx] for idx in src_idx[1:-1]]
+    print(src_str)
+    print(hyp_str)
+    sys.exit()
     out = []
     for ch in self.format:
       if ch=='i':
