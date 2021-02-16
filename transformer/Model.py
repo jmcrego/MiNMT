@@ -229,7 +229,6 @@ class Encoder(torch.nn.Module):
     tmp1 = self.norm_ff(tmp)
     #FF
     tmp2 = self.feedforward(tmp1) #[bs, ls, ed] contains dropout
-    return tmp2
     #ADD
     z = tmp2 + tmp
     return z
@@ -266,7 +265,6 @@ class Decoder(torch.nn.Module):
     tmp1 = self.norm_ff(tmp)
     #FF
     tmp2 = self.feedforward(tmp1) #[bs, lt, ed] contains dropout
-    return tmp2
     #ADD
     z = tmp2 + tmp
     return z
