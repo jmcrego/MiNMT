@@ -276,7 +276,7 @@ class Inference():
       elif ch=='h':
         out.append(' '.join(hyp_str)) ### output sentence (tokenized)
       elif ch=='H':
-        out.append(self.tgt_spm.decode(hyp_str)) ### output sentence (detokenized)
+        out.append(self.tgt_spm.decode(hyp_str),int) ### output sentence (detokenized)
       elif ch=='v':
         out.append(' '.join(map(str,hyp_idx))) ### output sentence (idxs)
 
