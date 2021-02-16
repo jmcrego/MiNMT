@@ -105,8 +105,8 @@ class Encoder_Decoder(torch.nn.Module):
   def __init__(self, n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout, share_embeddings, src_voc_size, tgt_voc_size, idx_pad):
     super(Encoder_Decoder, self).__init__()
     self.idx_pad = idx_pad
-    self.src_emb = Embedding(src_voc_size, emb_dim, idx_pad, dropout) 
-    self.tgt_emb = Embedding(tgt_voc_size, emb_dim, idx_pad, dropout) 
+    self.src_emb = Embedding(src_voc_size, emb_dim, idx_pad) 
+    self.tgt_emb = Embedding(tgt_voc_size, emb_dim, idx_pad) 
     if share_embeddings:
       self.tgt_emb.emb.weight = self.src_emb.emb.weight
 
@@ -149,14 +149,13 @@ class Encoder_Decoder(torch.nn.Module):
 ### Embedding ################################################################################################
 ##############################################################################################################
 class Embedding(torch.nn.Module):
-  def __init__(self, vocab_size, emb_dim, idx_pad, dropout):
+  def __init__(self, vocab_size, emb_dim, idx_pad):
     super(Embedding, self).__init__()
     self.emb = torch.nn.Embedding(vocab_size, emb_dim, padding_idx=idx_pad)
-    self.dropout = torch.nn.Dropout(dropout)
     self.sqrt_emb_dim = math.sqrt(emb_dim)
 
   def forward(self, x):
-    return self.dropout(self.emb(x)) * self.sqrt_emb_dim
+    return self.emb(x) * self.sqrt_emb_dim
 
 ##############################################################################################################
 ### PositionalEncoding #######################################################################################
