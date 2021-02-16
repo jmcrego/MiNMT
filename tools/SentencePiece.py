@@ -52,13 +52,12 @@ class SentencePiece():
 		return raw_lines, tok_lines
 
 	def decode(self, fin, in_type=int):
-		tok_lines = fd2list(fin, type=in_type) #list of list of strings_or_ints
+		if isinstance(fin, str):
+			tok_lines = fd2list(fin, type=in_type) #list of list of strings_or_ints
+		else:
+			tok_lines = fin
 		raw_lines = self.sp.decode(tok_lines)
 		return tok_lines, raw_lines
-
-	def decode_listint(self, tok_lines):
-		raw_lines = self.sp.decode(tok_lines)
-		return raw_lines
 
 	def __len__(self):
 		return len(self.sp)
