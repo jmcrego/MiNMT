@@ -253,7 +253,6 @@ class Inference():
       src_idx = src_idx[:-1]
     hyp_str = [self.tgt_spm[idx] for idx in hyp_idx[1:-1]]
     src_str = [self.src_spm[idx] for idx in src_idx[1:-1]]
-    sys.exit()
     out = []
     for ch in self.format:
       if ch=='i':
