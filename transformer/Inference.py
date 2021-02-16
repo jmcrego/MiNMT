@@ -252,7 +252,10 @@ class Inference():
     while src_idx[-1] == self.src_spm.idx_pad: # eliminate <pad> tokens from src_idx
       src_idx = src_idx[:-1]
     hyp_str = [self.tgt_spm[idx] for idx in hyp_idx[1:-1]]
+    print(hyp_str[0])
     src_str = [self.src_spm[idx] for idx in src_idx[1:-1]]
+    print(src_str[0])
+    sys.exit()
     out = []
     for ch in self.format:
       if ch=='i':
@@ -276,7 +279,7 @@ class Inference():
       elif ch=='h':
         out.append(' '.join(hyp_str)) ### output sentence (tokenized)
       elif ch=='H':
-        out.append(self.tgt_spm.decode(hyp_str),int) ### output sentence (detokenized)
+        out.append(self.tgt_spm.decode(hyp_str)) ### output sentence (detokenized)
       elif ch=='v':
         out.append(' '.join(map(str,hyp_idx))) ### output sentence (idxs)
 
