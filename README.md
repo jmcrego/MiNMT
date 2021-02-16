@@ -152,4 +152,13 @@ Option `-format` specifies the fields to output for every sentence (TAB-separate
 Same as Train/Validation datasets, test datasets are handled using `src_spm` and `tgt_spm` SentencePiece models existing in `$DNET` directory.
 
 
+## Use of GPU:
+
+It is highly recommended to use a GPU for training/inference. If you have one, you can prefix the training/inference commands with the `CUDA_VISIBLE_DEVICES=i` envoronment variable as well as adding the `-cuda` option. Ex:
+
+```
+CUDA_VISIBLE_DEVICES=0 python3 minmt-train.py -dnet $DNET -src_train train.en -tgt_train train.fr -src_valid valid.en -tgt_valid valid.fr -cuda
+CUDA_VISIBLE_DEVICES=0 python3 minmt-translate.py -dnet $DNET -i test.en -cuda
+```
+
 
