@@ -34,7 +34,7 @@ class Options():
     self.save_every =5000
     self.report_every = 100
     self.keep_last_n = 2
-    self.clip_grad_norm = 0.0
+    self.clip_grad_norm = 0.5
     ### optimization
     self.lr = 2.0
     self.min_lr = 0.0001
@@ -44,7 +44,7 @@ class Options():
     self.noam_scale = 2.0
     self.noam_warmup = 4000
     self.label_smoothing = 0.1
-    self.loss = 'KLDiv'
+    self.loss = 'NLL'
     ### data
     self.shard_size = 100000
     self.max_length = 100
