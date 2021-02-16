@@ -1,5 +1,7 @@
 # Minimalistic implementation of a NMT toolkit using Transformers
 
+A framework developed for research purposes, aiming to be a clean and minimalistic code base achieving similar accuracy than other state-of-the art frameworks.
+
 * PyTorch framework (https://pytorch.org)
 * Google SentencePiece (https://github.com/google/sentencepiece)
 * TensorBoard visualizations
