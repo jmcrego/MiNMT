@@ -9,7 +9,7 @@ The framework is built on/employs:
 
 ## Clients
 
-Preprocessing:
+Pre-processing:
 * `tools/spm_train.py` : Learns a SentencePiece model over raw (untokenized) text files
 
 Network:
@@ -24,7 +24,7 @@ Run clients with the -h option for a detailed description of available options.
 Hereinafter we consider `train.en, train.fr`, `valid.en, valid.fr` and `test.en` the respective train/valid/test files of our example.
 All files are formated with one sentence per line of untokenized (raw) text.
 
-### (1) Preprocessing
+### (1) Pre-processing
 
 * Build a tokenization (SentencePiece) model and vocabulary:
 ```
