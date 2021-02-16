@@ -2,7 +2,7 @@
 import sys
 import os
 from SentencePiece import SentencePiece
-from tools import create_logger
+from Tools import create_logger
 
 if __name__ == '__main__':
 
