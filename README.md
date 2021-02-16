@@ -2,8 +2,8 @@
 
 A framework developed for research purposes, aiming to be a clean and minimalistic code base achieving similar accuracy than other state-of-the art frameworks.
 
-MiNMT is built on:
-* PyTorch framework (https://pytorch.org)
+The framework is built on/employs:
+* PyTorch (https://pytorch.org)
 * Google SentencePiece (https://github.com/google/sentencepiece)
 * TensorBoard visualizations
 
@@ -13,7 +13,7 @@ Preprocessing:
 * `tools/spm_train.py` : Learns the SentencePiece model over raw (untokenized) text files
 
 Network:
-* `minmt-setup.py` : Creates the NMT network
+* `minmt-setup.py` : Creates the NMT network experiment
 * `minmt-train.py` : Runs learning 
 * `minmt-translate.py`: Runs inference
 
