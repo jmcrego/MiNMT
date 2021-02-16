@@ -21,8 +21,8 @@ Run clients with the -h option for a detailed description of available options.
 
 ## Usage example:
 
-Hereinafter we consider `train.en, train.fr`, `valid.en, valid.fr` and `test.en, test.fr` files of the respective train/valid/test files.
-Files are formated with one sentence per line of untokenized (raw) text. 
+Hereinafter we consider `train.en, train.fr`, `valid.en, valid.fr` and `test.en` the respective train/valid/test files.
+All files are formated with one sentence per line of untokenized (raw) text.
 
 ### (1) Preprocessing
 
