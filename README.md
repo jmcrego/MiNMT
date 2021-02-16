@@ -10,7 +10,7 @@ The framework is built on/employs:
 ## Clients
 
 Preprocessing:
-* `tools/spm_train.py` : Learns the SentencePiece model over raw (untokenized) text files
+* `tools/spm_train.py` : Learns a SentencePiece model over raw (untokenized) text files
 
 Network:
 * `minmt-setup.py` : Creates the NMT network experiment
@@ -21,7 +21,7 @@ Run clients with the -h option for a detailed description of available options.
 
 ## Usage example:
 
-Hereinafter we consider `train.en, train.fr`, `valid.en, valid.fr` and `test.en` the respective train/valid/test files.
+Hereinafter we consider `train.en, train.fr`, `valid.en, valid.fr` and `test.en` the respective train/valid/test files of our example.
 All files are formated with one sentence per line of untokenized (raw) text.
 
 ### (1) Preprocessing
