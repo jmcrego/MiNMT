@@ -69,6 +69,9 @@ class Inference():
         for b in range(len(finals)):
           for n, (hyp, logp) in enumerate(sorted(finals[b].items(), key=lambda kv: kv[1], reverse=True)):
             hyp = list(map(int,hyp.split(' ')))
+            print(batch_src[0])
+            print(hyp[0])
+            sys.exit()
             fh.write(self.format_hyp(pos[b],n,logp,hyp,batch_src[b]) + '\n')
             fh.flush()
             if n+1 >= self.N:
@@ -252,10 +255,7 @@ class Inference():
     while src_idx[-1] == self.src_spm.idx_pad: # eliminate <pad> tokens from src_idx
       src_idx = src_idx[:-1]
     hyp_str = [self.tgt_spm[idx] for idx in hyp_idx[1:-1]]
-    print(hyp_str[0])
     src_str = [self.src_spm[idx] for idx in src_idx[1:-1]]
-    print(src_str[0])
-    sys.exit()
     out = []
     for ch in self.format:
       if ch=='i':
