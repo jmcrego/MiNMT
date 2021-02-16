@@ -46,15 +46,19 @@ class SentencePiece():
 		if sp_model is not None:
 			self.sp = spm.SentencePieceTrainer.train(input=','.join(fins), model_prefix=sp_model, vocab_size=vocab_size, character_coverage=character_coverage,	input_sentence_size=input_sentence_size, shuffle_input_sentence=shuffle_input_sentence,	max_sentence_length=max_sentence_length, pad_id=0, pad_piece='<pad>', unk_id=1, unk_piece='<unk>', bos_id=2, bos_piece='<bos>', eos_id=3, eos_piece='<eos>')
 
-	def encode(self, fin, out_type):
+	def encode(self, fin, out_type=int):
 		raw_lines = fd2list(fin, type=None) #list of strings
 		tok_lines = self.sp.encode(raw_lines, out_type=out_type)
 		return raw_lines, tok_lines
 
-	def decode(self, fin, in_type):
+	def decode(self, fin, in_type=int):
 		tok_lines = fd2list(fin, type=in_type) #list of list of strings_or_ints
 		raw_lines = self.sp.decode(tok_lines)
 		return tok_lines, raw_lines
+
+	def decode_listint(self, tok_lines):
+		raw_lines = self.sp.decode(tok_lines)
+		return raw_lines
 
 	def __len__(self):
 		return len(self.sp)
