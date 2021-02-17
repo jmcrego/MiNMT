@@ -106,7 +106,8 @@ class Learning():
         loss_token = loss_batch / torch.sum(ref != self.idx_pad)
         ### optimize
         self.optScheduler.optimizer.zero_grad()                                        ### sets gradients to zero
-        loss_token.backward()                                                          ### computes gradients
+        loss_batch.backward()                                                          ### computes gradients
+        #loss_token.backward()                                                          ### computes gradients
         if self.clip_grad_norm > 0.0:
           torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.clip_grad_norm) ### clip gradients to clip_grad_norm
         self.optScheduler.step()                                                       ### updates model parameters after incrementing step and updating lr
@@ -129,6 +130,7 @@ class Learning():
             logging.info('TGT {}'.format(tgt[0].tolist()))
             logging.info('HYP {}'.format(ind[0].squeeze(-1).tolist()))
             logging.info('REF {}'.format(ref[0].tolist()))
+            logging.info('loss_batch={:.6f} tokens_batch={}'.format(loss_batch.item(), torch.sum(ref != self.idx_pad)))
 
           if validset is not None:
             vloss = self.validate(validset, device)
