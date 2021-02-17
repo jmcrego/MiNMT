@@ -109,7 +109,7 @@ class Space():
 
 	def decode_list(self, tok_lines):
 		raw_line = []
-		for idx in l:
+		for idx in tok_lines:
 			tok = self.idx_to_tok[idx] if idx < len(self.idx_to_tok) else self.str_unk
 			raw_line.append(tok)
 		return raw_line
