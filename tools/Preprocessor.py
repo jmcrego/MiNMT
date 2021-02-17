@@ -5,11 +5,18 @@ import sentencepiece as spm
 from collections import defaultdict
 
 def fd2list(fin, type=None):
-	### read file
+	### whe type is:
+	# None : returns list of strings (sentences)
+	# int : returns list of list of ints (idxs)
+	# str : returns list of list of strings (words)
+
+	### open file/stdin
 	if fin is None:
 	 	fd = sys.stdin
 	else:
 		fd = open(fin,'r')
+
+	### parse content
 	if type is None:
 		lines = fd.read().splitlines()
 	elif type == 'int':
@@ -19,12 +26,17 @@ def fd2list(fin, type=None):
 	else:
 		logging.error('Invalid type {}'.format(type))
 		sys.exit()
+
+	### close file
 	if fin is not None:
 		fd.close()
 	return lines
 
+#######################
+### space tokenizer ###
+#######################
 class Space():
-	def __init__(self, sp_model=None):
+	def __init__(self, fmod=None):
 		self.idx_pad = 0 
 		self.str_pad = '<pad>'
 		self.idx_unk = 1 
@@ -36,9 +48,9 @@ class Space():
 		self.tok_to_idx = defaultdict()
 		self.idx_to_tok = []
 
-		if sp_model is not None:
-			### read vocab from sp_model
-			with open(sp_model,'r') as f: 
+		if fmod is not None:
+			### read vocab from fmod
+			with open(fmod,'r') as f: 
 				for l in f:
 					toks = l.split()
 					tok = toks[0]
@@ -49,19 +61,19 @@ class Space():
 						continue
 					self.idx_to_tok.append(tok)
 					self.tok_to_idx[tok] = len(self.tok_to_idx)
-			logging.debug('Read Vocab ({} entries) from file {}'.format(len(self.idx_to_tok), sp_model))
+			logging.debug('Read Vocab ({} entries) from file {}'.format(len(self.idx_to_tok), fmod))
 			assert self.tok_to_idx[self.str_pad] == 0, '<pad> must exist in vocab with id=0 while found id={}'.format(self.tok_to_idx[self.str_pad])
 			assert self.tok_to_idx[self.str_unk] == 1, '<unk> must exist in vocab with id=1 while found id={}'.format(self.tok_to_idx[self.str_unk])
 			assert self.tok_to_idx[self.str_bos] == 2, '<bos> must exist in vocab with id=2 while found id={}'.format(self.tok_to_idx[self.str_bos])
 			assert self.tok_to_idx[self.str_eos] == 3, '<eos> must exist in vocab with id=3 while found id={}'.format(self.tok_to_idx[self.str_eos])
-			logging.info('Read Space vocab with {} tokens ~ {}'.format(len(self.tok_to_idx), sp_model))
+			logging.info('Read Space vocab with {} tokens ~ {}'.format(len(self.tok_to_idx), fmod))
 
 	def encode(self, fin, out_type=int):
 		raw_lines = fd2list(fin, type=None) #list of strings
 		tok_lines = []
 		for l in raw_lines:
 			tok_line = []
-			for tok in l.rstrip().split():
+			for tok in l.split():
 				idx = self.tok_to_idx[tok] if tok in self.tok_to_idx else self.idx_unk
 				tok_line.append(idx)
 			tok_lines.append(tok_line)
@@ -94,12 +106,11 @@ class Space():
 		else:
 			return self.idx_unk
 
-
-
-
-
+###############################
+### SentencePiece tokenizer ###
+###############################
 class SentencePiece():
-	def __init__(self, sp_model=None):
+	def __init__(self, fmod=None):
 		self.sp = None
 		self.idx_pad = 0 
 		self.str_pad = '<pad>'
@@ -110,17 +121,17 @@ class SentencePiece():
 		self.idx_eos = 3
 		self.str_eos = '<eos>'
 
-		if sp_model is not None: 
-			self.sp = spm.SentencePieceProcessor(model_file=sp_model)
+		if fmod is not None: 
+			self.sp = spm.SentencePieceProcessor(model_file=fmod)
 			assert self.sp.piece_to_id(self.str_pad) == 0, '<pad> must exist in vocab with id=0 while found id={}'.format(self.sp.piece_to_id(self.str_pad))
 			assert self.sp.piece_to_id(self.str_unk) == 1, '<unk> must exist in vocab with id=1 while found id={}'.format(self.sp.piece_to_id(self.str_unk))
 			assert self.sp.piece_to_id(self.str_bos) == 2, '<bos> must exist in vocab with id=2 while found id={}'.format(self.sp.piece_to_id(self.str_bos))
 			assert self.sp.piece_to_id(self.str_eos) == 3, '<eos> must exist in vocab with id=3 while found id={}'.format(self.sp.piece_to_id(self.str_eos))
-			logging.info('Read SentencePiece model with {} tokens ~ {}'.format(len(self.sp), sp_model))
+			logging.info('Read SentencePiece model with {} tokens ~ {}'.format(len(self.sp), fmod))
 
-	def train(self, sp_model, fins, vocab_size=30000, character_coverage=0.9995, input_sentence_size=1000000, shuffle_input_sentence=True, max_sentence_length=200):
-		if sp_model is not None:
-			self.sp = spm.SentencePieceTrainer.train(input=','.join(fins), model_prefix=sp_model, vocab_size=vocab_size, character_coverage=character_coverage,	input_sentence_size=input_sentence_size, shuffle_input_sentence=shuffle_input_sentence,	max_sentence_length=max_sentence_length, pad_id=0, pad_piece='<pad>', unk_id=1, unk_piece='<unk>', bos_id=2, bos_piece='<bos>', eos_id=3, eos_piece='<eos>')
+	def train(self, fmod, fins, vocab_size=30000, character_coverage=0.9995, input_sentence_size=1000000, shuffle_input_sentence=True, max_sentence_length=200):
+		if fmod is not None:
+			self.sp = spm.SentencePieceTrainer.train(input=','.join(fins), model_prefix=fmod, vocab_size=vocab_size, character_coverage=character_coverage,	input_sentence_size=input_sentence_size, shuffle_input_sentence=shuffle_input_sentence,	max_sentence_length=max_sentence_length, pad_id=0, pad_piece='<pad>', unk_id=1, unk_piece='<unk>', bos_id=2, bos_piece='<bos>', eos_id=3, eos_piece='<eos>')
 
 	def encode(self, fin, out_type=int):
 		raw_lines = fd2list(fin, type=None) #list of strings

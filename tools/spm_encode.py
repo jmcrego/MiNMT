@@ -7,7 +7,7 @@ from Tools import create_logger
 
 if __name__ == '__main__':
 
-  sp_model = None
+  fmod = None
   fin = None
   out_type = 'str'
   prog = sys.argv.pop(0)
@@ -40,7 +40,7 @@ Visit: https://github.com/google/sentencepiece/blob/master/python/README.md
     sys.exit()
 
   create_logger('stderr','info')
-  sp = SentencePiece(sp_model=sp_model)
+  sp = SentencePiece(fmod=sp_model)
   _, lines = sp.encode(fin=fin, out_type=str if out_type=='str' else int)
   for l in lines:
     if out_type == 'str':

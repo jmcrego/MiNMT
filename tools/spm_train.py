@@ -44,5 +44,5 @@ Visit: https://github.com/google/sentencepiece/blob/master/doc/options.md
     sys.exit()
 
   create_logger('stderr','info')
-  sp = SentencePiece(sp_model=None)
-  sp.train(sp_model=sp_model, fins=fins, vocab_size=vocab_size)
+  sp = SentencePiece(fmod=None)
+  sp.train(fmod=sp_model, fins=fins, vocab_size=vocab_size)
