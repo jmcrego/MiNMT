@@ -14,7 +14,7 @@ if __name__ == '__main__':
   in_type = 'int'
   out_type = 'str'
   prog = sys.argv.pop(0)
-  usage = '''usage: {} -model FILE -preprocessor STRING [-i FILE]
+  usage = '''usage: {} -do STRING -model FILE -preprocessor STRING
    -do           STRING : encode OR decode ({})
    -model          FILE : input model/vocab
    -preprocessor STRING : sentencepiece OR space ({})

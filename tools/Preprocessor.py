@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 import sys
 import logging
-import sentencepiece as spm
 from collections import defaultdict
+import sentencepiece as spm
 
 def fd2list(fin, type='str'):
 	### whe type is:
-	# int : returns list of list of ints (idxs)
-	# str : returns list of list of strings (words)
+	# int: returns list of list of ints (idxs)
+	# str: returns list of list of strings (words)
 
 	### open file/stdin
 	if fin is None:
@@ -30,7 +30,7 @@ def fd2list(fin, type='str'):
 	return lines
 
 #######################
-### space tokenizer ###
+### Space tokenizer ###
 #######################
 class Space():
 	def __init__(self, fmod=None):
@@ -107,6 +107,13 @@ class Space():
 			sys.exit()
 		return tok_lines, raw_lines
 
+	def decode_list(self, tok_lines):
+		raw_line = []
+		for idx in l:
+			tok = self.idx_to_tok[idx] if idx < len(self.idx_to_tok) else self.str_unk
+			raw_line.append(tok)
+		return raw_line
+
 	def __len__(self):
 		return len(self.idx_to_tok)
 
@@ -167,6 +174,10 @@ class SentencePiece():
 		tok_lines = fd2list(fin, type=in_type) #list of list of strings_or_ints		
 		raw_lines = self.sp.decode(tok_lines)
 		return tok_lines, raw_lines
+
+	def decode_list(self, tok_lines):
+		raw_line = self.sp.decode(tok_lines)
+		return raw_line
 
 	def __len__(self):
 		return len(self.sp)

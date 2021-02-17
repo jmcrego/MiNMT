@@ -243,20 +243,21 @@ class Inference():
         logging.debug('batch {} beam {}\tlogP={:.6f}\t{}'.format(b, k, sum(logP_bs_k[b,k]), ' '.join([self.tgt_pre[t] for t in hyps_bs_k[b,k].tolist()]) ))
 
 
-  def format_hyp(self, i, n, c, hyp_idx, src_idx): 
-    #i is the position in the input sentence
+  def format_hyp(self, p, n, c, tgt_idx, src_idx): 
+    #p is the position in the input sentence
     #n is the position in the nbest 
     #c is the hypothesis overall cost (sum_logP_norm)
-    #hyp_idx hypothesis (list of ints)
+    #tgt_idx hypothesis (list of ints)
     #src_idx source (list of ints)
     while src_idx[-1] == self.src_pre.idx_pad: # eliminate <pad> tokens from src_idx
       src_idx = src_idx[:-1]
-    hyp_str = [self.tgt_pre[idx] for idx in hyp_idx[1:-1]]
+
+    tgt_str = [self.tgt_pre[idx] for idx in tgt_idx[1:-1]]
     src_str = [self.src_pre[idx] for idx in src_idx[1:-1]]
     out = []
     for ch in self.format:
-      if ch=='i':
-        out.append("{}".format(i+1)) ### position in input file
+      if ch=='p':
+        out.append("{}".format(p+1)) ### position in input file
       elif ch=='n':
         out.append("{}".format(n+1)) ### position in n-best order
       elif ch=='c':
@@ -267,18 +268,18 @@ class Inference():
       elif ch=='s':
         out.append(' '.join(src_str)) ### input sentence (tokenized)
       elif ch=='S':
-        out.append(self.src_pre.decode(src_str)) ### input sentence (detokenized)
-      elif ch=='u':
+        out.append(self.src_pre.decode_list(src_str)) ### input sentence (detokenized)
+      elif ch=='i':
         out.append(' '.join(map(str,src_idx))) ### input sentence (idxs)
-      ##################
-      ### hypothesis ###
-      ##################
-      elif ch=='h':
-        out.append(' '.join(hyp_str)) ### output sentence (tokenized)
-      elif ch=='H':
-        out.append(self.tgt_pre.decode(hyp_str)) ### output sentence (detokenized)
-      elif ch=='v':
-        out.append(' '.join(map(str,hyp_idx))) ### output sentence (idxs)
+      #########################
+      ### target hypothesis ###
+      #########################
+      elif ch=='t':
+        out.append(' '.join(tgt_str)) ### output sentence (tokenized)
+      elif ch=='T':
+        out.append(self.tgt_pre.decode_list(tgt_str)) ### output sentence (detokenized)
+      elif ch=='j':
+        out.append(' '.join(map(str,tgt_idx))) ### output sentence (idxs)
 
       else:
         logging.error('invalid format option {} in {}'.format(ch,self.format))
