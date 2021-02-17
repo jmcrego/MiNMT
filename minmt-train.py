@@ -209,12 +209,9 @@ if __name__ == '__main__':
   if isbinary(o.dnet + '/src_pre'): #n['preprocessor'] == 'sentencepiece':
     src_pre = SentencePiece(fmod=o.dnet + '/src_pre')
     tgt_pre = SentencePiece(fmod=o.dnet + '/tgt_pre')
-  else: #elif n['preprocessor'] == 'space':
+  else: 
     src_pre = Space(fmod=o.dnet + '/src_pre')
     tgt_pre = Space(fmod=o.dnet + '/tgt_pre')
-#  else:
-#    logging.error('Bad tokenizer optioin {}'.format(n['tokenizer']))
-#    sys.exit()
   assert src_pre.idx_pad == tgt_pre.idx_pad, 'src/tgt vocabularies must have the same idx_pad'
 
   #############################
