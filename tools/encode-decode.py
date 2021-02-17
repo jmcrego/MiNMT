@@ -19,8 +19,8 @@ if __name__ == '__main__':
    -model          FILE : input model/vocab
    -preprocessor STRING : sentencepiece OR space ({})
    -i              FILE : input file (stdin)
-   -in_type      STRING : int OR str for sentencepiece/decode ({})
-   -out_type     STRING : int OR str for sentencepiece/encode ({})
+   -in_type      STRING : int OR str when sentencepiece/decode ({})
+   -out_type     STRING : int OR str when sentencepiece/encode ({})
    -h                   : this help
 '''.format(prog,do,preprocessor,in_type,out_type)
 
