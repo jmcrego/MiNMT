@@ -140,15 +140,15 @@ Default inference options are:
 
 Option `-format` specifies the fields to output for every sentence (TAB-separated):
 ```
-[i] index of sentence in test set
+[p] position of sentence in test set
 [n] rank in n-best
 [c] global hypothesis cost
 [s] input sentence (tokenised)
 [S] input sentence (raw)
-[u] input sentence (indexes)
-[h] hypothesis (tokenised)
-[H] hypothesis (raw)
-[v] hypothesis (indexes)
+[i] input sentence (indexes)
+[t] hypothesis (tokenised)
+[T] hypothesis (raw)
+[j] hypothesis (indexes)
 ```
 
 Same as Train/Validation datasets, test datasets are handled using `src_spm` and `tgt_spm` SentencePiece models existing in `$DNET` directory.
