@@ -145,10 +145,10 @@ Option `-format` specifies the fields to output for every sentence (TAB-separate
 [c] global hypothesis cost
 [s] input sentence (tokenised)
 [S] input sentence (raw)
-[i] input sentence (indexes)
+[j] input sentence (indexes)
 [t] hypothesis (tokenised)
 [T] hypothesis (raw)
-[j] hypothesis (indexes)
+[i] hypothesis (indexes)
 ```
 
 Same as Train/Validation datasets, test datasets are handled using `src_spm` and `tgt_spm` SentencePiece models existing in `$DNET` directory.
