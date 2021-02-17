@@ -215,7 +215,6 @@ if __name__ == '__main__':
   else:
     logging.error('Bad tokenizer optioin {}'.format(n['tokenizer']))
     sys.exit()
-
   assert src_pre.idx_pad == tgt_pre.idx_pad, 'src/tgt vocabularies must have the same idx_pad'
 
   #############################

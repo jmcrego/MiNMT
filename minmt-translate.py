@@ -140,12 +140,20 @@ if __name__ == '__main__':
     logging.error('cannot find target preprocessor file: {}'.format(o.dnet + '/tgt_pre'))
     sys.exit()
 
-  src_pre = SentencePiece(sp_model=o.dnet + '/src_pre')
-  tgt_pre = SentencePiece(sp_model=o.dnet + '/tgt_pre')
-  assert src_pre.idx_pad == tgt_pre.idx_pad, 'src/tgt vocabularies must have the same idx_pad'
   with open(o.dnet + '/network', 'r') as f:
     n = yaml.load(f, Loader=yaml.SafeLoader) #Loader=yaml.FullLoader)
   logging.info("Network = {}".format(n))
+
+  if n['preprocessor'] == 'sentencepiece':
+    src_pre = SentencePiece(sp_model=o.dnet + '/src_pre')
+    tgt_pre = SentencePiece(sp_model=o.dnet + '/tgt_pre')
+  elif n['preprocessor'] == 'space':
+    src_pre = Space(sp_model=o.dnet + '/src_pre')
+    tgt_pre = Space(sp_model=o.dnet + '/tgt_pre')
+  else:
+    logging.error('Bad tokenizer optioin {}'.format(n['tokenizer']))
+    sys.exit()
+  assert src_pre.idx_pad == tgt_pre.idx_pad, 'src/tgt vocabularies must have the same idx_pad'
 
   ##################
   ### load model ###

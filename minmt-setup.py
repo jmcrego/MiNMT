@@ -105,36 +105,36 @@ class Options():
 if __name__ == '__main__':
 
   tic = time.time()
-  opts = Options(sys.argv)
+  o = Options(sys.argv)
 
-  if os.path.exists(opts.dnet):
-    logging.error('cannot create network directory: {}'.format(opts.dnet))
+  if os.path.exists(o.dnet):
+    logging.error('cannot create network directory: {}'.format(o.dnet))
     sys.exit()
-  if not os.path.isfile(opts.src_pre):
-    logging.error('cannot find source preprocessor file: {}'.format(opts.src_pre))
+  if not os.path.isfile(o.src_pre):
+    logging.error('cannot find source preprocessor file: {}'.format(o.src_pre))
     sys.exit()
-  if not os.path.isfile(opts.tgt_pre):
-    logging.error('cannot find target preprocessor file: {}'.format(opts.tgt_pre))
+  if not os.path.isfile(o.tgt_pre):
+    logging.error('cannot find target preprocessor file: {}'.format(o.tgt_pre))
     sys.exit()
 
-  os.mkdir(opts.dnet)
-  logging.info('created network directory: {}'.format(opts.dnet))
-  with open(opts.dnet+'/network', 'w') as f:
-    f.write('emb_dim: {}\n'.format(opts.emb_dim))
-    f.write('qk_dim: {}\n'.format(opts.qk_dim))
-    f.write('v_dim: {}\n'.format(opts.v_dim))
-    f.write('ff_dim: {}\n'.format(opts.ff_dim))
-    f.write('n_heads: {}\n'.format(opts.n_heads))
-    f.write('n_layers: {}\n'.format(opts.n_layers))
-    f.write('dropout: {}\n'.format(opts.dropout))
-    f.write('share_embeddings: {}\n'.format(opts.share_embeddings))
-    f.write('preprocessor: {}\n'.format(opts.preprocessor))
+  os.mkdir(o.dnet)
+  logging.info('created network directory: {}'.format(o.dnet))
+  with open(o.dnet+'/network', 'w') as f:
+    f.write('emb_dim: {}\n'.format(o.emb_dim))
+    f.write('qk_dim: {}\n'.format(o.qk_dim))
+    f.write('v_dim: {}\n'.format(o.v_dim))
+    f.write('ff_dim: {}\n'.format(o.ff_dim))
+    f.write('n_heads: {}\n'.format(o.n_heads))
+    f.write('n_layers: {}\n'.format(o.n_layers))
+    f.write('dropout: {}\n'.format(o.dropout))
+    f.write('share_embeddings: {}\n'.format(o.share_embeddings))
+    f.write('preprocessor: {}\n'.format(o.preprocessor))
 
-  shutil.copy(opts.src_pre, opts.dnet+'/src_pre')
-  logging.info('copied source preprocessor {} into {}/src_pre'.format(opts.src_pre, opts.dnet))
+  shutil.copy(o.src_pre, o.dnet+'/src_pre')
+  logging.info('copied source preprocessor {} into {}/src_pre'.format(o.src_pre, o.dnet))
 
-  shutil.copy(opts.tgt_pre, opts.dnet+'/tgt_pre')
-  logging.info('copied target preprocessor {} into {}/tgt_pre'.format(opts.tgt_pre, opts.dnet))
+  shutil.copy(o.tgt_pre, o.dnet+'/tgt_pre')
+  logging.info('copied target preprocessor {} into {}/tgt_pre'.format(o.tgt_pre, o.dnet))
 
   toc = time.time()
   logging.info('Done ({:.2f} seconds)'.format(toc-tic))

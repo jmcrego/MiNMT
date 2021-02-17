@@ -40,7 +40,8 @@ class Space():
 			### read vocab from sp_model
 			with open(sp_model,'r') as f: 
 				for l in f:
-					tok = l.rstrip()
+					toks = l.split()
+					tok = toks[0]
 					if tok in self.tok_to_idx:
 						continue
 					if ' ' in tok or len(tok) == 0:

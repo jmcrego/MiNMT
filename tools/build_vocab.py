@@ -31,26 +31,38 @@ if __name__ == '__main__':
   logging.info('min_freq = {}'.format(min_freq))
   logging.info('max_size = {}'.format(max_size))
 
-  tok_to_frq = defaultdict(int)
+  ###########################
+  ### compute frequencies ###
+  ###########################
+  freq = defaultdict(int)
+  nlines = 0
   for l in sys.stdin:
-    for tok in l.rstrip().split():
-      tok_to_frq[tok] += 1
-  logging.info('Read stdin with {} distinct tokens'.format(len(tok_to_frq)))
+    nlines += 1
+    for tok in l.split():
+      freq[tok] += 1
+  logging.info('Read stdin with {} lines and {} distinct tokens'.format(nlines,len(freq)))
 
+  #######################
+  ### dump vocabulary ###
+  #######################
   seen = defaultdict(int)
-  print('<pad>')
-  print('<unk>')
-  print('<bos>')
-  print('<eos>')
+  print('<pad>\t0')
   seen['<pad>'] += 1
+  print('<unk>\t0')
   seen['<unk>'] += 1
+  print('<bos>\t0')
   seen['<bos>'] += 1
+  print('<eos>\t0')
   seen['<eos>'] += 1
-  for tok, frq in sorted(tok_to_frq.items(), key=lambda item: item[1], reverse=True):
+  last_freq = 0
+  for tok, frq in sorted(freq.items(), key=lambda item: item[1], reverse=True):
     if (max_size and len(seen) == max_size) or frq < min_freq:
       break
     if tok in seen: #in case reserved words appear in text
       continue
-    print(tok)
+    print(tok + '\t' + str(frq))
     seen[tok] += 1
-  logging.info('Dumped vocab with {} entries'.format(len(seen)))
+    last_freq = frq
+  logging.info('Dumped vocab with {} entries (lowest frequence is {})'.format(len(seen),last_freq))
+
+
