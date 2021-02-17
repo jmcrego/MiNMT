@@ -3,21 +3,19 @@ import sys
 import os
 import glob
 from Preprocessor import SentencePiece, Space
-from Tools import create_logger
+from Tools import create_logger, isbinary
 
 if __name__ == '__main__':
 
   fmod = None
   fin = None
-  preprocessor = 'space'
   do = 'encode'
   in_type = 'int'
   out_type = 'str'
   prog = sys.argv.pop(0)
-  usage = '''usage: {} -do STRING -model FILE -preprocessor STRING
+  usage = '''usage: {} -do STRING -model FILE
    -do           STRING : encode OR decode ({})
    -model          FILE : input model/vocab
-   -preprocessor STRING : sentencepiece OR space ({})
    -i              FILE : input file (stdin)
    -in_type      STRING : int OR str when sentencepiece/decode ({})
    -out_type     STRING : int OR str when sentencepiece/encode ({})
@@ -35,8 +33,6 @@ if __name__ == '__main__':
       do = sys.argv.pop(0)
     elif tok=='-model' and len(sys.argv)>=0:
       fmod = sys.argv.pop(0)
-    elif tok=='-preprocessor' and len(sys.argv)>=0:
-      preprocessor = sys.argv.pop(0)
     elif tok=='-in_type' and len(sys.argv)>=0:
       in_type = sys.argv.pop(0)
     elif tok=='-out_type' and len(sys.argv)>=0:
@@ -51,6 +47,8 @@ if __name__ == '__main__':
     sys.exit()
 
   create_logger('stderr','info')
+  preprocessor = 'sentencepiece' if isbinary(fmod) else 'space'
+
   if preprocessor == 'space':
     mod = Space(fmod=fmod)
   else:
