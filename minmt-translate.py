@@ -98,12 +98,12 @@ class Options():
                           [p] index in test set
                           [n] rank in n-best
                           [c] global hypothesis cost
-                          [s] source sentence
-                          [S] source sentence (detokenised)
-                          [i] source indexes
-                          [t] hypothesis
-                          [T] hypothesis (detokenised)
-                          [j] hypothesis indexes
+                          [s] input sentence
+                          [S] input sentence (detokenised)
+                          [j] input sentence ids
+                          [t] target hypothesis
+                          [T] target hypothesis (detokenised)
+                          [i] target hypothesis ids
 
    [Data]
    -shard_size    INT : maximum shard size ({}) [use 0 to consider all data in a single shard]

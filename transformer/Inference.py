@@ -269,7 +269,7 @@ class Inference():
         out.append(' '.join(src_str)) ### input sentence (tokenized)
       elif ch=='S':
         out.append(self.src_pre.decode_list(src_str)) ### input sentence (detokenized)
-      elif ch=='i':
+      elif ch=='j':
         out.append(' '.join(map(str,src_idx))) ### input sentence (idxs)
       #########################
       ### target hypothesis ###
@@ -278,7 +278,7 @@ class Inference():
         out.append(' '.join(tgt_str)) ### output sentence (tokenized)
       elif ch=='T':
         out.append(self.tgt_pre.decode_list(tgt_str)) ### output sentence (detokenized)
-      elif ch=='j':
+      elif ch=='i':
         out.append(' '.join(map(str,tgt_idx))) ### output sentence (idxs)
 
       else:
