@@ -71,11 +71,11 @@ class Dataset():
 
     if ftxt_src is not None:
       logging.info('Reading {}'.format(ftxt_src))
-      self.txts_src, self.idxs_src = self.pre_src.encode(ftxt_src,int)
+      self.txts_src, self.idxs_src = self.pre_src.encode(ftxt_src,in_type='str',out_type='int')
 
     if ftxt_tgt is not None:
       logging.info('Reading {}'.format(ftxt_tgt))
-      self.txts_tgt, self.idxs_tgt = self.pre_tgt.encode(ftxt_tgt,int)
+      self.txts_tgt, self.idxs_tgt = self.pre_tgt.encode(ftxt_tgt,in_type='str',out_type='int')
       assert len(self.txts_src) == len(self.txts_tgt), 'Different number of lines in parallel dataset ~ {}:{}'.format(len(self.txts_src),len(self.txts_tgt))
 
     if self.shard_size == 0:

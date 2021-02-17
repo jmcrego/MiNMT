@@ -13,7 +13,7 @@ from transformer.Model import Encoder_Decoder, load_checkpoint_or_initialise, sa
 from transformer.Optimizer import OptScheduler, LabelSmoothing_NLL, LabelSmoothing_KLDiv
 from transformer.Learning import Learning
 from tools.Preprocessor import SentencePiece, Space
-from tools.Tools import create_logger
+from tools.Tools import create_logger, isbinary
 
 ######################################################################
 ### Options ##########################################################
@@ -206,15 +206,15 @@ if __name__ == '__main__':
     n = yaml.load(f, Loader=yaml.SafeLoader) #Loader=yaml.FullLoader)
   logging.info("Network = {}".format(n))
 
-  if n['preprocessor'] == 'sentencepiece':
+  if isbinary(o.dnet + '/src_pre'): #n['preprocessor'] == 'sentencepiece':
     src_pre = SentencePiece(fmod=o.dnet + '/src_pre')
     tgt_pre = SentencePiece(fmod=o.dnet + '/tgt_pre')
-  elif n['preprocessor'] == 'space':
+  else: #elif n['preprocessor'] == 'space':
     src_pre = Space(fmod=o.dnet + '/src_pre')
     tgt_pre = Space(fmod=o.dnet + '/tgt_pre')
-  else:
-    logging.error('Bad tokenizer optioin {}'.format(n['tokenizer']))
-    sys.exit()
+#  else:
+#    logging.error('Bad tokenizer optioin {}'.format(n['tokenizer']))
+#    sys.exit()
   assert src_pre.idx_pad == tgt_pre.idx_pad, 'src/tgt vocabularies must have the same idx_pad'
 
   #############################

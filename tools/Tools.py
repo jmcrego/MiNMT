@@ -16,4 +16,14 @@ def create_logger(logfile, loglevel):
     logging.debug('Created Logger level={} file={}'.format(loglevel, logfile))
 
 
-
+def isbinary(fin):
+  try:
+    with open(fin, "r") as f:
+      n = 0
+      for l in f:
+        n += 1
+        if n == 10: 
+          break
+      return False
+  except UnicodeDecodeError: # Fond non-text data  
+    return True

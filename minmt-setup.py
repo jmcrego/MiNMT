@@ -6,7 +6,7 @@ import shutil
 import time
 import logging
 from tools.Preprocessor import SentencePiece, Space
-from tools.Tools import create_logger
+from tools.Tools import create_logger, isbinary
 import numpy as np
 
 ######################################################################
