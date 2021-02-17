@@ -37,7 +37,7 @@ class Options():
     self.clip_grad_norm = 0.5
     ### optimization
     self.lr = 2.0
-    self.min_lr = 0.0001
+    self.weight_decay = 0.0
     self.beta1 = 0.9
     self.beta2 = 0.998
     self.eps = 1e-9
@@ -81,8 +81,8 @@ class Options():
 
       elif tok=='-lr':
         self.lr = float(argv.pop(0))
-      elif tok=='-min_lr':
-        self.min_lr = float(argv.pop(0))
+      elif tok=='-weight_decay':
+        self.weight_decay= float(argv.pop(0))
       elif tok=='-beta1':
         self.beta1 = float(argv.pop(0))
       elif tok=='-beta2':
@@ -157,7 +157,7 @@ class Options():
 
    [Optimization]
    -lr              FLOAT : initial learning rate ({})
-   -min_lr          FLOAT : minimum value for learning rate ({})
+   -weight_decay    FLOAT : optimizer weight decay ({})
    -beta1           FLOAT : beta1 for adam optimizer ({})
    -beta2           FLOAT : beta2 for adam optimizer ({})
    -eps             FLOAT : epsilon for adam optimizer ({})
@@ -177,7 +177,7 @@ class Options():
    -log_file         FILE : log file  (stderr)
    -log_level      STRING : log level [debug, info, warning, critical, error] (info)
    -h                     : this help
-'''.format(self.prog, self.max_steps, self.max_epochs, self.validate_every, self.save_every, self.report_every, self.keep_last_n, self.clip_grad_norm, self.lr, self.min_lr, self.beta1, self.beta2, self.eps, self.noam_scale, self.noam_warmup, self.label_smoothing, self.loss, self.shard_size, self.max_length, self.batch_size, self.batch_type, self.cuda, self.seed))
+'''.format(self.prog, self.max_steps, self.max_epochs, self.validate_every, self.save_every, self.report_every, self.keep_last_n, self.clip_grad_norm, self.lr, self.weight_decay, self.beta1, self.beta2, self.eps, self.noam_scale, self.noam_warmup, self.label_smoothing, self.loss, self.shard_size, self.max_length, self.batch_size, self.batch_type, self.cuda, self.seed))
     sys.exit()
 
 ######################################################################
@@ -220,7 +220,7 @@ if __name__ == '__main__':
   device = torch.device('cuda' if o.cuda and torch.cuda.is_available() else 'cpu')
   model = Encoder_Decoder(n['n_layers'], n['ff_dim'], n['n_heads'], n['emb_dim'], n['qk_dim'], n['v_dim'], n['dropout'], n['share_embeddings'], len(src_pre), len(tgt_pre), src_pre.idx_pad).to(device)
   logging.info('Built model (#params, size) = ({}) in device {}'.format(', '.join([str(f) for f in numparameters(model)]), next(model.parameters()).device ))
-  optim = torch.optim.Adam(model.parameters(), lr=o.lr, betas=(o.beta1, o.beta2), eps=o.eps)
+  optim = torch.optim.Adam(model.parameters(), weight_decay=o.weight_decay, lr=o.lr, betas=(o.beta1, o.beta2), eps=o.eps)
   last_step, model, optim = load_checkpoint_or_initialise(o.dnet + '/network', model, optim, device)
   optScheduler = OptScheduler(optim, n['emb_dim'], o.noam_scale, o.noam_warmup, last_step)
 

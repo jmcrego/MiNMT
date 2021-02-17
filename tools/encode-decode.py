@@ -20,7 +20,7 @@ if __name__ == '__main__':
    -in_type      STRING : int OR str when sentencepiece/decode ({})
    -out_type     STRING : int OR str when sentencepiece/encode ({})
    -h                   : this help
-'''.format(prog,do,preprocessor,in_type,out_type)
+'''.format(prog,do,in_type,out_type)
 
   while len(sys.argv):
     tok = sys.argv.pop(0)
