@@ -6,7 +6,7 @@ import shutil
 import time
 import logging
 from tools.Preprocessor import SentencePiece, Space
-from tools.Tools import create_logger, isbinary
+from tools.Tools import create_logger
 import numpy as np
 
 ######################################################################
@@ -58,8 +58,6 @@ class Options():
         self.src_pre = argv.pop(0)
       elif tok=="-tgt_pre" and len(argv):
         self.tgt_pre = argv.pop(0)
-      elif tok=="-preprocessor" and len(argv):
-        self.preprocessor = argv.pop(0)
       elif tok=="-log_file" and len(argv):
         log_file = argv.pop(0)
       elif tok=="-log_level" and len(argv):
@@ -90,12 +88,11 @@ class Options():
    -n_layers        INT : number of encoder layers ({})
    -dropout       FLOAT : dropout value ({})
    -share_embeddings    : share source/target embeddings ({})
-   -preprocessor STRING : sentencepiece/space ({})
 
    -log_file    FILE : log file  (stderr)
    -log_level    STR : log level [debug, info, warning, critical, error] (info)
    -h                : this help
-'''.format(self.prog, self.emb_dim, self.qk_dim, self.v_dim, self.ff_dim, self.n_heads, self.n_layers, self.dropout, self.share_embeddings, self.preprocessor))
+'''.format(self.prog, self.emb_dim, self.qk_dim, self.v_dim, self.ff_dim, self.n_heads, self.n_layers, self.dropout, self.share_embeddings))
     sys.exit()
 
 ######################################################################
@@ -128,7 +125,6 @@ if __name__ == '__main__':
     f.write('n_layers: {}\n'.format(o.n_layers))
     f.write('dropout: {}\n'.format(o.dropout))
     f.write('share_embeddings: {}\n'.format(o.share_embeddings))
-    f.write('preprocessor: {}\n'.format(o.preprocessor))
 
   shutil.copy(o.src_pre, o.dnet+'/src_pre')
   logging.info('copied source preprocessor {} into {}/src_pre'.format(o.src_pre, o.dnet))
