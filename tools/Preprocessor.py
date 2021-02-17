@@ -4,9 +4,8 @@ import logging
 import sentencepiece as spm
 from collections import defaultdict
 
-def fd2list(fin, type=None):
+def fd2list(fin, type='str'):
 	### whe type is:
-	# None : returns list of strings (sentences)
 	# int : returns list of list of ints (idxs)
 	# str : returns list of list of strings (words)
 
@@ -17,9 +16,7 @@ def fd2list(fin, type=None):
 		fd = open(fin,'r')
 
 	### parse content
-	if type is None:
-		lines = fd.read().splitlines()
-	elif type == 'int':
+	if type == 'int':
 		lines = [[int(s) for s in l.split()] for l in fd.read().splitlines()]
 	elif type == 'str':
 		lines = [[s for s in l.split()] for l in fd.read().splitlines()]
@@ -68,26 +65,46 @@ class Space():
 			assert self.tok_to_idx[self.str_eos] == 3, '<eos> must exist in vocab with id=3 while found id={}'.format(self.tok_to_idx[self.str_eos])
 			logging.info('Read Space vocab with {} tokens ~ {}'.format(len(self.tok_to_idx), fmod))
 
-	def encode(self, fin, out_type=int):
-		raw_lines = fd2list(fin, type=None) #list of strings
+	def encode(self, fin, in_type, out_type):
+		if in_type == 'int':
+			logging.error('Space tokenizer encoder considers only str as in_type')
+			sys.exit()
+		if out_type == 'str':
+			logging.error('Space tokenizer encoder considers only int as out_type')
+			sys.exit()
+
+		raw_lines = fd2list(fin, type=in_type) #read into 'str'
 		tok_lines = []
 		for l in raw_lines:
 			tok_line = []
-			for tok in l.split():
+			for tok in l:
 				idx = self.tok_to_idx[tok] if tok in self.tok_to_idx else self.idx_unk
 				tok_line.append(idx)
 			tok_lines.append(tok_line)
-		assert len(raw_lines) == len(tok_lines), 'error: different length raw_lines/tok_lines!' 
+		if len(raw_lines) != len(tok_lines):
+			logging.info('error: different length raw_lines/tok_lines!')
+			sys.exit()
 		return raw_lines, tok_lines
 
-	def decode(self, fin, in_type=int):
-		assert False, 'not implemented'
-		if isinstance(fin, str):
-			tok_lines = fd2list(fin, type=in_type) #list of list of strings_or_ints
-			raw_lines = self.sp.decode(tok_lines)
-		else:
-			tok_lines = fin
-			return self.sp.decode(tok_lines)
+	def decode(self, fin, in_type, out_type):
+		if in_type == 'str':
+			logging.error('Space tokenizer decoder considers only int as in_type')
+			sys.exit()
+		if out_type == 'int':
+			logging.error('Space tokenizer encoder considers only str as out_type')
+			sys.exit()
+
+		tok_lines = fd2list(fin, type=in_type) #list of list of strings_or_ints
+		raw_lines = []
+		for l in tok_lines:
+			raw_line = []
+			for idx in l:
+				tok = self.idx_to_tok[idx] if idx < len(self.idx_to_tok) else self.str_unk
+				raw_line.append(tok)
+			raw_lines.append(raw_line)
+		if len(raw_lines) != len(tok_lines):
+			logging.info('error: different length raw_lines/tok_lines!')
+			sys.exit()
 		return tok_lines, raw_lines
 
 	def __len__(self):
@@ -133,18 +150,22 @@ class SentencePiece():
 		if fmod is not None:
 			self.sp = spm.SentencePieceTrainer.train(input=','.join(fins), model_prefix=fmod, vocab_size=vocab_size, character_coverage=character_coverage,	input_sentence_size=input_sentence_size, shuffle_input_sentence=shuffle_input_sentence,	max_sentence_length=max_sentence_length, pad_id=0, pad_piece='<pad>', unk_id=1, unk_piece='<unk>', bos_id=2, bos_piece='<bos>', eos_id=3, eos_piece='<eos>')
 
-	def encode(self, fin, out_type=int):
-		raw_lines = fd2list(fin, type=None) #list of strings
+	def encode(self, fin, in_type, out_type):
+		if in_type == 'int':
+			logging.error('SentencePiece tokenizer encoder considers only str as in_type')
+			sys.exit()
+		out_type = int if out_type == 'int' else str
+		raw_lines = fd2list(fin, type=in_type)
+		raw_lines = [' '.join(l) for l in raw_lines] ### list of list of words into list of sentences
 		tok_lines = self.sp.encode(raw_lines, out_type=out_type)
 		return raw_lines, tok_lines
 
-	def decode(self, fin, in_type=int):
-		if isinstance(fin, str):
-			tok_lines = fd2list(fin, type=in_type) #list of list of strings_or_ints
-			raw_lines = self.sp.decode(tok_lines)
-		else:
-			tok_lines = fin
-			return self.sp.decode(tok_lines)
+	def decode(self, fin, in_type, out_type):
+		if out_type == 'int':
+			logging.error('SentencePiece tokenizer decoder considers only str as out_type')
+			sys.exit()
+		tok_lines = fd2list(fin, type=in_type) #list of list of strings_or_ints		
+		raw_lines = self.sp.decode(tok_lines)
 		return tok_lines, raw_lines
 
 	def __len__(self):
