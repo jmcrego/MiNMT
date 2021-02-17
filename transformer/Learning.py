@@ -130,7 +130,6 @@ class Learning():
             logging.info('REF {}'.format(ref[0].tolist()))
             logging.info('HYP {}'.format(ind[0].squeeze(-1).tolist()))
             logging.info('loss_batch={:.6f} tokens_batch={}'.format(loss_batch.item(), torch.sum(ref != self.idx_pad)))
-            sys.exit()
 
           if validset is not None:
             vloss = self.validate(validset, device)
