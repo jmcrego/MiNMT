@@ -9,18 +9,18 @@ if __name__ == '__main__':
 
   fmod = None
   fin = None
-  in_type = 'str'
-  out_type = 'int'
   preprocessor = 'space'
   do = 'encode'
+  in_type = 'int'
+  out_type = 'str'
   prog = sys.argv.pop(0)
   usage = '''usage: {} -model FILE -preprocessor STRING [-i FILE]
-   -model          FILE : input model/vocab
    -do           STRING : encode OR decode ({})
+   -model          FILE : input model/vocab
    -preprocessor STRING : sentencepiece OR space ({})
    -i              FILE : input file (stdin)
-   -in_type        TYPE : str OR int ({})
-   -out_type       TYPE : str OR int ({})
+   -in_type      STRING : int OR str for sentencepiece/decode ({})
+   -out_type     STRING : int OR str for sentencepiece/encode ({})
    -h                   : this help
 '''.format(prog,do,preprocessor,in_type,out_type)
 
@@ -56,9 +56,14 @@ if __name__ == '__main__':
   else:
     mod = SentencePiece(fmod=fmod)
 
-
   if do == 'encode':
-    _, lines = mod.encode(fin=fin, in_type=in_type, out_type=out_type)
+    if preprocessor == 'space':
+      in_type = 'str'
+      out_type = 'int'
+    else:
+      in_type = 'str'
+
+    _, lines = mod.encode(fin=fin, in_type='str', out_type=out_type)
     for l in lines:
       if out_type == 'str':
         print(' '.join(l))
@@ -66,6 +71,12 @@ if __name__ == '__main__':
         print(' '.join([str(x) for x in l]))
 
   elif do == 'decode':
+    if preprocessor == 'space':
+      in_type = 'int'
+      out_type = 'str'
+    else:
+      out_type = 'str'
+
     _, lines = mod.decode(fin=fin, in_type=in_type, out_type=out_type)
     for l in lines:
       print(l)
