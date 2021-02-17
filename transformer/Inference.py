@@ -252,8 +252,6 @@ class Inference():
     while src_idx[-1] == self.src_pre.idx_pad: # eliminate <pad> tokens from src_idx
       src_idx = src_idx[:-1]
 
-    tgt_str = [self.tgt_pre[idx] for idx in tgt_idx[1:-1]]
-    src_str = [self.src_pre[idx] for idx in src_idx[1:-1]]
     out = []
     for ch in self.format:
       if ch=='p':
@@ -266,18 +264,18 @@ class Inference():
       ### input sentence ###
       ######################
       elif ch=='s':
-        out.append(' '.join(src_str)) ### input sentence (tokenized)
+        out.append(' '.join([self.src_pre[idx] for idx in src_idx[1:-1]])) ### input sentence (tokenized)
       elif ch=='S':
-        out.append(self.src_pre.decode_list(src_str)) ### input sentence (detokenized)
+        out.append(self.src_pre.decode_list(src_idx)) ### input sentence (detokenized)
       elif ch=='j':
         out.append(' '.join(map(str,src_idx))) ### input sentence (idxs)
       #########################
       ### target hypothesis ###
       #########################
       elif ch=='t':
-        out.append(' '.join(tgt_str)) ### output sentence (tokenized)
+        out.append(' '.join([self.tgt_pre[idx] for idx in tgt_idx[1:-1]])) ### output sentence (tokenized)
       elif ch=='T':
-        out.append(self.tgt_pre.decode_list(tgt_str)) ### output sentence (detokenized)
+        out.append(self.tgt_pre.decode_list(tgt_idx)) ### output sentence (detokenized)
       elif ch=='i':
         out.append(' '.join(map(str,tgt_idx))) ### output sentence (idxs)
 
