@@ -78,19 +78,19 @@ class Options():
 
   def usage(self):
     sys.stderr.write('''usage: {} -dnet FILE [Options]
-   -dnet         DIR : network ouput directory [must not exist]
-   -src_pre     FILE : source preprocessor file
-   -tgt_pre     FILE : target preprocessor file
+   -dnet            DIR : network ouput directory [must not exist]
+   -src_pre        FILE : source preprocessor file
+   -tgt_pre        FILE : target preprocessor file
 
-   -emb_dim      INT : model embedding dimension ({})
-   -qk_dim       INT : query/key embedding dimension ({})
-   -v_dim        INT : value embedding dimension ({})
-   -ff_dim       INT : feed-forward inner layer dimension ({})
-   -n_heads      INT : number of attention heads ({})
-   -n_layers     INT : number of encoder layers ({})
-   -dropout    FLOAT : dropout value ({})
-   -share_embeddings : share source/target embeddings ({})
-   -preprocessor STR : sentencepiece/space ({})
+   -emb_dim         INT : model embedding dimension ({})
+   -qk_dim          INT : query/key embedding dimension ({})
+   -v_dim           INT : value embedding dimension ({})
+   -ff_dim          INT : feed-forward inner layer dimension ({})
+   -n_heads         INT : number of attention heads ({})
+   -n_layers        INT : number of encoder layers ({})
+   -dropout       FLOAT : dropout value ({})
+   -share_embeddings    : share source/target embeddings ({})
+   -preprocessor STRING : sentencepiece/space ({})
 
    -log_file    FILE : log file  (stderr)
    -log_level    STR : log level [debug, info, warning, critical, error] (info)
