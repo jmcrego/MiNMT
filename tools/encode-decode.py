@@ -77,5 +77,5 @@ if __name__ == '__main__':
 
     _, lines = mod.decode(fin=fin, in_type=in_type, out_type=out_type)
     for l in lines:
-      print(l)
+      print(' '.join(l))
 

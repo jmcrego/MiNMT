@@ -186,8 +186,9 @@ class Dataset():
             idxs_tgt.append([self.pre_tgt.idx_bos] + self.idxs_tgt[pos] + [self.pre_tgt.idx_eos])
         yield [batch_pos, idxs_src, idxs_tgt]
 
-
-
-
+#        for e in range(len(idxs_src)): ### print a batch
+#          idx_src = [str(idx) for idx in idxs_src[e]]
+#          idx_tgt = [str(idx) for idx in idxs_tgt[e]]
+#          print("{}\t{}".format(' '.join(idx_src),' '.join(idx_tgt)))
 
 
