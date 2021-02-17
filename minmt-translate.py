@@ -26,7 +26,7 @@ class Options():
     self.n_best = 1
     self.max_size = 250
     self.alpha = 0.0
-    self.format = 'iH'
+    self.format = 'pT'
     self.shard_size = 0
     self.max_length = 0
     self.batch_size = 30
@@ -95,15 +95,15 @@ class Options():
    -max_size      INT : max hypothesis size ({})
    -alpha       FLOAT : hypothesis length-normalization parameter ({}) [use 0.0 for unnormalized otherwise (5+len)**alpha / (5+1)**alpha]
    -format     STRING : format of output lines (default {})
-                          [i] index in test set
+                          [p] index in test set
                           [n] rank in n-best
                           [c] global hypothesis cost
                           [s] source sentence
                           [S] source sentence (detokenised)
-                          [u] source indexes
-                          [h] hypothesis
-                          [H] hypothesis (detokenised)
-                          [v] hypothesis indexes
+                          [i] source indexes
+                          [t] hypothesis
+                          [T] hypothesis (detokenised)
+                          [j] hypothesis indexes
 
    [Data]
    -shard_size    INT : maximum shard size ({}) [use 0 to consider all data in a single shard]
