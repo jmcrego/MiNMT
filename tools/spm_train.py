@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import sys
 import os
-from SentencePiece import SentencePiece
+from Preprocessor import SentencePiece
 from Tools import create_logger
 
 if __name__ == '__main__':
