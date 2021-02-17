@@ -207,11 +207,11 @@ if __name__ == '__main__':
   logging.info("Network = {}".format(n))
 
   if n['preprocessor'] == 'sentencepiece':
-    src_pre = SentencePiece(sp_model=o.dnet + '/src_pre')
-    tgt_pre = SentencePiece(sp_model=o.dnet + '/tgt_pre')
+    src_pre = SentencePiece(fmod=o.dnet + '/src_pre')
+    tgt_pre = SentencePiece(fmod=o.dnet + '/tgt_pre')
   elif n['preprocessor'] == 'space':
-    src_pre = Space(sp_model=o.dnet + '/src_pre')
-    tgt_pre = Space(sp_model=o.dnet + '/tgt_pre')
+    src_pre = Space(fmod=o.dnet + '/src_pre')
+    tgt_pre = Space(fmod=o.dnet + '/tgt_pre')
   else:
     logging.error('Bad tokenizer optioin {}'.format(n['tokenizer']))
     sys.exit()
