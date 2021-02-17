@@ -127,9 +127,8 @@ class Learning():
             logging.info('POS {}'.format(batch_pos[0]))
             logging.info('SRC {}'.format(src[0].tolist()))
             logging.info('TGT {}'.format(tgt[0].tolist()))
-            logging.info('REF {}'.format(ref[0].tolist()))
             logging.info('HYP {}'.format(ind[0].squeeze(-1).tolist()))
-            logging.info('loss_batch={:.6f} tokens_batch={}'.format(loss_batch.item(), torch.sum(ref != self.idx_pad)))
+            logging.info('REF {}'.format(ref[0].tolist()))
 
           if validset is not None:
             vloss = self.validate(validset, device)
