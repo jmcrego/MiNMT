@@ -5,7 +5,7 @@ import os
 import shutil
 import time
 import logging
-from tools.SentencePiece import SentencePiece
+from tools.Preprocessor import SentencePiece, Space
 from tools.Tools import create_logger
 import numpy as np
 
@@ -24,10 +24,10 @@ class Options():
     self.n_layers = 6
     self.dropout = 0.1
     self.share_embeddings = False
-    self.tokenizer = 'space'
+    self.preprocessor = 'space'
     self.dnet = None
-    self.src_spm = None
-    self.tgt_spm = None
+    self.src_pre = None
+    self.tgt_pre = None
 
     log_file = 'stderr'
     log_level = 'info'
@@ -54,12 +54,12 @@ class Options():
         self.share_embeddings = True
       elif tok=="-dnet" and len(argv):
         self.dnet = argv.pop(0)
-      elif tok=="-src_spm" and len(argv):
-        self.src_spm = argv.pop(0)
-      elif tok=="-tgt_spm" and len(argv):
-        self.tgt_spm = argv.pop(0)
-      elif tok=="-tokenizer" and len(argv):
-        self.tokenizer = argv.pop(0)
+      elif tok=="-src_pre" and len(argv):
+        self.src_pre = argv.pop(0)
+      elif tok=="-tgt_pre" and len(argv):
+        self.tgt_pre = argv.pop(0)
+      elif tok=="-preprocessor" and len(argv):
+        self.preprocessor = argv.pop(0)
       elif tok=="-log_file" and len(argv):
         log_file = argv.pop(0)
       elif tok=="-log_level" and len(argv):
@@ -69,18 +69,18 @@ class Options():
     if self.dnet is None:
       logging.error('missing -dnet option')
       self.usage()
-    if self.src_spm is None:
-      logging.error('missing -src_spm option')
+    if self.src_pre is None:
+      logging.error('missing -src_pre option')
       self.usage()
-    if self.tgt_spm is None:
-      logging.error('missing -tgt_spm option')
+    if self.tgt_pre is None:
+      logging.error('missing -tgt_pre option')
       self.usage()
 
   def usage(self):
     sys.stderr.write('''usage: {} -dnet FILE [Options]
    -dnet         DIR : network ouput directory [must not exist]
-   -src_spm     FILE : source SentencePiece model
-   -tgt_spm     FILE : target SentencePiece model
+   -src_pre     FILE : source preprocessor file
+   -tgt_pre     FILE : target preprocessor file
 
    -emb_dim      INT : model embedding dimension ({})
    -qk_dim       INT : query/key embedding dimension ({})
@@ -90,12 +90,12 @@ class Options():
    -n_layers     INT : number of encoder layers ({})
    -dropout    FLOAT : dropout value ({})
    -share_embeddings : share source/target embeddings ({})
-   -tokenizer STRING : sentencepiece/space ({})
+   -preprocessor STR : sentencepiece/space ({})
 
    -log_file    FILE : log file  (stderr)
-   -log_level STRING : log level [debug, info, warning, critical, error] (info)
+   -log_level    STR : log level [debug, info, warning, critical, error] (info)
    -h                : this help
-'''.format(self.prog, self.emb_dim, self.qk_dim, self.v_dim, self.ff_dim, self.n_heads, self.n_layers, self.dropout, self.share_embeddings, self.tokenizer))
+'''.format(self.prog, self.emb_dim, self.qk_dim, self.v_dim, self.ff_dim, self.n_heads, self.n_layers, self.dropout, self.share_embeddings, self.preprocessor))
     sys.exit()
 
 ######################################################################
@@ -110,11 +110,11 @@ if __name__ == '__main__':
   if os.path.exists(opts.dnet):
     logging.error('cannot create network directory: {}'.format(opts.dnet))
     sys.exit()
-  if not os.path.isfile(opts.src_spm):
-    logging.error('cannot find source spm file: {}'.format(opts.src_spm))
+  if not os.path.isfile(opts.src_pre):
+    logging.error('cannot find source preprocessor file: {}'.format(opts.src_pre))
     sys.exit()
-  if not os.path.isfile(opts.tgt_spm):
-    logging.error('cannot find target spm file: {}'.format(opts.tgt_spm))
+  if not os.path.isfile(opts.tgt_pre):
+    logging.error('cannot find target preprocessor file: {}'.format(opts.tgt_pre))
     sys.exit()
 
   os.mkdir(opts.dnet)
@@ -128,13 +128,13 @@ if __name__ == '__main__':
     f.write('n_layers: {}\n'.format(opts.n_layers))
     f.write('dropout: {}\n'.format(opts.dropout))
     f.write('share_embeddings: {}\n'.format(opts.share_embeddings))
-    f.write('tokenizer: {}\n'.format(opts.tokenizer))
+    f.write('preprocessor: {}\n'.format(opts.preprocessor))
 
-  shutil.copy(opts.src_spm, opts.dnet+'/src_spm')
-  logging.info('copied source spm {} into {}/src_spm'.format(opts.src_spm, opts.dnet))
+  shutil.copy(opts.src_pre, opts.dnet+'/src_pre')
+  logging.info('copied source preprocessor {} into {}/src_pre'.format(opts.src_pre, opts.dnet))
 
-  shutil.copy(opts.tgt_spm, opts.dnet+'/tgt_spm')
-  logging.info('copied target spm {} into {}/tgt_spm'.format(opts.tgt_spm, opts.dnet))
+  shutil.copy(opts.tgt_pre, opts.dnet+'/tgt_pre')
+  logging.info('copied target preprocessor {} into {}/tgt_pre'.format(opts.tgt_pre, opts.dnet))
 
   toc = time.time()
   logging.info('Done ({:.2f} seconds)'.format(toc-tic))

@@ -18,24 +18,24 @@ def norm_length(l, alpha):
 ### Inference ################################################################################################
 ##############################################################################################################
 class Inference():
-  def __init__(self, model, src_spm, tgt_spm, oi, device): 
+  def __init__(self, model, src_pre, tgt_pre, oi, device): 
     super(Inference, self).__init__()
     self.model = model
-    self.src_spm = src_spm
-    self.tgt_spm = tgt_spm
+    self.src_pre = src_pre
+    self.tgt_pre = tgt_pre
     self.beam_size = oi.beam_size
     self.max_size = oi.max_size
     self.n_best = oi.n_best
     self.alpha = oi.alpha
     self.format = oi.format
-    self.idx_bos = tgt_spm.idx_bos
-    self.idx_eos = tgt_spm.idx_eos
-    self.Vt = len(tgt_spm)
+    self.idx_bos = tgt_pre.idx_bos
+    self.idx_eos = tgt_pre.idx_eos
+    self.Vt = len(tgt_pre)
     self.N = oi.n_best
     self.K = oi.beam_size
     self.device = device
 
-    self.force_eos = torch.ones(len(self.tgt_spm), dtype=torch.float32, device=self.device) * float('Inf') #[Vt]
+    self.force_eos = torch.ones(len(self.tgt_pre), dtype=torch.float32, device=self.device) * float('Inf') #[Vt]
     self.force_eos[self.idx_eos] = 1.0
     self.next_wrds = torch.tensor([i for i in range(self.Vt)], dtype=int, device=self.device).view(1,-1) #[1,Vt]
 
@@ -52,7 +52,7 @@ class Inference():
       self.model.eval()
       for pos, batch_src, _ in testset:
         ### encode batch
-        src, self.msk_src = prepare_source(batch_src, self.tgt_spm.idx_pad, self.device) #src is [bs, ls] msk_src is [bs,1,ls]
+        src, self.msk_src = prepare_source(batch_src, self.tgt_pre.idx_pad, self.device) #src is [bs, ls] msk_src is [bs,1,ls]
         self.z_src = self.model.encode(src, self.msk_src) #[bs,ls,ed]
 
         #for i in range(len(pos)):
@@ -240,7 +240,7 @@ class Inference():
     logP_bs_k = logP.view(bs,self.K,lt)
     for b in range(hyps_bs_k.shape[0]):
       for k in range(hyps_bs_k.shape[1]):
-        logging.debug('batch {} beam {}\tlogP={:.6f}\t{}'.format(b, k, sum(logP_bs_k[b,k]), ' '.join([self.tgt_spm[t] for t in hyps_bs_k[b,k].tolist()]) ))
+        logging.debug('batch {} beam {}\tlogP={:.6f}\t{}'.format(b, k, sum(logP_bs_k[b,k]), ' '.join([self.tgt_pre[t] for t in hyps_bs_k[b,k].tolist()]) ))
 
 
   def format_hyp(self, i, n, c, hyp_idx, src_idx): 
@@ -249,10 +249,10 @@ class Inference():
     #c is the hypothesis overall cost (sum_logP_norm)
     #hyp_idx hypothesis (list of ints)
     #src_idx source (list of ints)
-    while src_idx[-1] == self.src_spm.idx_pad: # eliminate <pad> tokens from src_idx
+    while src_idx[-1] == self.src_pre.idx_pad: # eliminate <pad> tokens from src_idx
       src_idx = src_idx[:-1]
-    hyp_str = [self.tgt_spm[idx] for idx in hyp_idx[1:-1]]
-    src_str = [self.src_spm[idx] for idx in src_idx[1:-1]]
+    hyp_str = [self.tgt_pre[idx] for idx in hyp_idx[1:-1]]
+    src_str = [self.src_pre[idx] for idx in src_idx[1:-1]]
     out = []
     for ch in self.format:
       if ch=='i':
@@ -267,7 +267,7 @@ class Inference():
       elif ch=='s':
         out.append(' '.join(src_str)) ### input sentence (tokenized)
       elif ch=='S':
-        out.append(self.src_spm.decode(src_str)) ### input sentence (detokenized)
+        out.append(self.src_pre.decode(src_str)) ### input sentence (detokenized)
       elif ch=='u':
         out.append(' '.join(map(str,src_idx))) ### input sentence (idxs)
       ##################
@@ -276,7 +276,7 @@ class Inference():
       elif ch=='h':
         out.append(' '.join(hyp_str)) ### output sentence (tokenized)
       elif ch=='H':
-        out.append(self.tgt_spm.decode(hyp_str)) ### output sentence (detokenized)
+        out.append(self.tgt_pre.decode(hyp_str)) ### output sentence (detokenized)
       elif ch=='v':
         out.append(' '.join(map(str,hyp_idx))) ### output sentence (idxs)
 

@@ -12,7 +12,7 @@ from transformer.Dataset import Dataset
 from transformer.Model import Encoder_Decoder, load_checkpoint_or_initialise, save_checkpoint, load_checkpoint, numparameters
 from transformer.Optimizer import OptScheduler, LabelSmoothing_NLL, LabelSmoothing_KLDiv
 from transformer.Learning import Learning
-from tools.SentencePiece import SentencePiece, Space
+from tools.Preprocessor import SentencePiece, Space
 from tools.Tools import create_logger
 
 ######################################################################
@@ -195,43 +195,43 @@ if __name__ == '__main__':
   if not os.path.isfile(o.dnet + '/network'):
     logging.error('cannot find network file: {}'.format(o.dnet + '/network'))
     sys.exit()
-  if not os.path.isfile(o.dnet + '/src_spm'):
-    logging.error('cannot find source spm file: {}'.format(o.dnet + '/src_spm'))
+  if not os.path.isfile(o.dnet + '/src_pre'):
+    logging.error('cannot find source preprocessor file: {}'.format(o.dnet + '/src_pre'))
     sys.exit()
-  if not os.path.isfile(o.dnet + '/tgt_spm'):
-    logging.error('cannot find target spm file: {}'.format(o.dnet + '/tgt_spm'))
+  if not os.path.isfile(o.dnet + '/tgt_pre'):
+    logging.error('cannot find target preprocessor file: {}'.format(o.dnet + '/tgt_pre'))
     sys.exit()
 
   with open(o.dnet + '/network', 'r') as f:
     n = yaml.load(f, Loader=yaml.SafeLoader) #Loader=yaml.FullLoader)
   logging.info("Network = {}".format(n))
 
-  if n['tokenizer'] == 'sentencepiece':
-    src_spm = SentencePiece(sp_model=o.dnet + '/src_spm')
-    tgt_spm = SentencePiece(sp_model=o.dnet + '/tgt_spm')
-  elif n['tokenizer'] == 'space':
-    src_spm = Space(sp_model=o.dnet + '/src_spm')
-    tgt_spm = Space(sp_model=o.dnet + '/tgt_spm')
+  if n['preprocessor'] == 'sentencepiece':
+    src_pre = SentencePiece(sp_model=o.dnet + '/src_pre')
+    tgt_pre = SentencePiece(sp_model=o.dnet + '/tgt_pre')
+  elif n['preprocessor'] == 'space':
+    src_pre = Space(sp_model=o.dnet + '/src_pre')
+    tgt_pre = Space(sp_model=o.dnet + '/tgt_pre')
   else:
     logging.error('Bad tokenizer optioin {}'.format(n['tokenizer']))
     sys.exit()
 
-  assert src_spm.idx_pad == tgt_spm.idx_pad, 'src/tgt vocabularies must have the same idx_pad'
+  assert src_pre.idx_pad == tgt_pre.idx_pad, 'src/tgt vocabularies must have the same idx_pad'
 
   #############################
   ### load model/optim/loss ###
   #############################
   device = torch.device('cuda' if o.cuda and torch.cuda.is_available() else 'cpu')
-  model = Encoder_Decoder(n['n_layers'], n['ff_dim'], n['n_heads'], n['emb_dim'], n['qk_dim'], n['v_dim'], n['dropout'], n['share_embeddings'], len(src_spm), len(tgt_spm), src_spm.idx_pad).to(device)
+  model = Encoder_Decoder(n['n_layers'], n['ff_dim'], n['n_heads'], n['emb_dim'], n['qk_dim'], n['v_dim'], n['dropout'], n['share_embeddings'], len(src_pre), len(tgt_pre), src_pre.idx_pad).to(device)
   logging.info('Built model (#params, size) = ({}) in device {}'.format(', '.join([str(f) for f in numparameters(model)]), next(model.parameters()).device ))
   optim = torch.optim.Adam(model.parameters(), lr=o.lr, betas=(o.beta1, o.beta2), eps=o.eps)
   last_step, model, optim = load_checkpoint_or_initialise(o.dnet + '/network', model, optim, device)
   optScheduler = OptScheduler(optim, n['emb_dim'], o.noam_scale, o.noam_warmup, last_step)
 
   if o.loss == 'KLDiv':
-    criter = LabelSmoothing_KLDiv(len(tgt_spm), src_spm.idx_pad, o.label_smoothing).to(device)
+    criter = LabelSmoothing_KLDiv(len(tgt_pre), src_pre.idx_pad, o.label_smoothing).to(device)
   elif o.loss == 'NLL':
-    criter = LabelSmoothing_NLL(len(tgt_spm), src_spm.idx_pad, o.label_smoothing).to(device)
+    criter = LabelSmoothing_NLL(len(tgt_pre), src_pre.idx_pad, o.label_smoothing).to(device)
   else:
     logging.error('bad -loss option')
     sys.exit()
@@ -240,10 +240,10 @@ if __name__ == '__main__':
   ### load data ####
   ##################
   if o.src_valid is not None and o.tgt_valid is not None:
-    valid = Dataset(src_spm, tgt_spm, o.src_valid, o.tgt_valid, o.shard_size, o.batch_size, o.batch_type, o.max_length)
+    valid = Dataset(src_pre, tgt_pre, o.src_valid, o.tgt_valid, o.shard_size, o.batch_size, o.batch_type, o.max_length)
   else:
     valid =None
-  train = Dataset(src_spm, tgt_spm, o.src_train, o.tgt_train, o.shard_size, o.batch_size, o.batch_type, o.max_length)
+  train = Dataset(src_pre, tgt_pre, o.src_train, o.tgt_train, o.shard_size, o.batch_size, o.batch_type, o.max_length)
 
   #n = 0
   #for pos, batch_src, batch_tgt in train:
@@ -260,7 +260,7 @@ if __name__ == '__main__':
   #############
   ### learn ###
   #############
-  learning = Learning(model, optScheduler, criter, o.dnet + '/network', src_spm.idx_pad, o)
+  learning = Learning(model, optScheduler, criter, o.dnet + '/network', src_pre.idx_pad, o)
   learning.learn(train, valid, device)
 
   toc = time.time()

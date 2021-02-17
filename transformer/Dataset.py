@@ -48,11 +48,11 @@ class Batch():
 ### Dataset ##################################################################################################
 ##############################################################################################################
 class Dataset():
-  def __init__(self, spm_src, spm_tgt, ftxt_src, ftxt_tgt=None, shard_size=100000, batch_size=64, batch_type='sentences', max_length=100):    
+  def __init__(self, pre_src, pre_tgt, ftxt_src, ftxt_tgt=None, shard_size=100000, batch_size=64, batch_type='sentences', max_length=100):    
     super(Dataset, self).__init__()
-    assert spm_src.idx_pad == spm_tgt.idx_pad
-    assert spm_src.idx_bos == spm_tgt.idx_bos
-    assert spm_src.idx_eos == spm_tgt.idx_eos
+    assert pre_src.idx_pad == pre_tgt.idx_pad
+    assert pre_src.idx_bos == pre_tgt.idx_bos
+    assert pre_src.idx_eos == pre_tgt.idx_eos
     ### dataset options
     self.shard_size = shard_size
     self.batch_type = batch_type
@@ -61,8 +61,8 @@ class Dataset():
     ### file/tokeniztion/vocabularies
     self.ftxt_src = ftxt_src
     self.ftxt_tgt = ftxt_tgt
-    self.spm_src = spm_src
-    self.spm_tgt = spm_tgt
+    self.pre_src = pre_src
+    self.pre_tgt = pre_tgt
     ### original corpora
     self.txts_src = None #list of strings (original sentences)
     self.txts_tgt = None #list of strings (original sentences)
@@ -71,11 +71,11 @@ class Dataset():
 
     if ftxt_src is not None:
       logging.info('Reading {}'.format(ftxt_src))
-      self.txts_src, self.idxs_src = self.spm_src.encode(ftxt_src,int)
+      self.txts_src, self.idxs_src = self.pre_src.encode(ftxt_src,int)
 
     if ftxt_tgt is not None:
       logging.info('Reading {}'.format(ftxt_tgt))
-      self.txts_tgt, self.idxs_tgt = self.spm_tgt.encode(ftxt_tgt,int)
+      self.txts_tgt, self.idxs_tgt = self.pre_tgt.encode(ftxt_tgt,int)
       assert len(self.txts_src) == len(self.txts_tgt), 'Different number of lines in parallel dataset ~ {}:{}'.format(len(self.txts_src),len(self.txts_tgt))
 
     if self.shard_size == 0:
@@ -143,12 +143,12 @@ class Dataset():
       idxs_len.append(len(self.idxs_src[pos]))
 
       n_src_tokens += len(self.idxs_src[pos])
-      n_src_unks += sum([i==self.spm_src.idx_unk for i in self.idxs_src[pos]])
+      n_src_unks += sum([i==self.pre_src.idx_unk for i in self.idxs_src[pos]])
       #print(['{}:{}'.format(tok[i],idx[i]) for i in range(len(tok))])
 
       if self.txts_tgt is not None:
         n_tgt_tokens += len(self.idxs_tgt[pos])
-        n_tgt_unks += sum([i==self.spm_tgt.idx_unk for i in self.idxs_tgt[pos]])
+        n_tgt_unks += sum([i==self.pre_tgt.idx_unk for i in self.idxs_tgt[pos]])
         #print(['{}:{}'.format(tok[i],idx[i]) for i in range(len(tok))])
 
       if len(idxs_pos) == self.shard_size:
@@ -181,9 +181,9 @@ class Dataset():
         idxs_src = []
         idxs_tgt = []
         for pos in batch_pos:
-          idxs_src.append([self.spm_src.idx_bos] + self.idxs_src[pos] + [self.spm_src.idx_eos]) 
+          idxs_src.append([self.pre_src.idx_bos] + self.idxs_src[pos] + [self.pre_src.idx_eos]) 
           if self.idxs_tgt is not None:
-            idxs_tgt.append([self.spm_tgt.idx_bos] + self.idxs_tgt[pos] + [self.spm_tgt.idx_eos])
+            idxs_tgt.append([self.pre_tgt.idx_bos] + self.idxs_tgt[pos] + [self.pre_tgt.idx_eos])
         yield [batch_pos, idxs_src, idxs_tgt]
 
 
