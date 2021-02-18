@@ -160,7 +160,7 @@ class Learning():
         loss = self.criter(pred, ref) ### batch loss
         valid_loss += loss.item() / torch.sum(ref != self.idx_pad)
         if n_batch == 1:
-          print_pos_src_tgt_hyp_ref(pred[0], batch_pos[0], src[0], tgt[0], ind[0], ref[0])
+          print_pos_src_tgt_hyp_ref(pred[0], batch_pos[0], src[0], tgt[0], ref[0])
 
     toc = time.time()
     loss = 1.0*valid_loss/n_batch if n_batch else 0.0
