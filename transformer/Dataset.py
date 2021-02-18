@@ -128,6 +128,8 @@ class Dataset():
     n_tgt_tokens = 0
     n_src_unks = 0
     n_tgt_unks = 0
+    lsrc = 0
+    ltgt = 0
     for pos in shard:
       if self.max_length and len(self.idxs_src[pos]) > self.max_length:
         n_filtered += 1
@@ -141,6 +143,9 @@ class Dataset():
       ### ADD example ###
       idxs_pos.append(pos)
       idxs_len.append(len(self.idxs_src[pos]))
+      lsrc += len(self.idxs_src[pos])
+      if self.txts_tgt is not None:
+        ltgt += len(self.idxs_tgt[pos])
 
       n_src_tokens += len(self.idxs_src[pos])
       n_src_unks += sum([i==self.pre_src.idx_unk for i in self.idxs_src[pos]])
@@ -156,7 +161,9 @@ class Dataset():
 
     perc_src = 100.0*n_src_unks/n_src_tokens if n_src_tokens else 0.0
     perc_tgt = 100.0*n_tgt_unks/n_tgt_tokens if n_tgt_tokens else 0.0
-    logging.info('Built shard with {} examples ~ {}:{} tokens ~ {}:{} OOVs [{:.2f}%:{:.2f}%] ~ {} filtered examples ~ {}:{}'.format(len(idxs_pos), n_src_tokens, n_tgt_tokens, n_src_unks, n_tgt_unks, perc_src, perc_tgt, n_filtered, self.ftxt_src, self.ftxt_tgt))
+    avg_lsrc = 100.0*lsrc/len(idxs_len)
+    avg_lsrc = 100.0*ltgt/len(idxs_len)
+    logging.info('Built shard with {} examples ~ {}:{} tokens ~ {}:{} OOVs [{:.2f}%:{:.2f}%] ~ {} filtered examples ~ {}:{} ~ average sentence length {:.2f}:{:.2f}'.format(len(idxs_pos), n_src_tokens, n_tgt_tokens, n_src_unks, n_tgt_unks, perc_src, perc_tgt, n_filtered, self.ftxt_src, self.ftxt_tgt, avg_lsrc, avg_ltgt))
     return idxs_len, idxs_pos
 
 
