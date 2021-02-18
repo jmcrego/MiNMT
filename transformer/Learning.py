@@ -39,13 +39,11 @@ class Score():
     #gold is [bs, lt]
     #pred is [bs, lt, Vt]
 
-    #gold = gold.contiguous().view(-1) #[bs*lt]
-    #pred = pred.contiguous().view(-1,pred.size(2)) #[bs*lt, Vt]
-    #nok_batch = self.nOK(gold,pred,idx_pad)
-    nok_batch = 0
+    gold = gold.contiguous().view(-1) #[bs*lt]
+    pred = pred.contiguous().view(-1,pred.size(2)) #[bs*lt, Vt]
+    nok_batch = self.nOK(gold,pred,idx_pad)
 
     ntoks_batch = torch.sum(gold != idx_pad)
-
     #global
     self.nsteps += 1
     self.loss += sum_loss_batch
