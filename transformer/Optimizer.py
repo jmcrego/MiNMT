@@ -32,38 +32,38 @@ class LabelSmoothing_NLL(torch.nn.Module):
     self.pad_idx = pad_idx
     self.nclasses = nclasses #size of tgt vocab
     self.smoothing = smoothing
-
-
-    # batch*seq_len x vocab_size
-#    smooth_dist = targets.new_zeros((targets.size(0), vocab_size)).float()
-    # fill distribution uniformly with smoothing
-#    smooth_dist.fill_(self.smoothing / (vocab_size - 2))
-    # assign true label the probability of 1-smoothing ("confidence")
-#    smooth_dist.scatter_(1, targets.unsqueeze(1).data, 1.0-self.smoothing)
-    # give padding probability of 0 everywhere
-#    smooth_dist[:, self.pad_index] = 0
-    # masking out padding area (sum of probabilities for padding area = 0)
-#    padding_positions = torch.nonzero(targets.data == self.pad_index)
-    # pylint: disable=len-as-condition
-#    if len(padding_positions) > 0:
-#        smooth_dist.index_fill_(0, padding_positions.squeeze(), 0.0)
-#    return Variable(smooth_dist, requires_grad=False)
-
+    self.crit = torch.nn.NLLLoss(ignore_index=self.pad_idx, reduction='sum')
 
   def forward(self, pred, gold):
+    (bs, lt, Vt) = pred.shape
     #pred is [bs, lt, Vt] #logits
-    #gold is [bs, lt]
-    log_prob = torch.nn.functional.log_softmax(pred, dim=-1) #[bs,lt, Vt]
-    log_prob = log_prob.contiguous().view(-1,log_prob.size(2)) #[bs*lt, Vt]
+    #gold is [bs, lt] #references
+    log_prob = torch.nn.functional.log_softmax(pred, dim=-1)   #[bs,lt,Vt] 
+    log_prob = log_prob.contiguous().view(-1,log_prob.size(2)) #[bs*lt,Vt]
     gold = gold.contiguous().view(-1) #[bs*lt]
 
     ### smooth
-    one_hot = torch.zeros_like(log_prob).scatter(1, gold.view(-1, 1), 1)
-    one_hot = one_hot * (1 - self.smoothing) + (1 - one_hot) * self.smoothing / (self.nclasses - 1)
-    non_pad_mask = gold.ne(self.pad_idx)
-    loss = -(one_hot * log_prob).sum(dim=1)
+    smooth_dist = gold.new_zeros((bs*lt, Vt)).float()                   # [bs*lt, Vt]
+    smooth_dist.fill_(self.smoothing / (Vt - 2))                        # fill distribution uniformly with smoothing
+    smooth_dist.scatter_(1, gold.unsqueeze(1).data, 1.0-self.smoothing) # assign true label the probability of 1-smoothing ("confidence") gold is [bs, 1, lt]
+    smooth_dist[:, self.pad_idx] = 0.0                                  # padding probability = 0.0
+    padding_positions = torch.nonzero(gold.data == self.pad_idx)
+    if len(padding_positions) > 0:
+        smooth_dist.index_fill_(0, padding_positions.squeeze(), 0.0)    # masking out padding area (sum of probabilities for padding area = 0)
 
-    loss = loss.masked_select(non_pad_mask).sum()
+    logging.info('log_probs = {}'.format(log_probs.shape))
+    log_probs = log_probs.contiguous().view(-1, log_probs.size(-1))
+    logging.info('log_probs = {}'.format(log_probs.shape))
+    sys.exit()
+    loss = self.crit(log_probs, gold)
+
+    ### smooth
+#    one_hot = torch.zeros_like(log_prob).scat
+#    one_hot = one_hot * (1 - self.smoothing) + (1 - one_hot) * self.smoothing / (self.nclasses - 1)
+#    non_pad_mask = gold.ne(self.pad_idx)
+#    loss = -(one_hot * log_prob).sum(dim=1)
+#    loss = loss.masked_select(non_pad_mask).sum()
+
     return loss
 
 #class LabelSmoothing_NLL(torch.nn.Module):
