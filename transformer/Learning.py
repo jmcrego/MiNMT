@@ -122,16 +122,6 @@ class Learning():
           self.writer.add_scalar('LearningRate', self.optScheduler._rate, self.optScheduler._step)
 
         if self.validate_every and self.optScheduler._step % self.validate_every == 0: ### validate
-          if True:
-            hyp = torch.nn.functional.log_softmax(pred, dim=-1) #[bs, lt, vt] => [1, lt, vt] => [lt, vt]
-            _, ind = torch.topk(hyp, k=1, dim=-1) #[bs,lt,1]
-            logging.info('POS {}'.format(batch_pos[0]))
-            logging.info('SRC {}'.format(src[0].tolist()))
-            logging.info('TGT {}'.format(tgt[0].tolist()))
-            logging.info('HYP {}'.format(ind[0].squeeze(-1).tolist()))
-            logging.info('REF {}'.format(ref[0].tolist()))
-            logging.info('loss_batch={:.6f} tokens_batch={}'.format(loss_batch.item(), torch.sum(ref != self.idx_pad)))
-
           if validset is not None:
             vloss = self.validate(validset, device)
 
@@ -162,13 +152,24 @@ class Learning():
     n_batch = 0
     with torch.no_grad():
       self.model.eval()
-      for _, batch_src, batch_tgt in validset:
+      for batch_pos, batch_src, batch_tgt in validset:
         n_batch += 1
         src, msk_src = prepare_source(batch_src, self.idx_pad, device)
         tgt, ref, msk_tgt = prepare_target(batch_tgt, self.idx_pad, device)
         pred = self.model.forward(src, tgt, msk_src, msk_tgt) #no log_softmax is applied
         loss = self.criter(pred, ref) ### batch loss
         valid_loss += loss.item() / torch.sum(ref != self.idx_pad)
+
+        if True:
+          hyp = torch.nn.functional.log_softmax(pred, dim=-1) #[bs, lt, vt] => [1, lt, vt] => [lt, vt]
+          _, ind = torch.topk(hyp, k=1, dim=-1) #[bs,lt,1]
+          logging.info('POS {}'.format(batch_pos[0]))
+          logging.info('SRC {}'.format(src[0].tolist()))
+          logging.info('TGT {}'.format(tgt[0].tolist()))
+          logging.info('HYP {}'.format(ind[0].squeeze(-1).tolist()))
+          logging.info('REF {}'.format(ref[0].tolist()))
+          logging.info('loss_batch={:.6f} tokens_batch={}'.format(loss.item(), torch.sum(ref != self.idx_pad)))
+
 
     toc = time.time()
     loss = 1.0*valid_loss/n_batch if n_batch else 0.0
