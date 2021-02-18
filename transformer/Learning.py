@@ -41,9 +41,10 @@ class Score():
 
     #gold = gold.contiguous().view(-1) #[bs*lt]
     #pred = pred.contiguous().view(-1,pred.size(2)) #[bs*lt, Vt]
-    #ntoks_batch = torch.sum(gold != idx_pad)
     #nok_batch = self.nOK(gold,pred,idx_pad)
     nok_batch = 0
+
+    ntoks_batch = torch.sum(gold != idx_pad)
 
     #global
     self.nsteps += 1
