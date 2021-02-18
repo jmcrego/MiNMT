@@ -171,7 +171,7 @@ class Learning():
 def print_pos_src_tgt_hyp_ref(pred, pos, src, tgt, ref):
   hyp = torch.nn.functional.log_softmax(pred, dim=-1) #[lt, vt]
   _, ind = torch.topk(hyp, k=1, dim=-1) #[lt,1]
-  logging.info('POS {}'.format(batch_pos))
+  logging.info('POS {}'.format(pos))
   logging.info('SRC {}'.format(src.tolist()))
   logging.info('TGT {}'.format(tgt.tolist()))
   logging.info('HYP {}'.format(ind.squeeze(-1).tolist()))
