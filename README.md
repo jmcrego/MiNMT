@@ -143,12 +143,12 @@ Option `-format` specifies the fields to output for every sentence (TAB-separate
 [p] position of sentence in test set
 [n] rank in n-best
 [c] global hypothesis cost
-[j] input sentence (ids) : "104 17 71 406 4"
-[s] input sentence (tok) : "▁This ▁is ▁an ▁example ."
-[S] input sentence (raw) : "This is an example."
-[i] hypothesis (ids) : "1738 40 44 551 4"
-[t] hypothesis (tok) : "▁Ceci ▁est ▁un ▁exemple ."
-[T] hypothesis (raw) : "Ceci est un exemple."
+[j] input sentence (ids) : 104 17 71 406 4
+[s] input sentence (tok) : ▁This ▁is ▁an ▁example .
+[S] input sentence (raw) : This is an example.
+[i] hypothesis (ids) : 1738 40 44 551 4
+[t] hypothesis (tok) : ▁Ceci ▁est ▁un ▁exemple .
+[T] hypothesis (raw) : Ceci est un exemple.
 ```
 
 Same as Train/Validation datasets, test datasets are handled using `src_spm` and `tgt_spm` SentencePiece models existing in `$DNET` directory.
