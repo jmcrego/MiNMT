@@ -38,10 +38,12 @@ class Score():
   def step(self, sum_loss_batch, gold, pred, idx_pad):
     #gold is [bs, lt]
     #pred is [bs, lt, Vt]
-    gold = gold.contiguous().view(-1) #[bs*lt]
-    pred = pred.contiguous().view(-1,pred.size(2)) #[bs*lt, Vt]
-    ntoks_batch = torch.sum(gold != idx_pad)
-    nok_batch = self.nOK(gold,pred,idx_pad)
+
+    #gold = gold.contiguous().view(-1) #[bs*lt]
+    #pred = pred.contiguous().view(-1,pred.size(2)) #[bs*lt, Vt]
+    #ntoks_batch = torch.sum(gold != idx_pad)
+    #nok_batch = self.nOK(gold,pred,idx_pad)
+    nok_batch = 0
 
     #global
     self.nsteps += 1
@@ -194,11 +196,6 @@ class Learning():
 def print_pos_src_tgt_hyp_ref(pred, pos, src, tgt, ref):
   hyp = torch.nn.functional.log_softmax(pred, dim=-1) #[lt, vt]
   _, ind = torch.topk(hyp, k=1, dim=-1) #[lt,1]
-  #logging.info('POS {}'.format(pos))
-  #logging.info('SRC {}'.format(src.tolist()))
-  #logging.info('TGT {}'.format(tgt.tolist()))
-  #logging.info('HYP {}'.format(ind.squeeze(-1).tolist()))
-  #logging.info('REF {}'.format(ref.tolist()))
   logging.info('POS: {}'.format(pos))
   logging.info('SRC: ' + ' '.join(['{: ^5}'.format(t) for t in src.tolist()]))
   logging.info('TGT: ' + ' '.join(['{: ^5}'.format(t) for t in tgt.tolist()]))
