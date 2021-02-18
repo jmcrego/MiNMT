@@ -159,17 +159,8 @@ class Learning():
         pred = self.model.forward(src, tgt, msk_src, msk_tgt) #no log_softmax is applied
         loss = self.criter(pred, ref) ### batch loss
         valid_loss += loss.item() / torch.sum(ref != self.idx_pad)
-
-        if True:
-          hyp = torch.nn.functional.log_softmax(pred, dim=-1) #[bs, lt, vt] => [1, lt, vt] => [lt, vt]
-          _, ind = torch.topk(hyp, k=1, dim=-1) #[bs,lt,1]
-          logging.info('POS {}'.format(batch_pos[0]))
-          logging.info('SRC {}'.format(src[0].tolist()))
-          logging.info('TGT {}'.format(tgt[0].tolist()))
-          logging.info('HYP {}'.format(ind[0].squeeze(-1).tolist()))
-          logging.info('REF {}'.format(ref[0].tolist()))
-          logging.info('loss_batch={:.6f} tokens_batch={}'.format(loss.item(), torch.sum(ref != self.idx_pad)))
-
+        if n_batch == 1:
+          print_pos_src_tgt_hyp_ref(pred[0], batch_pos[0], src[0], tgt[0], ind[0], ref[0])
 
     toc = time.time()
     loss = 1.0*valid_loss/n_batch if n_batch else 0.0
@@ -177,6 +168,15 @@ class Learning():
     self.writer.add_scalar('Loss/valid', loss, self.optScheduler._step)
     return loss
 
+def print_pos_src_tgt_hyp_ref(pred, pos, src, tgt, ref){
+  hyp = torch.nn.functional.log_softmax(pred, dim=-1) #[lt, vt]
+  _, ind = torch.topk(hyp, k=1, dim=-1) #[lt,1]
+  logging.info('POS {}'.format(batch_pos))
+  logging.info('SRC {}'.format(src.tolist()))
+  logging.info('TGT {}'.format(tgt.tolist()))
+  logging.info('HYP {}'.format(ind.squeeze(-1).tolist()))
+  logging.info('REF {}'.format(ref.tolist()))
+}
 
 
 
