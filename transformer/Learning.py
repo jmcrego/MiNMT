@@ -28,20 +28,21 @@ class Score():
     self.nsteps_report = 0
     self.msec_report = self.msec_epoch
 
-  def Acc(self, gold, pred, idx_pad):
+  def nOK(self, gold, pred, idx_pad):
     hyps = torch.nn.functional.log_softmax(pred, dim=-1) #[bs*lt, Vt]
     _, inds = torch.topk(hyps, k=1, dim=-1) #[bs*lt,1]
     inds = inds.squeeze(-1) #[bs*lt]
-    nok = torch.sum(torch.logical_and( (gold != idx_pad), (inds == gold) )) #gold_is_not_pad AND inds_is_gold
-    ntoks = torch.sum(gold != idx_pad)
-    return nok.item(), ntoks.item()
+    nok = torch.sum(torch.logical_and((gold!=idx_pad), (inds==gold))) #sum(gold_is_not_pad AND inds_is_gold)
+    return nok.item()
 
   def step(self, sum_loss_batch, gold, pred, idx_pad):
     #gold is [bs, lt]
     #pred is [bs, lt, Vt]
     gold = gold.contiguous().view(-1) #[bs*lt]
     pred = pred.contiguous().view(-1,pred.size(2)) #[bs*lt, Vt]
-    nok_batch, ntoks_batch = self.Acc(gold,pred,idx_pad)
+    ntoks_batch = torch.sum(gold != idx_pad)
+    nok_batch = self.nOK(gold,pred,idx_pad)
+
     #global
     self.nsteps += 1
     self.loss += sum_loss_batch
