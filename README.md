@@ -60,8 +60,8 @@ python3 minmt-setup.py -dnet $DNET -src_spm SP_en.model -tgt_spm SP_fr.model
 
 The script creates the directory `$DNET` containing:
 * `network` (the network description file)
-* `src_spm` (source-side SentencePiece model)
-* `tgt_spm` (target-side SentencePiece model)
+* `src_pre` (source-side SentencePiece model)
+* `tgt_pre` (target-side SentencePiece model)
 
 (source and target vocabularies are contained in SentencePiece models)
 
