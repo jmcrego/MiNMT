@@ -168,6 +168,7 @@ class Embedding(torch.nn.Module):
 ##############################################################################################################
 class AddPositionalEncoding(torch.nn.Module):
   def __init__(self, emb_dim, dropout, max_len=1000):
+    super(AddPositionalEncoding, self).__init__()
     assert emb_dim%2 == 0, 'emb_dim must be pair'
     self.dropout = torch.nn.Dropout(dropout)
 
@@ -179,7 +180,6 @@ class AddPositionalEncoding(torch.nn.Module):
     pe[:, 1::2] = torch.cos(position.float()*div_term) #[max_len, 1] * [1, ed/2] => [max_len, ed] (sets odds of pe)
     pe = pe.unsqueeze(0) #[1, max_len=5000, ed]
 
-    super(AddPositionalEncoding, self).__init__()
     self.register_buffer('pe', pe) #register_buffer is for params which are saved&restored in state_dict but not trained 
 
   def forward(self, x):
