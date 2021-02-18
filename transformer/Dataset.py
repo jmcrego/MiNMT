@@ -162,7 +162,7 @@ class Dataset():
     perc_src = 100.0*n_src_unks/n_src_tokens if n_src_tokens else 0.0
     perc_tgt = 100.0*n_tgt_unks/n_tgt_tokens if n_tgt_tokens else 0.0
     avg_lsrc = 100.0*lsrc/len(idxs_len)
-    avg_lsrc = 100.0*ltgt/len(idxs_len)
+    avg_ltgt = 100.0*ltgt/len(idxs_len)
     logging.info('Built shard with {} examples ~ {}:{} tokens ~ {}:{} OOVs [{:.2f}%:{:.2f}%] ~ {} filtered examples ~ average sentence length {:.2f}:{:.2f} ~ {}:{}'.format(len(idxs_pos), n_src_tokens, n_tgt_tokens, n_src_unks, n_tgt_unks, perc_src, perc_tgt, n_filtered, avg_lsrc, avg_ltgt, self.ftxt_src, self.ftxt_tgt))
     return idxs_len, idxs_pos
 
