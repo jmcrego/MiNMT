@@ -168,21 +168,50 @@ class Embedding(torch.nn.Module):
 ##############################################################################################################
 class AddPositionalEncoding(torch.nn.Module):
   def __init__(self, emb_dim, dropout, max_len=1000):
-    super(AddPositionalEncoding, self).__init__()
-    assert emb_dim%2 == 0 #emb_dim must be pair
+    assert emb_dim%2 == 0, 'emb_dim must be pair'
     self.dropout = torch.nn.Dropout(dropout)
+
+    position = torch.arange(0, max_len).unsqueeze(1) #[max_len, 1]
+    div_term = torch.exp((torch.arange(0, emb_dim, 2, dtype=torch.float) * -(math.log(10000.0) / emb_dim))) #[ed/2]
+
     pe = torch.zeros(max_len, emb_dim) #[max_len, ed]
-    position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1) #[max_len, 1]
-    div_term = torch.exp(torch.arange(0, emb_dim, 2).float() * (-math.log(10000.0) / emb_dim)) #[ed/2]
-    pe[:, 0::2] = torch.sin(position*div_term) #[max_len, 1] * [1, ed/2] => [max_len, ed] (pairs of pe)
-    pe[:, 1::2] = torch.cos(position*div_term) #[max_len, 1] * [1, ed/2] => [max_len, ed] (odds of pe)
+    pe[:, 0::2] = torch.sin(position.float()*div_term) #[max_len, 1] * [1, ed/2] => [max_len, ed] (sets pairs of pe)
+    pe[:, 1::2] = torch.cos(position.float()*div_term) #[max_len, 1] * [1, ed/2] => [max_len, ed] (sets odds of pe)
     pe = pe.unsqueeze(0) #[1, max_len=5000, ed]
+
+    super(AddPositionalEncoding, self).__init__()
     self.register_buffer('pe', pe) #register_buffer is for params which are saved&restored in state_dict but not trained 
 
   def forward(self, x):
     bs, l, ed = x.shape
-    #x = x + self.pe[:, :l] #[bs, l, ed] + [1, l, ed] => [bs, l, ed]
+    x = x + self.pe[:, :l, :] #[bs, l, ed] + [1, l, ed] => [bs, l, ed]
     return self.dropout(x)
+
+
+
+
+class PositionalEncoding(nn.Module):
+    def __init__(self, dropout, dim, max_len=5000):
+        if dim % 2 != 0: raise ValueError("Cannot use sin/cos positional encoding with odd dim (got dim={:d})".format(dim))
+        pe = torch.zeros(max_len, dim)
+        position = torch.arange(0, max_len).unsqueeze(1)
+        div_term = torch.exp((torch.arange(0, dim, 2, dtype=torch.float) * -(math.log(10000.0) / dim)))
+        pe[:, 0::2] = torch.sin(position.float() * div_term)
+        pe[:, 1::2] = torch.cos(position.float() * div_term)
+        pe = pe.unsqueeze(1)
+
+        super(PositionalEncoding, self).__init__()
+        self.register_buffer('pe', pe)
+
+        self.dropout = nn.Dropout(p=dropout)
+        self.dim = dim
+
+    def forward(self, emb, step=None):
+        emb = emb * math.sqrt(self.dim)
+        step = step or 0
+        emb = emb + self.pe[step:emb.size(0)+step]
+        emb = self.dropout(emb)
+        return emb
 
 ##############################################################################################################
 ### Stacked_Encoder ##########################################################################################
