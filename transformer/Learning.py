@@ -32,10 +32,8 @@ class Score():
     hyps = torch.nn.functional.log_softmax(pred, dim=-1) #[bs*lt, Vt]
     _, inds = torch.topk(hyps, k=1, dim=-1) #[bs*lt,1]
     inds = inds.squeeze(-1) #[bs*lt]
-    gold_nopad = torch.tensor(gold != idx_pad)
-    pred_is_gold = torch.tensor(gold == inds)
-    nok = torch.sum(torch.logical_and(gold_nopad, pred_is_gold))
-    ntoks = torch.sum(gold_nopad)
+    nok = torch.sum(torch.logical_and( (gold != idx_pad), (inds == gold) )) #gold_is_not_pad AND inds_is_gold
+    ntoks = torch.sum(gold != idx_pad)
     return nok.item(), ntoks.item()
 
   def step(self, sum_loss_batch, gold, pred, idx_pad):
