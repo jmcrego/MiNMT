@@ -82,8 +82,11 @@ def prepare_source(batch_src, idx_pad, device):
   src = [torch.tensor(seq) for seq in batch_src] #[bs, ls]
   src = torch.nn.utils.rnn.pad_sequence(src, batch_first=True, padding_value=idx_pad).to(device) #[bs,ls]
   msk_src = (src != idx_pad).unsqueeze(-2) #[bs,1,ls] (False where <pad> True otherwise)
-  #print('src',src.tolist())
-  #print('msk_src',msk_src.tolist())
+  if False:
+    print('batch')
+    for i in range(len(src)):
+      print('src[{}]: '.format(i) + ' '.join(['{: ^5}'.format(t) for t in src[i].tolist()]))
+      print('msk[{}]: '.format(i) + ' '.join(['{: ^5}'.format(t) for t in msk_src[i,0].tolist()]))
   return src, msk_src
 
 def prepare_target(batch_tgt, idx_pad, device):
@@ -92,9 +95,12 @@ def prepare_target(batch_tgt, idx_pad, device):
   ref = [torch.tensor(seq[1:])  for seq in batch_tgt] #delete <bos>
   ref = torch.nn.utils.rnn.pad_sequence(ref, batch_first=True, padding_value=idx_pad).to(device)
   msk_tgt = (tgt != idx_pad).unsqueeze(-2) & (1 - torch.triu(torch.ones((1, tgt.size(1), tgt.size(1)), device=tgt.device), diagonal=1)).bool() #[bs,lt,lt]
-  #print('tgt',tgt.tolist())
-  #print('ref',ref.tolist())
-  #print('msk_tgt',msk_tgt.tolist())
+  if False:
+    for i in range(len(tgt)):
+      print('tgt[{}]: '.format(i) + ' '.join(['{: ^5}'.format(t) for t in tgt[i].tolist()]))
+      print('ref[{}]: '.format(i) + ' '.join(['{: ^5}'.format(t) for t in ref[i].tolist()]))
+      for j in range(len(msk_tgt[i])):
+        print('msk[{}]: '.format(i) + ' '.join(['{: ^5}'.format(t) for t in msk_tgt[i,j].tolist()]))
   return tgt, ref, msk_tgt
 
 ##############################################################################################################
@@ -161,11 +167,11 @@ class Embedding(torch.nn.Module):
 ### PositionalEncoding #######################################################################################
 ##############################################################################################################
 class AddPositionalEncoding(torch.nn.Module):
-  def __init__(self, emb_dim, dropout, max_len=5000):
+  def __init__(self, emb_dim, dropout, max_len=1000):
     super(AddPositionalEncoding, self).__init__()
     assert emb_dim%2 == 0 #emb_dim must be pair
     self.dropout = torch.nn.Dropout(dropout)
-    pe = torch.zeros(max_len, emb_dim) #[max_len=5000, ed]
+    pe = torch.zeros(max_len, emb_dim) #[max_len, ed]
     position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1) #[max_len, 1]
     div_term = torch.exp(torch.arange(0, emb_dim, 2).float() * (-math.log(10000.0) / emb_dim)) #[ed/2]
     pe[:, 0::2] = torch.sin(position*div_term) #[max_len, 1] * [1, ed/2] => [max_len, ed] (pairs of pe)
@@ -175,7 +181,7 @@ class AddPositionalEncoding(torch.nn.Module):
 
   def forward(self, x):
     bs, l, ed = x.shape
-    x = x + self.pe[:, :l] #[bs, l, ed] + [1, l, ed] => [bs, l, ed]
+    #x = x + self.pe[:, :l] #[bs, l, ed] + [1, l, ed] => [bs, l, ed]
     return self.dropout(x)
 
 ##############################################################################################################
