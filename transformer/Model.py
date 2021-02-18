@@ -266,7 +266,7 @@ class Decoder(torch.nn.Module):
     #NORM
     tmp1 = self.norm_att_enc(tmp)
     #ATTN over src words : q are tgt words, k, v are src words
-    tmp2 = self.multihead_attn_enc(q=tmp1, k=z_src,    v=z_src,    msk=msk_src) #[bs, lt, ed] contains dropout
+    tmp2 = self.multihead_attn_enc(q=tmp1, k=z_src, v=z_src, msk=msk_src) #[bs, lt, ed] contains dropout
     #ADD
     tmp = tmp2 + tmp
 
@@ -294,6 +294,7 @@ class MultiHead_Attn(torch.nn.Module):
     self.WV = torch.nn.Linear(emb_dim, v_dim*n_heads)
     self.WO = torch.nn.Linear(v_dim*n_heads, emb_dim)
     self.dropout = torch.nn.Dropout(dropout)
+    self.softmax = torch.nn.Softmax(dim=-1)
 
   def forward(self, q, k, v, msk=None):
     #q is [bs, lq, ed]
@@ -317,7 +318,7 @@ class MultiHead_Attn(torch.nn.Module):
     s = torch.matmul(Q, K.transpose(2, 3)) #[bs,nh,lq,qd] x [bs,nh,kd,lk] = [bs,nh,lq,lk] # thanks to qd==kd #in decoder lq are target words and lk are source words
     if msk is not None:
       s = s.masked_fill(msk == 0, float('-inf')) #score=-Inf to masked tokens
-    w = torch.nn.functional.softmax(s, dim=-1) #[bs,nh,lq,lk] (these are the attention weights)
+    w = self.softmax(s) #[bs,nh,lq,lk] (these are the attention weights)
     w = self.dropout(w) #[bs,nh,lq,lk] 
 
     z = torch.matmul(w,V) #[bs,nh,lq,lk] x [bs,nh,lv,vd] = [bs,nh,lq,vd] #thanks to lk==lv
