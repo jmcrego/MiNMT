@@ -86,7 +86,8 @@ class Inference():
       lt = hyps.shape[0]
 
       ### DECODE ###
-      y_next = self.model.decode(self.z_src, hyps, self.msk_src, msk_tgt=None)[:,-1,:] #[1,lt,Vt] => [1,Vt]
+      msk_tgt = (1 - torch.triu(torch.ones((1, lt, lt), device=self.device), diagonal=1)).bool()
+      y_next = self.model.decode(self.z_src, hyps, self.msk_src, msk_tgt=msk_tgt)[:,-1,:] #[1,lt,Vt] => [1,Vt]
  
       if lt == self.max_size - 1: #last extension
         y_next[:,] *= self.force_eos #all words are assigned -Inf except <eos> which keeps its logP
@@ -129,7 +130,8 @@ class Inference():
       lt = hyps.shape[1]
 
       ### DECODE ###
-      y_next = self.model.decode(self.z_src, hyps, self.msk_src, msk_tgt=None)[:,-1,:] #[bs,lt,Vt] => [bs,Vt]
+      msk_tgt = (1 - torch.triu(torch.ones((1, lt, lt), device=self.device), diagonal=1)).bool()
+      y_next = self.model.decode(self.z_src, hyps, self.msk_src, msk_tgt=msk_tgt)[:,-1,:] #[bs,lt,Vt] => [bs,Vt]
  
       if lt == self.max_size - 1: #last extension
         y_next[:,] *= self.force_eos #all words are assigned -Inf except <eos> which keeps its logP
@@ -184,7 +186,8 @@ class Inference():
         #logging.info('z_src = {} msk_src = {}'.format(self.z_src.shape, self.msk_src.shape))
 
       ### DECODE ###
-      y_next = self.model.decode(self.z_src, hyps, self.msk_src, msk_tgt=None)[:,-1,:] #[I,lt,Vt] => [I,Vt]
+      msk_tgt = (1 - torch.triu(torch.ones((1, lt, lt), device=self.device), diagonal=1)).bool()
+      y_next = self.model.decode(self.z_src, hyps, self.msk_src, msk_tgt=msk_tgt)[:,-1,:] #[I,lt,Vt] => [I,Vt]
       #logging.info('y_next = {}'.format(y_next.shape))
       if lt == self.max_size - 1: #last extension (force <eos>)
         y_next[:,] *= self.force_eos #all words are assigned -Inf except <eos> which keeps its logP
