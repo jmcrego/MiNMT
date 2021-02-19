@@ -60,10 +60,7 @@ class Inference():
 
         ### decode batch step-by-step
         if self.K == 1:
-          if src.shape[0] == 1:
-            finals = self.translate_greedy_nobatchs()
-          else:
-            finals = self.translate_greedy()
+          finals = self.translate_greedy()
         else:
           finals = self.translate_beam()
         for b in range(len(finals)):
@@ -76,47 +73,6 @@ class Inference():
 
     if output != '-':
       fh.close()
-
-  def translate_greedy_nobatchs(self):
-    hyps = torch.ones([1,1], dtype=int).to(self.device) * self.idx_bos #[1,lt=1]
-    logP = torch.zeros([1,1], dtype=torch.float32).to(self.device)     #[1,lt=1]
-    finals = [defaultdict() for i in range(1)]
-
-    while True:
-      lt = hyps.shape[0]
-
-      ### DECODE ###
-      msk_tgt = (1 - torch.triu(torch.ones((1, lt, lt), device=self.device), diagonal=1)).bool()
-      y_next = self.model.decode(self.z_src, hyps, self.msk_src, msk_tgt=msk_tgt)[:,-1,:] #[1,lt,Vt] => [1,Vt]
- 
-      if lt == self.max_size - 1: #last extension
-        y_next[:,] *= self.force_eos #all words are assigned -Inf except <eos> which keeps its logP
-
-      next_logP = y_next.contiguous().view(self.Vt,1) #[Vt,1]
-
-      ### EXPAND ###
-      hyps_extended = hyps.repeat_interleave(repeats=self.Vt, dim=0) #[1,lt] => [Vt,lt]
-      logP_extended = logP.repeat_interleave(repeats=self.Vt, dim=0) #[1,lt] => [Vt,lt]
-
-      hyps_extended = torch.cat((hyps_extended, self.next_wrds.view(-1,1)), dim=-1) #[Vt,lt+1]
-      logP_extended = torch.cat((logP_extended, next_logP), dim=-1) #[Vt,lt+1]
-      lt = hyps_extended.shape[1] #new hypothesis length
-
-      ### KEEP best expansion ###
-      sum_logP = torch.sum(logP_extended,dim=1) #[Vt]
-      _, ind_best = torch.topk(sum_logP, k=1, dim=0) #[1]
-      hyps = hyps_extended[ind_best].view(1,-1) #[1,lt]
-      logP = logP_extended[ind_best].view(1,-1) #[1,lt]
-
-      ### FINALS ###
-      if hyps[0,-1] == self.idx_eos:
-        hyp = ' '.join(map(str,hyps[0].tolist()))
-        cst = sum(logP[0])
-        if self.alpha:
-          cst = cst / norm_length(hyps.shape[1],self.alpha)
-        #logging.info('[FINAL b={}]\t{:6f}\t{}'.format(b,sum_logp,hyp))
-        finals[0][hyp] = cst.item()
-        return finals
 
 
   def translate_greedy(self):
