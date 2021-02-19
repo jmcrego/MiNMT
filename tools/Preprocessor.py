@@ -178,7 +178,7 @@ class SentencePiece():
 
 	def decode_list(self, tok_lines):
 		raw_line = self.sp.decode(tok_lines) #raw_line is string		
-		return raw_line.split()
+		return raw_line.split() #list of strings
 
 	def __len__(self):
 		return len(self.sp)
