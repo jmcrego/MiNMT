@@ -173,7 +173,6 @@ class Inference():
       hyps = torch.stack([hyps_extended[b][inds] for b,inds in enumerate(kbest_inds)], dim=0).contiguous().view(bs*self.K,lt) #[bs,K,lt] => [bs*K,lt]
       logP = torch.stack([logP_extended[b][inds] for b,inds in enumerate(kbest_inds)], dim=0).contiguous().view(bs*self.K,lt) #[bs,K,lt] => [bs*K,lt]
       #logging.info('hyps = {} logP = {}'.format(hyps.shape, logP.shape))
-
       #self.print_beam(bs, lt)
 
       ### FINALS ###
@@ -186,10 +185,8 @@ class Inference():
           if self.alpha:
             cst = cst / norm_length(hyps.shape[1],self.alpha)
           #logging.info('[FINAL b={}]\t{:6f}\t{}'.format(b,sum_logp,hyp))
-          ### keep record of final hypothesis
-          finals[b][hyp] = cst.item() 
-          ### force the hypothesis to disappear in next step
-          logP[i,-1] = -float('Inf')
+          finals[b][hyp] = cst.item() # keep record of final hypothesis
+          logP[i,-1] = -float('Inf') # force the hypothesis to disappear in next step
 
       if sum([len(d) for d in finals]) == bs*self.K:
         return finals
@@ -239,7 +236,7 @@ class Inference():
         out.append(' '.join(map(str,tgt_idx))) ### output sentence (idxs)
 
       else:
-        logging.error('invalid format option {} in {}'.format(ch,self.format))
+        logging.error('Invalid format option {} in {}'.format(ch,self.format))
         sys.exit()
     return '\t'.join(out)
 
