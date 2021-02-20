@@ -2,7 +2,7 @@
 
 import torch
 import torch.nn.functional as F
-from torch.autograd import Variable
+#from torch.autograd import Variable
 import logging
 
 class OptScheduler(): ### Adam optimizer with scheduler
@@ -37,11 +37,11 @@ class LabelSmoothing_NLL(torch.nn.Module):
     (bs, lt, Vt) = pred.shape
     #pred is [bs,lt,Vt] #logits
     #gold is [bs,lt] #references
-    log_prob = torch.nn.functional.log_softmax(pred, dim=-1) #[bs,lt,Vt] 
-    log_prob = log_prob.contiguous().view(-1,log_prob.size(2)) #[bs*lt,Vt]
+    pred = pred.contiguous().view(-1,pred.size(2)) #[bs*lt, Vt]
+    log_prob = F.log_softmax(pred, dim=1)
     gold = gold.contiguous().view(-1) #[bs*lt]
     ### smooth nll
-    one_hot = torch.zeros_like(log_prob).scatter(1, gold.view(-1, 1), 1)
+    one_hot = torch.zeros_like(pred).scatter(1, gold.view(-1, 1), 1)
     one_hot = one_hot * (1 - self.smoothing) + (1 - one_hot) * self.smoothing / (self.nclasses - 1)
     non_pad_mask = gold.ne(self.pad_idx)
     loss = -(one_hot * log_prob).sum(dim=1)
