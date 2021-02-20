@@ -18,13 +18,13 @@ class Score():
     #global
     self.nsteps = 0
     self.loss = 0.
-    self.ntoks = 0
+    self.ntok = 0
     self.nok = 0
     self.msec_epoch = time.time()
     #report
     self.loss_report = 0.
     self.nok_report = 0
-    self.ntoks_report = 0
+    self.ntok_report = 0
     self.nsteps_report = 0
     self.msec_report = self.msec_epoch
 
@@ -47,19 +47,19 @@ class Score():
     self.nsteps += 1
     self.loss += sum_loss_batch
     self.nok += nok_batch
-    self.ntoks += ntok_batch
+    self.ntok += ntok_batch
     #report
     self.loss_report += sum_loss_batch
     self.nok_report += nok_batch
-    self.ntoks_report += ntoks_batch
+    self.ntok_report += ntok_batch
     self.nsteps_report += 1
 
   def report(self):
     tnow = time.time()
-    if self.ntoks_report and self.nsteps_report:
-      #print('Report loss={:.5f} ntoks={}'.format(self.loss_report, self.ntoks_report))
-      loss_per_tok = self.loss_report / (1.0*self.ntoks_report)
-      acc_per_tok = self.nok_report / (1.0*self.ntoks_report)
+    if self.ntok_report and self.nsteps_report:
+      #print('Report loss={:.5f} ntoks={}'.format(self.loss_report, self.ntok_report))
+      loss_per_tok = self.loss_report / (1.0*self.ntok_report)
+      acc_per_tok = self.nok_report / (1.0*self.ntok_report)
       ms_per_step = 1000.0 * (tnow - self.msec_report) / (1.0*self.nsteps_report)
     else:
       loss_per_tok = 0.
@@ -68,7 +68,7 @@ class Score():
       logging.warning('Requested report after 0 tokens optimised')
     #initialize for next report
     self.loss_report = 0.
-    self.ntoks_report = 0
+    self.ntok_report = 0
     self.nok_report = 0
     self.nsteps_report = 0
     self.msec_report = tnow
@@ -76,9 +76,9 @@ class Score():
 
   def epoch(self):
     tnow = time.time()
-    if self.ntoks and self.nsteps:
-      loss_per_tok = self.loss / (1.0*self.ntoks)
-      acc_per_tok = self.nok / (1.0*self.ntoks)
+    if self.ntok and self.nsteps:
+      loss_per_tok = self.loss / (1.0*self.ntok)
+      acc_per_tok = self.nok / (1.0*self.ntok)
       ms_epoch = 1000.0 * (tnow - self.msec_epoch)
     else:
       loss_per_tok = 0.
@@ -136,22 +136,22 @@ class Learning():
         self.optScheduler.step()                                                       ### updates model parameters after incrementing step and updating lr
         ### accumulate score
         score.step(loss_batch.item(), ntok_batch, ref, pred, self.idx_pad)
-
-        if self.report_every and self.optScheduler._step % self.report_every == 0: ### report
+        ### report
+        if self.report_every and self.optScheduler._step % self.report_every == 0: 
           acc_per_tok, loss_per_tok, ms_per_step = score.report()
           logging.info('Learning step: {} epoch: {} batch: {} steps/sec: {:.2f} lr: {:.6f} Acc: {:.3f} Loss: {:.3f}'.format(self.optScheduler._step, n_epoch, n_batch, 1000.0/ms_per_step, self.optScheduler._rate, acc_per_tok, loss_per_tok))
           #self.writer.add_scalar('Loss/train', loss_per_tok, self.optScheduler._step)
           self.writer.add_scalar('Loss/train', loss_token.item(), self.optScheduler._step)
           self.writer.add_scalar('LearningRate', self.optScheduler._rate, self.optScheduler._step)
-
-        if self.validate_every and self.optScheduler._step % self.validate_every == 0: ### validate
+        ### validate
+        if self.validate_every and self.optScheduler._step % self.validate_every == 0: 
           if validset is not None:
             vloss = self.validate(validset, device)
-
-        if self.save_every and self.optScheduler._step % self.save_every == 0: ### save
+        ### save
+        if self.save_every and self.optScheduler._step % self.save_every == 0: 
           save_checkpoint(self.suffix, self.model, self.optScheduler.optimizer, self.optScheduler._step, self.keep_last_n)
-
-        if self.max_steps and self.optScheduler._step >= self.max_steps: ### stop by max_steps
+        ### stop by max_steps
+        if self.max_steps and self.optScheduler._step >= self.max_steps: 
           if validset is not None:
             vloss = self.validate(validset, device)
           save_checkpoint(self.suffix, self.model, self.optScheduler.optimizer, self.optScheduler._step, self.keep_last_n)
