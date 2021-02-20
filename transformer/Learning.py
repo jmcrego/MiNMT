@@ -35,7 +35,7 @@ class Score():
     nok = torch.sum(torch.logical_and((gold!=idx_pad), (inds==gold))) #sum(gold_is_not_pad AND inds_is_gold)
     return nok.item()
 
-  def step(self, sum_loss_batch, gold, pred, idx_pad):
+  def step(self, sum_loss_batch, ntok_batch, gold, pred, idx_pad):
     #gold is [bs, lt]
     #pred is [bs, lt, Vt]
 
@@ -43,12 +43,11 @@ class Score():
     pred = pred.contiguous().view(-1,pred.size(2)) #[bs*lt, Vt]
     nok_batch = self.nOK(gold,pred,idx_pad)
 
-    ntoks_batch = torch.sum(gold != idx_pad)
     #global
     self.nsteps += 1
     self.loss += sum_loss_batch
     self.nok += nok_batch
-    self.ntoks += ntoks_batch
+    self.ntoks += ntok_batch
     #report
     self.loss_report += sum_loss_batch
     self.nok_report += nok_batch
@@ -127,7 +126,8 @@ class Learning():
         pred = self.model.forward(src, tgt, msk_src, msk_tgt) #no log_softmax is applied
         ### compute loss
         loss_batch = self.criter(pred, ref) #sum of losses in batch
-        loss_token = loss_batch / torch.sum(ref != self.idx_pad)
+        ntok_batch = torch.sum(ref != self.idx_pad)
+        loss_token = loss_batch / ntok_batch
         ### optimize
         self.optScheduler.optimizer.zero_grad()                                        ### sets gradients to zero
         loss_token.backward()
@@ -135,7 +135,7 @@ class Learning():
           torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.clip_grad_norm) ### clip gradients to clip_grad_norm
         self.optScheduler.step()                                                       ### updates model parameters after incrementing step and updating lr
         ### accumulate score
-        score.step(loss_batch.item(), ref, pred, self.idx_pad)
+        score.step(loss_batch.item(), ntok_batch, ref, pred, self.idx_pad)
 
         if self.report_every and self.optScheduler._step % self.report_every == 0: ### report
           acc_per_tok, loss_per_tok, ms_per_step = score.report()
