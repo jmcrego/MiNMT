@@ -10,7 +10,7 @@ from transformer.Dataset import Dataset
 from transformer.Model import Encoder_Decoder, load_checkpoint_or_initialise, save_checkpoint, load_checkpoint, numparameters
 from transformer.Inference import Inference
 from tools.Preprocessor import SentencePiece, Space
-from tools.Tools import create_logger, isbinary
+from tools.Tools import create_logger, isbinary, read_dnet
 
 ######################################################################
 ### Options ##########################################################
@@ -126,31 +126,7 @@ if __name__ == '__main__':
 
   tic = time.time()
   o = Options(sys.argv)
-
-  if not os.path.isdir(o.dnet):
-    logging.error('unavailable network directory: {}'.format(o.dnet))
-    sys.exit()
-  if not os.path.isfile(o.dnet + '/network'):
-    logging.error('cannot find network file: {}'.format(o.dnet + '/network'))
-    sys.exit()
-  if not os.path.isfile(o.dnet + '/src_pre'):
-    logging.error('cannot find source preprocessor file: {}'.format(o.dnet + '/src_pre'))
-    sys.exit()
-  if not os.path.isfile(o.dnet + '/tgt_pre'):
-    logging.error('cannot find target preprocessor file: {}'.format(o.dnet + '/tgt_pre'))
-    sys.exit()
-
-  with open(o.dnet + '/network', 'r') as f:
-    n = yaml.load(f, Loader=yaml.SafeLoader) #Loader=yaml.FullLoader)
-  logging.info("Network = {}".format(n))
-
-  if isbinary(o.dnet + '/src_pre'): #n['preprocessor'] == 'sentencepiece':
-    src_pre = SentencePiece(fmod=o.dnet + '/src_pre')
-    tgt_pre = SentencePiece(fmod=o.dnet + '/tgt_pre')
-  else: 
-    src_pre = Space(fmod=o.dnet + '/src_pre')
-    tgt_pre = Space(fmod=o.dnet + '/tgt_pre')
-  assert src_pre.idx_pad == tgt_pre.idx_pad, 'src/tgt vocabularies must have the same idx_pad'
+  n, src_pre, tgt_pre = read_dnet(o.dnet)
 
   ##################
   ### load model ###
