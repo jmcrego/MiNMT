@@ -54,10 +54,8 @@ class Inference():
         ### encode batch
         src, self.msk_src = prepare_source(batch_src, self.tgt_pre.idx_pad, self.device) #src is [bs, ls] msk_src is [bs,1,ls]
         self.z_src = self.model.encode(src, self.msk_src) #[bs,ls,ed]
-
         #for i in range(len(pos)):
         #  logging.debug('{}\n\t{}\n\t{}'.format(pos[i], src[i].tolist(), self.msk_src[i,0].tolist()))
-
         ### decode batch step-by-step
         if self.K == 1:
           finals = self.translate_greedy()

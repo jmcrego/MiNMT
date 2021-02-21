@@ -67,20 +67,20 @@ class Space():
 
 	def encode(self, fin, in_type, out_type):
 		if in_type == 'int':
-			logging.error('Space tokenizer encoder considers only str as in_type')
+			logging.error('Space encoder considers only str as in_type')
 			sys.exit()
 		if out_type == 'str':
-			logging.error('Space tokenizer encoder considers only int as out_type')
+			logging.error('Space encoder considers only int as out_type')
 			sys.exit()
 
-		raw_lines = fd2list(fin, type=in_type) #read into 'str'
+		raw_lines = fd2list(fin, type=in_type) #list of list of words
 		tok_lines = []
 		for l in raw_lines:
-			tok_line = []
+			tok_line = [] #list of ints
 			for tok in l:
 				idx = self.tok_to_idx[tok] if tok in self.tok_to_idx else self.idx_unk
 				tok_line.append(idx)
-			tok_lines.append(tok_line)
+			tok_lines.append(tok_line) #list of list of ints
 		if len(raw_lines) != len(tok_lines):
 			logging.info('error: different length raw_lines/tok_lines!')
 			sys.exit()
@@ -88,16 +88,16 @@ class Space():
 
 	def decode(self, fin, in_type, out_type):
 		if in_type == 'str':
-			logging.error('Space tokenizer decoder considers only int as in_type')
+			logging.error('Space decoder considers only int as in_type')
 			sys.exit()
 		if out_type == 'int':
-			logging.error('Space tokenizer encoder considers only str as out_type')
+			logging.error('Space encoder considers only str as out_type')
 			sys.exit()
 
-		tok_lines = fd2list(fin, type=in_type) #list of list of strings_or_ints
-		raw_lines = []
+		tok_lines = fd2list(fin, type=in_type) #list of list of ints
+		raw_lines = [] #list of list of words
 		for l in tok_lines:
-			raw_line = []
+			raw_line = [] #list of words
 			for idx in l:
 				tok = self.idx_to_tok[idx] if idx < len(self.idx_to_tok) else self.str_unk
 				raw_line.append(tok)
@@ -107,13 +107,14 @@ class Space():
 			sys.exit()
 		return tok_lines, raw_lines
 
-	def decode_list(self, tok_lines):
-		tok_lines = map(int,tok_lines)
+	def decode_list(self, idx_line):
+		#idx_line is a list of strings representing ints
+		idx_line = map(int,idx_line) #list of ints
 		raw_line = []
-		for idx in tok_lines:
+		for idx in idx_line:
 			tok = self.idx_to_tok[idx] if idx < len(self.idx_to_tok) else self.str_unk
 			raw_line.append(tok)
-		return raw_line
+		return raw_line #list of words
 
 	def __len__(self):
 		return len(self.idx_to_tok)
@@ -160,25 +161,26 @@ class SentencePiece():
 
 	def encode(self, fin, in_type, out_type):
 		if in_type == 'int':
-			logging.error('SentencePiece tokenizer encoder considers only str as in_type')
+			logging.error('SentencePiece encoder considers only str as in_type')
 			sys.exit()
 		out_type = int if out_type == 'int' else str
-		raw_lines = fd2list(fin, type=in_type)
-		raw_lines = [' '.join(l) for l in raw_lines] ### list of list of words into list of sentences
-		tok_lines = self.sp.encode(raw_lines, out_type=out_type)
+		raw_lines = fd2list(fin, type=in_type) #list of list of words
+		raw_lines = [' '.join(l) for l in raw_lines] ### list of sentences
+		tok_lines = self.sp.encode(raw_lines, out_type=out_type) #list of list of ints_or_words
 		return raw_lines, tok_lines
 
 	def decode(self, fin, in_type, out_type):
 		if out_type == 'int':
-			logging.error('SentencePiece tokenizer decoder considers only str as out_type')
+			logging.error('SentencePiece decoder considers only str as out_type')
 			sys.exit()
-		tok_lines = fd2list(fin, type=in_type) #list of list of strings_or_ints		
-		raw_lines = self.sp.decode(tok_lines)
+		tok_lines = fd2list(fin, type=in_type) #list of list of words_or_ints		
+		raw_lines = self.sp.decode(tok_lines) #list of sentences
+		raw_lines = [l.split() for l in raw_lines] #list of list of words
 		return tok_lines, raw_lines
 
-	def decode_list(self, tok_lines):
-		raw_line = self.sp.decode(tok_lines) #raw_line is string		
-		return raw_line.split() #list of strings
+	def decode_list(self, idx_line):
+		raw_line = self.sp.decode(idx_line) #raw_line is sentence
+		return raw_line.split() #list of words
 
 	def __len__(self):
 		return len(self.sp)

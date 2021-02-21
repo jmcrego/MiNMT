@@ -61,7 +61,8 @@ if __name__ == '__main__':
     else:
       in_type = 'str'
 
-    _, lines = mod.encode(fin=fin, in_type='str', out_type=out_type)
+    _, lines = mod.encode(fin=fin, in_type='str', out_type=out_type) 
+    #input is file or stdin => returns (list of (list of ints))
     for l in lines:
       if out_type == 'str':
         print(' '.join(l))

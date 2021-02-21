@@ -12,7 +12,6 @@ from transformer.Dataset import Dataset
 from transformer.Model import Encoder_Decoder, load_checkpoint_or_initialise, save_checkpoint, load_checkpoint, numparameters
 from transformer.Optimizer import OptScheduler, LabelSmoothing_NLL, LabelSmoothing_KLDiv
 from transformer.Learning import Learning
-from tools.Preprocessor import SentencePiece, Space
 from tools.Tools import create_logger, isbinary, read_dnet
 
 ######################################################################

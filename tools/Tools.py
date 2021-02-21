@@ -4,6 +4,7 @@ import os
 import sys
 import shutil
 import logging
+from Preprocessor import SentencePiece, Space
 
 def create_logger(logfile, loglevel):
   numeric_level = getattr(logging, loglevel.upper(), None)

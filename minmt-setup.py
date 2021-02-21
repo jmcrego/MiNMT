@@ -2,10 +2,8 @@
 
 import sys
 import os
-import shutil
 import time
 import logging
-from tools.Preprocessor import SentencePiece, Space
 from tools.Tools import create_logger, write_dnet
 import numpy as np
 
