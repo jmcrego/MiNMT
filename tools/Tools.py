@@ -4,7 +4,7 @@ import os
 import sys
 import shutil
 import logging
-import yaml
+#import yaml
 from tools.Preprocessor import SentencePiece, Space
 
 def create_logger(logfile, loglevel):
@@ -32,6 +32,20 @@ def isbinary(fin):
   except UnicodeDecodeError: # Fond non-text data  
     return True
 
+def getValue(s):
+  try:
+    return int(s)
+  except ValueError:
+    pass
+  try:
+    return float(s)
+  except ValueError:
+    pass
+  if s=='True':
+    return True
+  if s=='False':
+    return False
+  return s
 
 def read_dnet(dnet):
   if not os.path.isdir(dnet):
@@ -45,7 +59,20 @@ def read_dnet(dnet):
     sys.exit()
 
   with open(dnet + '/network', 'r') as f:
-    n = yaml.load(f, Loader=yaml.SafeLoader) 
+    n = {}
+    for l in f:
+      toks = l.split()
+      if len(toks) == 2:
+        key = toks[0][:-1] #discard ':'
+        val = getValue(toks[1])
+        #print(key,val)
+        n[key] = val        
+      else:
+        logging.error('Bad network option line: {}'.format(l))
+        sys.exit()
+
+#  with open(dnet + '/network', 'r') as f:
+#    n = yaml.load(f, Loader=yaml.SafeLoader) 
   logging.info("Network = {}".format(n))
 
   if os.path.isfile(dnet + '/joint_pre'): ### joint pre

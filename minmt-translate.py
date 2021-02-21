@@ -5,7 +5,7 @@ import os
 import time
 import logging
 import torch
-import yaml
+#import yaml
 from transformer.Dataset import Dataset
 from transformer.Model import Encoder_Decoder, load_checkpoint_or_initialise, save_checkpoint, load_checkpoint, numparameters
 from transformer.Inference import Inference

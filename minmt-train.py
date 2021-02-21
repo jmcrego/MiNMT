@@ -6,7 +6,7 @@ import time
 import random
 import logging
 import torch
-import yaml
+#import yaml
 import numpy as np
 from transformer.Dataset import Dataset
 from transformer.Model import Encoder_Decoder, load_checkpoint_or_initialise, save_checkpoint, load_checkpoint, numparameters

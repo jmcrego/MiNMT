@@ -1,4 +1,3 @@
 torch==1.*
 sentencepiece==0.1.95
-PyYAML==5.*
 tensorboard==2.*
