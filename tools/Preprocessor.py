@@ -5,9 +5,9 @@ from collections import defaultdict
 import sentencepiece as spm
 
 def fd2list(fin, type='str'):
-	### whe type is:
-	# int: returns list of list of ints (idxs)
-	# str: returns list of list of strings (words)
+	### type is:
+	# 'int': returns list of list of ints
+	# 'str': returns list of list of words
 
 	### open file/stdin
 	if fin is None:
