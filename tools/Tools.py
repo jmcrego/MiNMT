@@ -4,6 +4,7 @@ import os
 import sys
 import shutil
 import logging
+import yaml
 from tools.Preprocessor import SentencePiece, Space
 
 def create_logger(logfile, loglevel):
