@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python3
 
 import sys
 import os
@@ -6,7 +6,6 @@ import time
 import random
 import logging
 import torch
-#import yaml
 import numpy as np
 from transformer.Dataset import Dataset
 from transformer.Model import Encoder_Decoder, load_checkpoint_or_initialise, save_checkpoint, load_checkpoint, numparameters
@@ -211,18 +210,6 @@ if __name__ == '__main__':
   else:
     valid =None
   train = Dataset(src_pre, tgt_pre, o.src_train, o.tgt_train, o.shard_size, o.batch_size, o.batch_type, o.max_length)
-
-  #n = 0
-  #for pos, batch_src, batch_tgt in train:
-  #  max_lsrc = 0
-  #  max_ltgt = 0
-  #  for i in range(len(batch_src)):
-  #    print( "{}\t{}\t{}\t{}\t{}\t{}".format(n, pos[i], len(batch_src[i]), len(batch_tgt[i]), batch_src[i], batch_tgt[i]) )
-  #    max_lsrc = max(max_lsrc, len(batch_src[i]))
-  #    max_ltgt = max(max_ltgt, len(batch_tgt[i]))
-  #  print("batch[{}] ({},{}) {}".format(i, max_lsrc*len(batch_src), max_ltgt*len(batch_tgt), len(batch_src)) )
-  #  n += 1
-  #sys.exit()
 
   #############
   ### learn ###
