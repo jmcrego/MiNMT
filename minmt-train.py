@@ -7,11 +7,11 @@ import random
 import logging
 import torch
 import numpy as np
-from transformer.Dataset import Dataset
+from transformer.Dataset import Dataset, Vocab
 from transformer.Model import Encoder_Decoder, load_checkpoint_or_initialise, save_checkpoint, load_checkpoint, numparameters
 from transformer.Optimizer import OptScheduler, LabelSmoothing_NLL, LabelSmoothing_KLDiv
 from transformer.Learning import Learning
-from tools.Tools import create_logger, isbinary, read_dnet
+from tools.Tools import create_logger, read_dnet
 
 ######################################################################
 ### Options ##########################################################
@@ -182,22 +182,24 @@ if __name__ == '__main__':
 
   tic = time.time()
   o = Options(sys.argv)
-  n, src_pre, tgt_pre = read_dnet(o.dnet)
+  n, src_voc, tgt_voc = read_dnet(o.dnet)
+  src_voc = Vocab(src_voc)
+  tgt_voc = Vocab(tgt_voc)
 
   #############################
   ### load model/optim/loss ###
   #############################
   device = torch.device('cuda' if o.cuda and torch.cuda.is_available() else 'cpu')
-  model = Encoder_Decoder(n['n_layers'], n['ff_dim'], n['n_heads'], n['emb_dim'], n['qk_dim'], n['v_dim'], n['dropout'], n['share_embeddings'], len(src_pre), len(tgt_pre), src_pre.idx_pad).to(device)
+  model = Encoder_Decoder(n['n_layers'], n['ff_dim'], n['n_heads'], n['emb_dim'], n['qk_dim'], n['v_dim'], n['dropout'], n['share_embeddings'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
   logging.info('Built model (#params, size) = ({}) in device {}'.format(', '.join([str(f) for f in numparameters(model)]), next(model.parameters()).device ))
   optim = torch.optim.Adam(model.parameters(), weight_decay=o.weight_decay, betas=(o.beta1, o.beta2), eps=o.eps)
   last_step, model, optim = load_checkpoint_or_initialise(o.dnet + '/network', model, optim, device)
   optScheduler = OptScheduler(optim, n['emb_dim'], o.noam_scale, o.noam_warmup, last_step)
 
   if o.loss == 'KLDiv':
-    criter = LabelSmoothing_KLDiv(len(tgt_pre), src_pre.idx_pad, o.label_smoothing).to(device)
+    criter = LabelSmoothing_KLDiv(len(tgt_voc), src_voc.idx_pad, o.label_smoothing).to(device)
   elif o.loss == 'NLL':
-    criter = LabelSmoothing_NLL(len(tgt_pre), src_pre.idx_pad, o.label_smoothing).to(device)
+    criter = LabelSmoothing_NLL(len(tgt_voc), src_voc.idx_pad, o.label_smoothing).to(device)
   else:
     logging.error('bad -loss option')
     sys.exit()
@@ -206,15 +208,15 @@ if __name__ == '__main__':
   ### load data ####
   ##################
   if o.src_valid is not None and o.tgt_valid is not None:
-    valid = Dataset(src_pre, tgt_pre, o.src_valid, o.tgt_valid, o.shard_size, o.batch_size, o.batch_type, o.max_length)
+    valid = Dataset([o.src_valid,o.tgt_valid], [src_voc,tgt_voc], shard_size=o.shard_size, batch_size=o.batch_size, batch_type=o.batch_type, max_length=o.max_length)
   else:
     valid =None
-  train = Dataset(src_pre, tgt_pre, o.src_train, o.tgt_train, o.shard_size, o.batch_size, o.batch_type, o.max_length)
+  train = Dataset([o.src_train,o.tgt_train], [src_voc,tgt_voc], shard_size=o.shard_size, batch_size=o.batch_size, batch_type=o.batch_type, max_length=o.max_length)
 
   #############
   ### learn ###
   #############
-  learning = Learning(model, optScheduler, criter, o.dnet + '/network', src_pre.idx_pad, o)
+  learning = Learning(model, optScheduler, criter, o.dnet + '/network', src_voc.idx_pad, o)
   learning.learn(train, valid, device)
 
   toc = time.time()

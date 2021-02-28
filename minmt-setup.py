@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python3
 
 import sys
 import os
@@ -22,10 +22,9 @@ class Options():
     self.n_layers = 6
     self.dropout = 0.1
     self.share_embeddings = False
-    self.preprocessor = 'space'
     self.dnet = None
-    self.src_pre = None
-    self.tgt_pre = None
+    self.src_voc = None
+    self.tgt_voc = None
 
     log_file = 'stderr'
     log_level = 'info'
@@ -52,10 +51,10 @@ class Options():
         self.share_embeddings = True
       elif tok=="-dnet" and len(argv):
         self.dnet = argv.pop(0)
-      elif tok=="-src_pre" and len(argv):
-        self.src_pre = argv.pop(0)
-      elif tok=="-tgt_pre" and len(argv):
-        self.tgt_pre = argv.pop(0)
+      elif tok=="-src_voc" and len(argv):
+        self.src_voc = argv.pop(0)
+      elif tok=="-tgt_voc" and len(argv):
+        self.tgt_voc = argv.pop(0)
       elif tok=="-log_file" and len(argv):
         log_file = argv.pop(0)
       elif tok=="-log_level" and len(argv):
@@ -65,18 +64,18 @@ class Options():
     if self.dnet is None:
       logging.error('missing -dnet option')
       self.usage()
-    if self.src_pre is None:
-      logging.error('missing -src_pre option')
+    if self.src_voc is None:
+      logging.error('missing -src_voc option')
       self.usage()
-    if self.tgt_pre is None:
-      logging.error('missing -tgt_pre option')
+    if self.tgt_voc is None:
+      logging.error('missing -tgt_voc option')
       self.usage()
 
   def usage(self):
     sys.stderr.write('''usage: {} -dnet FILE [Options]
    -dnet            DIR : network ouput directory [must not exist]
-   -src_pre        FILE : source preprocessor file
-   -tgt_pre        FILE : target preprocessor file
+   -src_voc        FILE : source vocabulary file
+   -tgt_voc        FILE : target vocabulary file
 
    -emb_dim         INT : model embedding dimension ({})
    -qk_dim          INT : query/key embedding dimension ({})

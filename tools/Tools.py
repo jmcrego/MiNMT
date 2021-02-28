@@ -4,7 +4,7 @@ import os
 import sys
 import shutil
 import logging
-from tools.Preprocessor import SentencePiece, Space
+#from Preprocessor import SentencePiece, Space
 
 def create_logger(logfile, loglevel):
   numeric_level = getattr(logging, loglevel.upper(), None)
@@ -18,18 +18,6 @@ def create_logger(logfile, loglevel):
     logging.basicConfig(filename=logfile, format='[%(asctime)s.%(msecs)03d] %(levelname)s %(message)s', datefmt='%Y-%m-%d_%H:%M:%S', level=numeric_level)
     logging.debug('Created Logger level={} file={}'.format(loglevel, logfile))
 
-
-def isbinary(fin):
-  try:
-    with open(fin, "r") as f:
-      n = 0
-      for l in f:
-        n += 1
-        if n == 10: 
-          break
-      return False
-  except UnicodeDecodeError: # Fond non-text data  
-    return True
 
 def getValue(s):
   try:
@@ -53,8 +41,8 @@ def read_dnet(dnet):
   if not os.path.isfile(dnet + '/network'):
     logging.error('cannot find network file: {}'.format(dnet + '/network'))
     sys.exit()
-  if not os.path.isfile(dnet + '/joint_pre') and (not os.path.isfile(dnet + '/src_pre') or not os.path.isfile(dnet + '/tgt_pre')):
-    logging.error('cannot find preprocessor file/s')
+  if not os.path.isfile(dnet + '/joint_voc') and (not os.path.isfile(dnet + '/src_voc') or not os.path.isfile(dnet + '/tgt_voc')):
+    logging.error('cannot find vocabulary file/s')
     sys.exit()
 
   with open(dnet + '/network', 'r') as f:
@@ -70,39 +58,27 @@ def read_dnet(dnet):
         logging.error('Bad network option line: {}'.format(l))
         sys.exit()
 
-#  with open(dnet + '/network', 'r') as f:
-#    n = yaml.load(f, Loader=yaml.SafeLoader) 
   logging.info("Network = {}".format(n))
 
-  if os.path.isfile(dnet + '/joint_pre'): ### joint pre
-    if isbinary(dnet + '/joint_pre'): 
-      src_pre = SentencePiece(fmod=dnet + '/joint_pre')
-      tgt_pre = src_pre
-    else: 
-      src_pre = Space(fmod=dnet + '/joint_pre')
-      tgt_pre = src_pre
+  if os.path.isfile(dnet + '/joint_voc'): ### joint voc
+    src_voc = dnet + '/joint_voc'
+    tgt_voc = src_voc
+  else: ### src_voc / tgt_voc
+    src_voc = dnet + '/src_voc'
+    tgt_voc = dnet + '/tgt_voc'
 
-  else: ### src_pre / tgt_pre
-    if isbinary(dnet + '/src_pre'): 
-      src_pre = SentencePiece(fmod=dnet + '/src_pre')
-      tgt_pre = SentencePiece(fmod=dnet + '/tgt_pre')
-    else: 
-      src_pre = Space(fmod=dnet + '/src_pre')
-      tgt_pre = Space(fmod=dnet + '/tgt_pre')
-
-  assert src_pre.idx_pad == tgt_pre.idx_pad, 'src/tgt vocabularies must have the same idx_pad'
-  return n, src_pre, tgt_pre
+  return n, src_voc, tgt_voc
 
 
 def write_dnet(o):
   if os.path.exists(o.dnet):
     logging.error('cannot create network directory: {}'.format(o.dnet))
     sys.exit()
-  if not os.path.isfile(o.src_pre):
-    logging.error('cannot find source preprocessor file: {}'.format(o.src_pre))
+  if not os.path.isfile(o.src_voc):
+    logging.error('cannot find source vocabulary file: {}'.format(o.src_voc))
     sys.exit()
-  if not os.path.isfile(o.tgt_pre):
-    logging.error('cannot find target preprocessor file: {}'.format(o.tgt_pre))
+  if not os.path.isfile(o.tgt_voc):
+    logging.error('cannot find target vocabulary file: {}'.format(o.tgt_voc))
     sys.exit()
 
   os.mkdir(o.dnet)
@@ -118,13 +94,13 @@ def write_dnet(o):
     f.write('dropout: {}\n'.format(o.dropout))
     f.write('share_embeddings: {}\n'.format(o.share_embeddings))
 
-  if o.src_pre == o.tgt_pre: ### joint pre
-    shutil.copy(o.src_pre, o.dnet+'/joint_pre')
-    logging.info('copied source/target preprocessor {} into {}/joint_pre'.format(o.src_pre, o.dnet))
-  else: ### src_pre / tgt_pre
-    shutil.copy(o.src_pre, o.dnet+'/src_pre')
-    logging.info('copied source preprocessor {} into {}/src_pre'.format(o.src_pre, o.dnet))
-    shutil.copy(o.tgt_pre, o.dnet+'/tgt_pre')
-    logging.info('copied target preprocessor {} into {}/tgt_pre'.format(o.tgt_pre, o.dnet))
+  if o.src_voc == o.tgt_voc: ### joint voc
+    shutil.copy(o.src_voc, o.dnet+'/joint_voc')
+    logging.info('copied source/target vocabulary {} into {}/joint_voc'.format(o.src_voc, o.dnet))
+  else: ### src_voc / tgt_voc
+    shutil.copy(o.src_voc, o.dnet+'/src_voc')
+    logging.info('copied source vocabulary {} into {}/src_voc'.format(o.src_voc, o.dnet))
+    shutil.copy(o.tgt_voc, o.dnet+'/tgt_voc')
+    logging.info('copied target vocabulary {} into {}/tgt_voc'.format(o.tgt_voc, o.dnet))
 
 

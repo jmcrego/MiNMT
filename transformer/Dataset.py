@@ -86,16 +86,16 @@ class Batch():
 ### Dataset ###########################################
 #######################################################
 class Dataset():
-    def __init__(self, ftxts, fvocs, shard_size=500000, batch_size=4096, batch_type='tokens', max_length=100):
+    def __init__(self, ftxts, vocs, shard_size=500000, batch_size=4096, batch_type='tokens', max_length=100):
         self.shard_size = shard_size
         self.batch_size = batch_size
         self.batch_type = batch_type
         self.max_length = max_length
         self.idx_bos = []
         self.idx_eos = []
-        self.File_Line_Idx = [] #Idx[file][line][idx]
+        self.File_Line_Idx = [] 
         for i in range(len(ftxts)):
-            voc = Vocab(fvocs[i])
+            voc = vocs[i]
             self.idx_bos.append(voc.idx_bos)
             self.idx_eos.append(voc.idx_eos)
             with codecs.open(ftxts[i], 'r', 'utf-8') as fd:
@@ -113,7 +113,7 @@ class Dataset():
         logging.debug('Shuffled dataset ({} examples)'.format(n_lines))
         shards = [Pos[i:i+self.shard_size] for i in range(0, n_lines, self.shard_size)]
         logging.debug('Split dataset in {} shards'.format(len(shards)))
-        for shard in shards:
+        for s,shard in enumerate(shards):
             ###
             ### build shard
             ########################
@@ -126,12 +126,13 @@ class Dataset():
                         continue
                 shard_pos.append(pos)
                 shard_len.append(len(self.File_Line_Idx[0][pos]))
-            logging.debug('Built shard ({} examples)'.format(len(shard_pos)))
+            logging.debug('Built shard {}/{} ({} examples)'.format(s+1,len(shards),len(shard_pos)))
             ###
             ### build batchs
             ########################
             shard_pos = np.asarray(shard_pos)
             shard_pos = shard_pos[np.argsort(shard_len)] #sort by len (lower to higher lenghts)
+            logging.debug('Sorted examples by length')
             batchs = []
             b = Batch(self.batch_size, self.batch_type, n_files)
             for pos in shard_pos:
@@ -161,12 +162,12 @@ class Dataset():
 if __name__ == '__main__':
     logging.basicConfig(format='[%(asctime)s.%(msecs)03d] %(levelname)s %(message)s', datefmt='%Y-%m-%d_%H:%M:%S', level=10) #10:DEBUG, 20:INFO, ...
     tic = time.time()
-    data = Dataset(['kk.en.bpe','kk.fr.bpe'],['kk.vocab','kk.vocab'],batch_size=2, batch_type='sentences', max_length=10)
-    for pos, idxs in data:
-        print('pos',pos)
-        print('src',idxs[0])
-        print('tgt',idxs[1])
-        pass
+    ftrns = sys.argv[1].split(',')
+    fvocs = sys.argv[2].split(',')
+    assert len(ftrns) == len(fvocs), 'Use as many corpora as vocabs comma-separated'
+    data = Dataset(ftrns,fvocs)
     toc = time.time()
     logging.info('Done ({:.2f} seconds)'.format(toc-tic))
-    #pickle.dump( data, open( "dataset.p", "wb" ))
+    #pickle.dump(data, open(sys.argv[3],"wb"))
+
+

@@ -6,10 +6,10 @@ import time
 import logging
 import torch
 #import yaml
-from transformer.Dataset import Dataset
+from transformer.Dataset import Dataset, Vocab
 from transformer.Model import Encoder_Decoder, load_checkpoint_or_initialise, save_checkpoint, load_checkpoint, numparameters
 from transformer.Inference import Inference
-from tools.Tools import create_logger, isbinary, read_dnet
+from tools.Tools import create_logger, read_dnet
 
 ######################################################################
 ### Options ##########################################################
@@ -125,25 +125,27 @@ if __name__ == '__main__':
 
   tic = time.time()
   o = Options(sys.argv)
-  n, src_pre, tgt_pre = read_dnet(o.dnet)
+  n, src_voc, tgt_voc = read_dnet(o.dnet)
+  src_voc = Vocab(src_voc)
+  tgt_voc = Vocab(tgt_voc)
 
   ##################
   ### load model ###
   ##################
   device = torch.device('cuda' if o.cuda and torch.cuda.is_available() else 'cpu')
-  model = Encoder_Decoder(n['n_layers'], n['ff_dim'], n['n_heads'], n['emb_dim'], n['qk_dim'], n['v_dim'], n['dropout'], n['share_embeddings'], len(src_pre), len(tgt_pre), src_pre.idx_pad).to(device)
+  model = Encoder_Decoder(n['n_layers'], n['ff_dim'], n['n_heads'], n['emb_dim'], n['qk_dim'], n['v_dim'], n['dropout'], n['share_embeddings'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
   logging.info('Built model (#params, size) = ({}) in device {}'.format(', '.join([str(f) for f in numparameters(model)]), next(model.parameters()).device ))
   model = load_checkpoint(o.dnet + '/network', model, device)
 
   ##################
   ### load test ####
   ##################
-  test = Dataset(src_pre, tgt_pre, o.input, None, o.shard_size, o.batch_size, o.batch_type, o.max_length)
+  test = Dataset([o.src_test], [src_voc], shard_size=o.shard_size, batch_size=o.batch_size, batch_type=o.batch_type, max_length=o.max_length)
 
   ##################
   ### Inference ####
   ##################
-  inference = Inference(model, src_pre, tgt_pre, o, device)
+  inference = Inference(model, src_voc, tgt_voc, o, device)
   inference.translate(test,o.output)
 
   toc = time.time()
