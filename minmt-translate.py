@@ -98,10 +98,8 @@ class Options():
                           [n] rank in n-best
                           [c] global hypothesis cost
                           [s] input sentence
-                          [S] input sentence (detokenised)
                           [j] input sentence ids
                           [t] target hypothesis
-                          [T] target hypothesis (detokenised)
                           [i] target hypothesis ids
 
    [Data]
