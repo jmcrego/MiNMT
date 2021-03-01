@@ -140,7 +140,7 @@ if __name__ == '__main__':
   ##################
   ### load test ####
   ##################
-  test = Dataset([o.src_test], [src_voc], shard_size=o.shard_size, batch_size=o.batch_size, batch_type=o.batch_type, max_length=o.max_length)
+  test = Dataset([o.input], [src_voc], shard_size=o.shard_size, batch_size=o.batch_size, batch_type=o.batch_type, max_length=o.max_length)
 
   ##################
   ### Inference ####
