@@ -95,7 +95,7 @@ class Batch():
 #######################################################
 class Dataset():
 	def __init__(self, ftxts, vocs, shard_size=500000, batch_size=4096, batch_type='tokens', max_length=100):
-		self.shard_size = shard_size
+		self.shard_size = shard_size 
 		self.batch_size = batch_size
 		self.batch_type = batch_type
 		self.max_length = max_length
@@ -119,6 +119,8 @@ class Dataset():
 		Pos = [i for i in range(n_lines)]
 		np.random.shuffle(Pos)
 		logging.debug('Shuffled dataset ({} examples)'.format(n_lines))
+		if self.shard_size == 0:
+			self.shard_size = n_lines
 		shards = [Pos[i:i+self.shard_size] for i in range(0, n_lines, self.shard_size)]
 		logging.debug('Split dataset in {} shards'.format(len(shards)))
 		for s,shard in enumerate(shards):
