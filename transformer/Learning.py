@@ -177,7 +177,9 @@ class Learning():
     n_batch = 0
     with torch.no_grad():
       self.model.eval()
-      for batch_pos, batch_src, batch_tgt in validset:
+      for batch_pos, batch_idxs in validset:
+        batch_src = batch_idxs[0]
+        batch_tgt = batch_idxs[1]
         n_batch += 1
         src, msk_src = prepare_source(batch_src, self.idx_pad, device)
         tgt, ref, msk_tgt = prepare_target(batch_tgt, self.idx_pad, device)

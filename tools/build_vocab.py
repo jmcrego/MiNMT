@@ -60,7 +60,7 @@ if __name__ == '__main__':
       break
     if tok in seen: #in case reserved words appear in text
       continue
-    print(tok + '\t' + str(frq))
+    print(tok)
     seen[tok] += 1
     last_freq = frq
   logging.info('Dumped vocab with {} entries (lowest frequence is {})'.format(len(seen),last_freq))
