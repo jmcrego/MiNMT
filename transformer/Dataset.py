@@ -10,7 +10,7 @@ from collections import defaultdict
 ### Vocab #############################################
 #######################################################
 class Vocab():
-    def __init__(self, fvoc):
+	def __init__(self, fvoc):
         self.idx_pad = 0 
         self.str_pad = '<pad>'
         self.idx_unk = 1 
