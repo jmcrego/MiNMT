@@ -50,7 +50,8 @@ class Inference():
 
     with torch.no_grad():
       self.model.eval()
-      for pos, batch_src, _ in testset:
+      for pos, batch_idxs in testset:
+        batch_src = batch_idxs[0]
         ### encode batch
         src, self.msk_src = prepare_source(batch_src, self.tgt_voc.idx_pad, self.device) #src is [bs, ls] msk_src is [bs,1,ls]
         self.z_src = self.model.encode(src, self.msk_src) #[bs,ls,ed]
