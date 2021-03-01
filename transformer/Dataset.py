@@ -29,7 +29,6 @@ class Vocab():
         assert self.tok_to_idx[self.str_bos] == 2, '<bos> must exist in vocab with id=2 while found id={}'.format(self.tok_to_idx[self.str_bos])
         assert self.tok_to_idx[self.str_eos] == 3, '<eos> must exist in vocab with id=3 while found id={}'.format(self.tok_to_idx[self.str_eos])
         logging.debug('Read Vocab ({} entries) from {}'.format(len(self.idx_to_tok), fvoc))
-        
 
 	def decode(self, idxs):
 		toks = [self.idx_to_tok[idx] for idx in idxs]
