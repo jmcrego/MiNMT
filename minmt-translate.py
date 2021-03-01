@@ -26,7 +26,7 @@ class Options():
     self.n_best = 1
     self.max_size = 250
     self.alpha = 0.0
-    self.format = 'pT'
+    self.format = 'pt'
     self.shard_size = 0
     self.max_length = 0
     self.batch_size = 30
