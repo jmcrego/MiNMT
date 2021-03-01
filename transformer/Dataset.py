@@ -31,11 +31,13 @@ class Vocab():
         logging.debug('Read Vocab ({} entries) from {}'.format(len(self.idx_to_tok), fvoc))
         
 
-    def decode(self, idxs):
-		return [self.idx_to_tok[idx] for idx in idxs]
+	def decode(self, idxs):
+		toks = [self.idx_to_tok[idx] for idx in idxs]
+		return toks
 
-    def encode(self, toks):
-		return [self.tok_to_idx[tok] for tok in toks]
+	def encode(self, toks):
+		idxs = [self.tok_to_idx[tok] for tok in toks]
+		return idxs
 
     def __len__(self):
         return len(self.idx_to_tok)
