@@ -21,6 +21,7 @@ class Options():
     self.dnet = None
     self.input = None
     self.output = '-'
+    self.model = None
     self.beam_size = 4
     self.n_best = 1
     self.max_size = 250
@@ -56,6 +57,8 @@ class Options():
         self.input = argv.pop(0)
       elif tok=='-o' and len(argv):
         self.output = argv.pop(0)
+      elif tok=='-m' and len(argv):
+        self.model = argv.pop(0)
       elif tok=='-shard_size' and len(argv):
         self.shard_size = int(argv.pop(0))
       elif tok=='-max_length' and len(argv):
@@ -87,6 +90,7 @@ class Options():
    -dnet          DIR : network directory [must exist]
    -i            FILE : input file to translate
    -o            FILE : output file ({})
+   -m            FILE : use this model file (last checkpoint)
 
    [Inference]
    -beam_size     INT : size of beam ({})
@@ -133,7 +137,7 @@ if __name__ == '__main__':
   device = torch.device('cuda' if o.cuda and torch.cuda.is_available() else 'cpu')
   model = Encoder_Decoder(n['n_layers'], n['ff_dim'], n['n_heads'], n['emb_dim'], n['qk_dim'], n['v_dim'], n['dropout'], n['share_embeddings'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
   logging.info('Built model (#params, size) = ({}) in device {}'.format(', '.join([str(f) for f in numparameters(model)]), next(model.parameters()).device ))
-  model = load_checkpoint(o.dnet + '/network', model, device)
+  model = load_checkpoint(o.dnet + '/network', model, o.model, device)
 
   ##################
   ### load test ####
