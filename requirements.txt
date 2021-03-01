@@ -1,3 +1,2 @@
 torch==1.*
-sentencepiece==0.1.95
 tensorboard==2.*
