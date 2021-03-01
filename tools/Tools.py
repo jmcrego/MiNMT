@@ -18,7 +18,6 @@ def create_logger(logfile, loglevel):
     logging.basicConfig(filename=logfile, format='[%(asctime)s.%(msecs)03d] %(levelname)s %(message)s', datefmt='%Y-%m-%d_%H:%M:%S', level=numeric_level)
     logging.debug('Created Logger level={} file={}'.format(loglevel, logfile))
 
-
 def getValue(s):
   try:
     return int(s)

@@ -30,6 +30,13 @@ class Vocab():
         assert self.tok_to_idx[self.str_eos] == 3, '<eos> must exist in vocab with id=3 while found id={}'.format(self.tok_to_idx[self.str_eos])
         logging.debug('Read Vocab ({} entries) from {}'.format(len(self.idx_to_tok), fvoc))
         
+
+    def decode(self, idxs):
+		return [self.idx_to_tok[idx] for idx in idxs]
+
+    def encode(self, toks):
+		return [self.tok_to_idx[tok] for tok in toks]
+
     def __len__(self):
         return len(self.idx_to_tok)
     

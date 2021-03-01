@@ -18,24 +18,24 @@ def norm_length(l, alpha):
 ### Inference ################################################################################################
 ##############################################################################################################
 class Inference():
-  def __init__(self, model, src_pre, tgt_pre, oi, device): 
+  def __init__(self, model, src_voc, tgt_voc, oi, device): 
     super(Inference, self).__init__()
     self.model = model
-    self.src_pre = src_pre
-    self.tgt_pre = tgt_pre
+    self.src_voc = src_voc
+    self.tgt_voc = tgt_voc
     self.beam_size = oi.beam_size
     self.max_size = oi.max_size
     self.n_best = oi.n_best
     self.alpha = oi.alpha
     self.format = oi.format
-    self.idx_bos = tgt_pre.idx_bos
-    self.idx_eos = tgt_pre.idx_eos
-    self.Vt = len(tgt_pre)
+    self.idx_bos = tgt_voc.idx_bos
+    self.idx_eos = tgt_voc.idx_eos
+    self.Vt = len(tgt_voc)
     self.N = oi.n_best
     self.K = oi.beam_size
     self.device = device
 
-    self.force_eos = torch.ones(len(self.tgt_pre), dtype=torch.float32, device=self.device) * float('Inf') #[Vt]
+    self.force_eos = torch.ones(len(self.tgt_voc), dtype=torch.float32, device=self.device) * float('Inf') #[Vt]
     self.force_eos[self.idx_eos] = 1.0
     self.next_wrds = torch.tensor([i for i in range(self.Vt)], dtype=int, device=self.device).view(1,-1) #[1,Vt]
 
@@ -52,7 +52,7 @@ class Inference():
       self.model.eval()
       for pos, batch_src, _ in testset:
         ### encode batch
-        src, self.msk_src = prepare_source(batch_src, self.tgt_pre.idx_pad, self.device) #src is [bs, ls] msk_src is [bs,1,ls]
+        src, self.msk_src = prepare_source(batch_src, self.tgt_voc.idx_pad, self.device) #src is [bs, ls] msk_src is [bs,1,ls]
         self.z_src = self.model.encode(src, self.msk_src) #[bs,ls,ed]
         #for i in range(len(pos)):
         #  logging.debug('{}\n\t{}\n\t{}'.format(pos[i], src[i].tolist(), self.msk_src[i,0].tolist()))
@@ -194,7 +194,7 @@ class Inference():
     logP_bs_k = logP.view(bs,self.K,lt)
     for b in range(hyps_bs_k.shape[0]):
       for k in range(hyps_bs_k.shape[1]):
-        logging.debug('batch {} beam {}\tlogP={:.6f}\t{}'.format(b, k, sum(logP_bs_k[b,k]), ' '.join([self.tgt_pre[t] for t in hyps_bs_k[b,k].tolist()]) ))
+        logging.debug('batch {} beam {}\tlogP={:.6f}\t{}'.format(b, k, sum(logP_bs_k[b,k]), ' '.join([self.tgt_voc[t] for t in hyps_bs_k[b,k].tolist()]) ))
 
 
   def format_hyp(self, p, n, c, tgt_idx, src_idx): 
@@ -203,7 +203,7 @@ class Inference():
     #c is the hypothesis overall cost (sum_logP_norm)
     #tgt_idx hypothesis (list of ints)
     #src_idx source (list of ints)
-    while src_idx[-1] == self.src_pre.idx_pad: # eliminate <pad> tokens from src_idx
+    while src_idx[-1] == self.src_voc.idx_pad: # eliminate <pad> tokens from src_idx
       src_idx = src_idx[:-1]
 
     out = []
@@ -218,18 +218,18 @@ class Inference():
       ### input sentence ###
       ######################
       elif ch=='s':
-        out.append(' '.join([self.src_pre[idx] for idx in src_idx[1:-1]])) ### input sentence (tokenized)
+        out.append(' '.join([self.src_voc[idx] for idx in src_idx[1:-1]])) ### input sentence (tokenized)
       elif ch=='S':
-        out.append(' '.join(self.src_pre.decode_list(src_idx[1:-1]))) ### input sentence (detokenized)
+        out.append(' '.join(self.src_voc.decode(src_idx[1:-1]))) ### input sentence (detokenized)
       elif ch=='j':
         out.append(' '.join(map(str,src_idx))) ### input sentence (idxs)
       #########################
       ### target hypothesis ###
       #########################
       elif ch=='t':
-        out.append(' '.join([self.tgt_pre[idx] for idx in tgt_idx[1:-1]])) ### output sentence (tokenized)
+        out.append(' '.join([self.tgt_voc[idx] for idx in tgt_idx[1:-1]])) ### output sentence (tokenized)
       elif ch=='T':
-        out.append(' '.join(self.tgt_pre.decode_list(tgt_idx[1:-1]))) ### output sentence (detokenized)
+        out.append(' '.join(self.tgt_voc.decode(tgt_idx[1:-1]))) ### output sentence (detokenized)
       elif ch=='i':
         out.append(' '.join(map(str,tgt_idx))) ### output sentence (idxs)
 
