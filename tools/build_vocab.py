@@ -3,8 +3,7 @@
 import sys
 import logging
 from Tools import create_logger
-from collections import defaultdict
-
+from collections import Counter
 
 if __name__ == '__main__':
 
@@ -31,38 +30,32 @@ if __name__ == '__main__':
   logging.info('min_freq = {}'.format(min_freq))
   logging.info('max_size = {}'.format(max_size))
 
-  ###########################
-  ### compute frequencies ###
-  ###########################
-  freq = defaultdict(int)
-  nlines = 0
-  for l in sys.stdin:
-    nlines += 1
-    for tok in l.split():
-      freq[tok] += 1
-  logging.info('Read stdin with {} lines and {} distinct tokens'.format(nlines,len(freq)))
+  ###################
+  ### count words ###
+  ###################
+  flat = []
+  ll = [l.split() for l in sys.stdin.readlines()]
+  list(map(flat.extend, ll))
+  freq = Counter(flat)
 
   #######################
   ### dump vocabulary ###
   #######################
-  seen = defaultdict(int)
-  print('<pad>\t0')
-  seen['<pad>'] += 1
-  print('<unk>\t0')
-  seen['<unk>'] += 1
-  print('<bos>\t0')
-  seen['<bos>'] += 1
-  print('<eos>\t0')
-  seen['<eos>'] += 1
-  last_freq = 0
-  for tok, frq in sorted(freq.items(), key=lambda item: item[1], reverse=True):
-    if (max_size and len(seen) == max_size) or frq < min_freq:
+  print('<pad>')
+  print('<unk>')
+  print('<bos>')
+  print('<eos>')
+  n = 4
+  for tok, count in freq.most_common():
+    if max_size and n >= max_size:
       break
-    if tok in seen: #in case reserved words appear in text
+    if count < min_freq:
+      break
+    if tok=='<pad>' or tok=='<unk>' or tok=='<bos>' or tok=='<eos>':
       continue
     print(tok)
-    seen[tok] += 1
-    last_freq = frq
-  logging.info('Dumped vocab with {} entries (lowest frequence is {})'.format(len(seen),last_freq))
+    f = count
+    n += 1
+  logging.info('Dumped vocab with {} entries (lowest frequence is {})'.format(n,f))
 
 
