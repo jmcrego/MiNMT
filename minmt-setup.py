@@ -72,7 +72,7 @@ class Options():
       self.usage()
 
   def usage(self):
-    sys.stderr.write('''usage: {} -dnet FILE [Options]
+    sys.stderr.write('''usage: {} -dnet DIR [Options]
    -dnet            DIR : network ouput directory [must not exist]
    -src_voc        FILE : source vocabulary file
    -tgt_voc        FILE : target vocabulary file
