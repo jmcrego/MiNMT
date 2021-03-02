@@ -1,3 +1,4 @@
+import os
 import sys
 import time
 #import pickle
@@ -95,6 +96,9 @@ class Dataset():
 		self.idx_eos = []
 		self.File_Line_Idx = [] 
 		for i in range(len(ftxts)):
+			if not os.path.isfile(ftxts[i]):
+				logging.error('Cannot read file {}'.format(ftxts[i]))
+				sys.exit()
 			voc = vocs[i]
 			self.idx_bos.append(voc.idx_bos)
 			self.idx_eos.append(voc.idx_eos)
