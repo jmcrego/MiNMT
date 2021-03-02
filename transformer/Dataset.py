@@ -6,6 +6,7 @@ import codecs
 import logging
 import numpy as np
 from collections import defaultdict
+from tools.Tools import flatten_count 
 
 #######################################################
 ### Vocab #############################################
@@ -105,7 +106,9 @@ class Dataset():
 			with codecs.open(ftxts[i], 'r', 'utf-8') as fd:
 				Line_Idx = [[voc[t] for t in l.split()] for l in fd.read().splitlines()]
 			self.File_Line_Idx.append(Line_Idx)
-			logging.info('Read Corpus ({} lines) from {}'.format(len(Line_Idx),ftxts[i]))
+			### compute tokens and OOVs
+			n_tok, n_unk = flatten_count(Line_Idx, [voc.idx_unk])
+			logging.info('Read Corpus ({} lines ~ {} tokens ~ {} OOVs [{:.2f}%]) from {}'.format(len(Line_Idx),n_tok,n_unk,100.0*n_unk/n_tok,ftxts[i]))
 			assert len(self.File_Line_Idx[0]) == len(self.File_Line_Idx[-1]), 'Non parallel corpus in dataset'
 
 	def __iter__(self):
