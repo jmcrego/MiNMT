@@ -33,10 +33,10 @@ if __name__ == '__main__':
   ###################
   ### count words ###
   ###################
-  flat = []
+  lflat = []
   ll = [l.split() for l in sys.stdin.readlines()]
-  list(map(flat.extend, ll))
-  freq = Counter(flat)
+  list(map(lflat.extend, ll))
+  freq = Counter(lflat)
 
   #######################
   ### dump vocabulary ###
