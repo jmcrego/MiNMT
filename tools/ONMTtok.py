@@ -7,7 +7,7 @@ import pyonmttok
 
 class ONMTtok():
 
-    def __init__(self, fyaml):
+    def __init__(self, fyaml, bpe_model=None):
         opts = {}
         if fyaml is None:
             self.tokenizer = None
@@ -24,6 +24,8 @@ class ONMTtok():
 
             mode = opts["mode"]
             del opts["mode"]
+            if bpe_model is not None:
+                opts['bpe_path_file'] = bpe_model
             self.tokenizer = pyonmttok.Tokenizer(mode, **opts)
             logging.debug('Built tokenizer mode={} {}'.format(mode,opts))
 

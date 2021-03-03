@@ -51,7 +51,7 @@ joiner_annotate: True
     sys.exit()
 
   if model is None:
-    sys.stderr.write('error: missing -o option\n')
+    sys.stderr.write('error: missing -m option\n')
     sys.exit()
 
   if tok_config is None:
@@ -60,10 +60,10 @@ joiner_annotate: True
 
   create_logger('stderr','info')
   tokenizer = ONMTtok(tok_config) #pyonmttok.Tokenizer("aggressive", joiner_annotate=True, segment_numbers=True)
-  #learner = pyonmttok.BPELearner(tokenizer=tokenizer, symbols=vocab_size)
+  learner = pyonmttok.BPELearner(tokenizer=tokenizer, symbols=vocab_size)
 
   for f in fins:
     logging.info('Ingest: {}'.format(f))
-    #learner.ingest_file(f)
+    learner.ingest_file(f)
   logging.info('Learning bpe model: {}\n'.format(model))
-  #tokenizer = learner.learn(model)
+  tokenizer = learner.learn(model)
