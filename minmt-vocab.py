@@ -1,8 +1,8 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python3
 
 import sys
 import logging
-from Tools import create_logger
+from tools.Tools import create_logger
 from collections import Counter
 
 if __name__ == '__main__':
