@@ -27,7 +27,7 @@ All files are formated with one sentence per line of already tokenized text. You
 
 ### (1) Vocabulary
 
-* Create the vocabulary to be considered by the network using:
+* Create the vocabulary considered by the network, using:
 ```
 python3 tools/build_vocabulary.py < train.en > vocab.en
 python3 tools/build_vocabulary.py < train.fr > vocab.fr
