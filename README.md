@@ -104,7 +104,7 @@ Checkpoints available in `$DNET` are averaged running:
 ```
 python3 minmt-average -dnet $DNET
 ```
-The resulting network is available in `network.checkpoint_XXXXXXXX_average.pt` with XXXXXXXX being the last learning step found.
+The resulting network is available in `network.checkpoint_XXXXXXXX_average.pt` with `XXXXXXXX` being the last learning step found.
 
 
 ### (5) Inference
