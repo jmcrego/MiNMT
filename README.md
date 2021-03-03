@@ -125,7 +125,7 @@ Default inference options are:
 -n_best 1
 -max_size 250
 -alpha 0.0
--format iH
+-format pt
 ```
 ```
 -shard_size 0
