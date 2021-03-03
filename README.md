@@ -147,7 +147,8 @@ Option `-format` specifies the fields to output for every sentence (TAB-separate
 
 ## Use of GPU:
 
-It is highly recommended to use a GPU for learning/inference steps. If you have one, you can prefix the training/inference commands with the `CUDA_VISIBLE_DEVICES=i` envoronment variable as well as adding the `-cuda` option. Ex:
+It is highly recommended to use a GPU for learning/inference steps. 
+If you have one, you can prefix the training/inference commands with the `CUDA_VISIBLE_DEVICES=i` envoronment variable as well as adding the `-cuda` option. Ex:
 
 ```
 CUDA_VISIBLE_DEVICES=0 python3 minmt-train.py -dnet $DNET -src_train train.en -tgt_train train.fr -src_valid valid.en -tgt_valid valid.fr -cuda
