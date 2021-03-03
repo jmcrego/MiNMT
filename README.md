@@ -3,7 +3,6 @@
 A toolkit developed for research purposes, aiming to be a clean and minimalistic code base achieving similar accuracy than other state-of-the art frameworks.
 
 Built on PyTorch (https://pytorch.org) employing:
-* TensorBoard visualizations
 * OpenNMT tokenizer (https://github.com/OpenNMT/Tokenizer)
 * Google SentencePiece (https://github.com/google/sentencepiece)
 
