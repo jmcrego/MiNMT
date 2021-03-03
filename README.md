@@ -24,7 +24,7 @@ Run clients with the -h option for a detailed description of available options.
 
 Hereinafter we consider `train.en, train.fr`, `valid.en, valid.fr` and `test.en` the respective train/valid/test files of our running example.
 All files are formated with one sentence per line of already tokenized text. You can preprocess your data using any tokenization/sub-tokenization toolkit.
-We provide several examples of widely used toolkits.
+In our `tools` directory we provide several scripts employing widely used libraries (BPE/SentencePiece).
 
 ### (1) Vocabulary
 
