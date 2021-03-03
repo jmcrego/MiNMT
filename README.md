@@ -24,12 +24,12 @@ In our `tools` directory we provide several scripts employing libraries of widel
 
 * Create the vocabulary considered by the network, using:
 ```
-cat train.en | ./minmt-vocab.py > vocab.en
-cat train.fr | ./minmt-vocab.py > vocab.fr
+cat train.en | minmt-vocab.py > vocab.en
+cat train.fr | minmt-vocab.py > vocab.fr
 ```
 You can use a joint vocabulary:
 ```
-cat train.{en,fr} | ./minmt-vocab.py > vocab.en-fr
+cat train.{en,fr} | minmt-vocab.py > vocab.en-fr
 ```
 Default vocabulary options are:
 ```
@@ -41,7 +41,7 @@ Default vocabulary options are:
 
 To setup the network follow:
 ```
-./minmt-setup.py -dnet $DNET -src_voc vocab.en -tgt_voc vocab.fr
+minmt-setup.py -dnet $DNET -src_voc vocab.en -tgt_voc vocab.fr
 ```
 Use `vocab.en-fr` in both (-src_voc and -tgt_voc) options if you built a joint vocabulary file.
 
@@ -66,7 +66,7 @@ Default network options are:
 
 To start (or continue) learning, run the command:
 ```
-./minmt-train.py -dnet $DNET -src_train train.en -tgt_train train.fr -src_valid valid.en -tgt_valid valid.fr
+minmt-train.py -dnet $DNET -src_train train.en -tgt_train train.fr -src_valid valid.en -tgt_valid valid.fr
 ```
 
 Default learning options are:
@@ -103,7 +103,7 @@ Network checkpoints are built in `$DNET` directory named `network.checkpoint_???
 
 Checkpoints available in `$DNET` can be averaged running:
 ```
-./minmt-average -dnet $DNET
+minmt-average -dnet $DNET
 ```
 The resulting network is available in `network.checkpoint_XXXXXXXX_average.pt` with `XXXXXXXX` being the last learning step found. Averaging last checkpoints typically results in a light performance improvement.
 
@@ -112,7 +112,7 @@ The resulting network is available in `network.checkpoint_XXXXXXXX_average.pt` w
 
 To translate an input file, run the command:
 ```
-./minmt-translate.py -dnet $DNET -i test.en
+minmt-translate.py -dnet $DNET -i test.en
 ```
 The last network checkpoint is considered unless the `-m FILE` option be used.
 
@@ -148,8 +148,8 @@ It is highly recommended to use a GPU for learning/inference steps.
 If you have one, you can prefix the training/inference commands with the `CUDA_VISIBLE_DEVICES=i` envoronment variable as well as adding the `-cuda` option. Ex:
 
 ```
-CUDA_VISIBLE_DEVICES=0 ./minmt-train.py -dnet $DNET -src_train train.en -tgt_train train.fr -src_valid valid.en -tgt_valid valid.fr -cuda
-CUDA_VISIBLE_DEVICES=0 ./minmt-translate.py -dnet $DNET -i test.en -cuda
+CUDA_VISIBLE_DEVICES=0 minmt-train.py -dnet $DNET -src_train train.en -tgt_train train.fr -src_valid valid.en -tgt_valid valid.fr -cuda
+CUDA_VISIBLE_DEVICES=0 minmt-translate.py -dnet $DNET -i test.en -cuda
 ```
 
 
