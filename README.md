@@ -27,12 +27,12 @@ In our `tools` directory we provide several scripts employing libraries of widel
 
 * Create the vocabulary considered by the network, using:
 ```
-cat train.en | python3 tools/build_vocabulary.py > vocab.en
-cat train.fr | python3 tools/build_vocabulary.py > vocab.fr
+cat train.en | python3 minmt-vocab.py > vocab.en
+cat train.fr | python3 minmt-vocab.py > vocab.fr
 ```
 You can use a joint vocabulary:
 ```
-cat train.{en,fr} | python3 tools/build_vocabulary.py > vocab.en-fr
+cat train.{en,fr} | python3 minmt-vocab.py > vocab.en-fr
 ```
 By default, the script outputs the 30,000 most frequent tokens appearing in the input training data.
 
