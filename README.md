@@ -78,8 +78,7 @@ Default learning options are:
 -report_every 100
 -keep_last_n 10
 -clip_grad_norm 0.0
-```
-```
+
 -lr 2.0
 -min_lr 0.0001
 -beta1 0.9
@@ -89,8 +88,7 @@ Default learning options are:
 -noam_warmup 4000
 -label_smoothing 0.1
 -loss NLL
-```
-```
+
 -shard_size 1000000
 -max_length 100
 -batch_size 4096
@@ -123,8 +121,7 @@ Default inference options are:
 -max_size 250
 -alpha 0.0
 -format pt
-```
-```
+
 -shard_size 0
 -max_length 0
 -batch_size 30
