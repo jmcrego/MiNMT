@@ -85,7 +85,7 @@ def load_checkpoint(suffix, model, device, fmodel=None):
   ### assert checkpoint['model'] has same options than model
   model.load_state_dict(checkpoint['model'])
   logging.info('Loaded model step={} from {}'.format(step,file))
-  return model
+  return step, model
 
 def load_checkpoint_or_initialise(suffix, model, optimizer, device):
   step = 0

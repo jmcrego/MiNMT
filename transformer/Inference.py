@@ -220,8 +220,6 @@ class Inference():
       ######################
       elif ch=='s':
         out.append(' '.join([self.src_voc[idx] for idx in src_idx[1:-1]])) ### input sentence (tokenized)
-#      elif ch=='S':
-#        out.append(' '.join(self.src_voc.decode(src_idx[1:-1]))) ### input sentence (detokenized)
       elif ch=='j':
         out.append(' '.join(map(str,src_idx))) ### input sentence (idxs)
       #########################
@@ -229,8 +227,6 @@ class Inference():
       #########################
       elif ch=='t':
         out.append(' '.join([self.tgt_voc[idx] for idx in tgt_idx[1:-1]])) ### output sentence (tokenized)
-#      elif ch=='T':
-#        out.append(' '.join(self.tgt_voc.decode(tgt_idx[1:-1]))) ### output sentence (detokenized)
       elif ch=='i':
         out.append(' '.join(map(str,tgt_idx))) ### output sentence (idxs)
 
