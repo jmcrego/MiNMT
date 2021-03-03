@@ -22,7 +22,7 @@ Run clients with the -h option for a detailed description of available options.
 
 ## Usage example:
 
-Hereinafter we consider `train.en, train.fr`, `valid.en, valid.fr` and `test.en` the respective train/valid/test files of our example.
+Hereinafter we consider `train.en, train.fr`, `valid.en, valid.fr` and `test.en` the respective train/valid/test files of our running example.
 All files are formated with one sentence per line of already tokenized text. You can tokenize your data using 
 
 ### (1) Vocabulary
