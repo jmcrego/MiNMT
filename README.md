@@ -34,7 +34,11 @@ You can use a joint vocabulary:
 ```
 cat train.{en,fr} | python3 minmt-vocab.py > vocab.en-fr
 ```
-By default, the script outputs the 30,000 most frequent tokens appearing in the input training data.
+Default vocabulary options are:
+```
+-max_size 30000
+-min_freq 1
+```
 
 ### (2) Create the network
 
