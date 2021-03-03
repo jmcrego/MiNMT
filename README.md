@@ -41,11 +41,11 @@ By default, the script outputs the 30,000 most frequent tokens appearing in the 
 
 ### (2) Create the network
 
-If you built a single vocabulary:
+To setup the network follow:
 ```
 python3 minmt-setup.py -dnet $DNET -src_voc vocab.en -tgt_voc vocab.fr
 ```
-Use `vocab.en-fr` for both options if you built a joint vocabulary file.
+Use `vocab.en-fr` in both (-src_voc and -tgt_voc) options if you built a joint vocabulary file.
 
 The script creates the directory `$DNET` containing:
 * `network` (the network description file)
