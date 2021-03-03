@@ -1,18 +1,18 @@
 # -*- coding: utf-8 -*-
 import sys
 import os
-from Preprocessor import SentencePiece
 from Tools import create_logger
+from SentencePiece import SentencePiece
 
 if __name__ == '__main__':
 
   vocab_size = 30000
-  sp_model = None
+  model = None
   fins = []
   prog = sys.argv.pop(0)
-  usage = '''usage: {} -sp_model FILE -i FILE+ [-vocab_size INT]
+  usage = '''usage: {} -m FILE -i FILE+ [-vocab_size INT]
    -i         FILE : input file/s (multiple files and wildcards allowed)
-   -sp_model  FILE : output model/vocab prefix
+   -m         FILE : output SP model/vocab prefix
    -vocab_size INT : vocabulary size ({})
    -h              : this help
 Visit: https://github.com/google/sentencepiece/blob/master/doc/options.md
@@ -26,8 +26,8 @@ Visit: https://github.com/google/sentencepiece/blob/master/doc/options.md
     elif tok=='-i' and len(sys.argv)>=0:
       while len(sys.argv)>0 and not sys.argv[0].startswith('-'):
         fins.append(sys.argv.pop(0))
-    elif tok=='-sp_model' and len(sys.argv)>=0:
-      sp_model = sys.argv.pop(0)
+    elif tok=='-m' and len(sys.argv)>=0:
+      model = sys.argv.pop(0)
     elif tok=='-vocab_size' and len(sys.argv)>=0:
       vocab_size = int(sys.argv.pop(0))
     else:
@@ -39,10 +39,10 @@ Visit: https://github.com/google/sentencepiece/blob/master/doc/options.md
     sys.stderr.write('error: missing -i option\n')
     sys.exit()
 
-  if sp_model is None:
-    sys.stderr.write('error: missing -sp_model option\n')
+  if model is None:
+    sys.stderr.write('error: missing -o option\n')
     sys.exit()
 
   create_logger('stderr','info')
   sp = SentencePiece(fmod=None)
-  sp.train(fmod=sp_model, fins=fins, vocab_size=vocab_size)
+  sp.train(fmod=model, fins=fins, vocab_size=vocab_size)
