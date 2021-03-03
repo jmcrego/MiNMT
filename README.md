@@ -1,11 +1,11 @@
-# Minimalistic implementation of a NMT toolkit using Transformers
+# Minimalistic NMT toolkit using Transformers
 
-A framework developed for research purposes, aiming to be a clean and minimalistic code base achieving similar accuracy than other state-of-the art frameworks.
+A toolkit developed for research purposes, aiming to be a clean and minimalistic code base achieving similar accuracy than other state-of-the art frameworks.
 
-The framework is built on/employs:
-* PyTorch (https://pytorch.org)
-* Google SentencePiece (https://github.com/google/sentencepiece)
+Built on PyTorch (https://pytorch.org) employing:
 * TensorBoard visualizations
+* OpenNMT tokenizer (https://github.com/OpenNMT/Tokenizer)
+* Google SentencePiece (https://github.com/google/sentencepiece)
 
 ## Clients
 
