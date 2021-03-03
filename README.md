@@ -30,12 +30,12 @@ In our `tools` directory we provide several scripts employing libraries of widel
 
 * Create the vocabulary considered by the network, using:
 ```
-python3 tools/build_vocabulary.py < train.en > vocab.en
-python3 tools/build_vocabulary.py < train.fr > vocab.fr
+cat train.en | python3 tools/build_vocabulary.py > vocab.en
+cat train.fr | python3 tools/build_vocabulary.py > vocab.fr
 ```
-You can use the same vocabulary for both sides:
+You can use a joint vocabulary:
 ```
-python3 tools/build_vocabulary.py < train.{en,fr} > vocab.en-fr
+cat train.{en,fr} | python3 tools/build_vocabulary.py > vocab.en-fr
 ```
 By default, the script considers the 30,000 most frequent tokens appearing in the training files.
 
