@@ -37,7 +37,7 @@ You can use a joint vocabulary:
 ```
 cat train.{en,fr} | python3 tools/build_vocabulary.py > vocab.en-fr
 ```
-By default, the script outputs the 30,000 most frequent tokens appearing in the input training files.
+By default, the script outputs the 30,000 most frequent tokens appearing in the input training data.
 
 ### (2) Create the network
 
