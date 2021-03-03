@@ -104,11 +104,11 @@ Network checkpoints are built in `$DNET` directory named `network.checkpoint_???
 
 ### (4) Average checkpoints
 
-Checkpoints available in `$DNET` are averaged running:
+Checkpoints available in `$DNET` can be averaged running:
 ```
 python3 minmt-average -dnet $DNET
 ```
-The resulting network is available in `network.checkpoint_XXXXXXXX_average.pt` with `XXXXXXXX` being the last learning step found.
+The resulting network is available in `network.checkpoint_XXXXXXXX_average.pt` with `XXXXXXXX` being the last learning step found. Averaging last checkpoints typically results in a light performance improvement.
 
 
 ### (5) Inference
