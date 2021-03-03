@@ -2,8 +2,8 @@
 import sys
 import os
 import glob
-from Preprocessor import SentencePiece, Space
-from Tools import create_logger, isbinary
+from SentencePiece import SentencePiece
+from Tools import create_logger
 
 if __name__ == '__main__':
 
@@ -14,12 +14,12 @@ if __name__ == '__main__':
   out_type = 'str'
   prog = sys.argv.pop(0)
   usage = '''usage: {} -do STRING -model FILE
-   -do           STRING : encode OR decode ({})
-   -model          FILE : input model/vocab
-   -i              FILE : input file (stdin)
-   -in_type      STRING : int OR str when sentencepiece/decode ({})
-   -out_type     STRING : int OR str when sentencepiece/encode ({})
-   -h                   : this help
+   -do       STRING : encode OR decode ({})
+   -model      FILE : input model/vocab
+   -i          FILE : input file (stdin)
+   -in_type  STRING : int OR str when sentencepiece/decode ({})
+   -out_type STRING : int OR str when sentencepiece/encode ({})
+   -h               : this help
 '''.format(prog,do,in_type,out_type)
 
   while len(sys.argv):
@@ -47,20 +47,10 @@ if __name__ == '__main__':
     sys.exit()
 
   create_logger('stderr','info')
-  preprocessor = 'sentencepiece' if isbinary(fmod) else 'space'
-
-  if preprocessor == 'space':
-    mod = Space(fmod=fmod)
-  else:
-    mod = SentencePiece(fmod=fmod)
+  mod = SentencePiece(fmod=fmod)
 
   if do == 'encode':
-    if preprocessor == 'space':
-      in_type = 'str'
-      out_type = 'int'
-    else:
-      in_type = 'str'
-
+    in_type = 'str'
     _, lines = mod.encode(fin=fin, in_type='str', out_type=out_type) 
     #input is file or stdin => returns (list of (list of ints))
     for l in lines:
@@ -70,13 +60,9 @@ if __name__ == '__main__':
         print(' '.join([str(x) for x in l]))
 
   elif do == 'decode':
-    if preprocessor == 'space':
-      in_type = 'int'
-      out_type = 'str'
-    else:
-      out_type = 'str'
-
+    out_type = 'str'
     _, lines = mod.decode(fin=fin, in_type=in_type, out_type=out_type)
     for l in lines:
       print(' '.join(l))
+
 
