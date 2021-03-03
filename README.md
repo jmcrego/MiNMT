@@ -10,7 +10,7 @@ Built on PyTorch (https://pytorch.org) employing:
 ## Clients
 
 Vocabulary:
-* `tools/build_vocab.py` : Learns source (target or joint) vocabulary based on frequency over (tokenized) text files
+* `tools/build_vocab.py` : Reads (tokenized) training data and outputs a frequency-based vocabulary.
 
 Network:
 * `minmt-setup.py` : Creates the NMT network experiment
