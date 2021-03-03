@@ -6,7 +6,11 @@ import logging
 import numpy as np
 import torch
 import time
-from torch.utils.tensorboard import SummaryWriter
+try:
+  from torch.utils.tensorboard import SummaryWriter
+  tensorboard = True
+except ImportError:
+  tensorboard = False
 from transformer.Model import save_checkpoint, prepare_source, prepare_target
 
 ##############################################################################################################
@@ -107,7 +111,8 @@ class Learning():
     self.keep_last_n = ol.keep_last_n
     self.clip_grad_norm = ol.clip_grad_norm
     self.idx_pad = idx_pad
-    self.writer = SummaryWriter(log_dir=ol.dnet, comment='', purge_step=None, max_queue=10, flush_secs=60, filename_suffix='')
+    if tensorboard:
+      self.writer = SummaryWriter(log_dir=ol.dnet, comment='', purge_step=None, max_queue=10, flush_secs=60, filename_suffix='')
 
   def learn(self, trainset, validset, device):
     logging.info('Running: learning')
@@ -143,8 +148,9 @@ class Learning():
           acc_per_tok, loss_per_tok, ms_per_step = score.report()
           logging.info('Learning step: {} epoch: {} batch: {} steps/sec: {:.2f} lr: {:.6f} Acc: {:.3f} Loss: {:.3f}'.format(self.optScheduler._step, n_epoch, n_batch, 1000.0/ms_per_step, self.optScheduler._rate, acc_per_tok, loss_per_tok))
           #self.writer.add_scalar('Loss/train', loss_per_tok, self.optScheduler._step)
-          self.writer.add_scalar('Loss/train', loss_token.item(), self.optScheduler._step)
-          self.writer.add_scalar('LearningRate', self.optScheduler._rate, self.optScheduler._step)
+          if tensorboard:
+            self.writer.add_scalar('Loss/train', loss_token.item(), self.optScheduler._step)
+            self.writer.add_scalar('LearningRate', self.optScheduler._rate, self.optScheduler._step)
         ### validate
         if self.validate_every and self.optScheduler._step % self.validate_every == 0: 
           if validset is not None:
@@ -192,7 +198,8 @@ class Learning():
     toc = time.time()
     loss = 1.0*valid_loss/n_batch if n_batch else 0.0
     logging.info('Validation step: {} #batchs: {} sec: {:.2f} loss: {:.3f}'.format(self.optScheduler._step, n_batch, toc-tic, loss))
-    self.writer.add_scalar('Loss/valid', loss, self.optScheduler._step)
+    if tensorboard:
+      self.writer.add_scalar('Loss/valid', loss, self.optScheduler._step)
     return loss
 
 def print_pos_src_tgt_hyp_ref(pred, pos, src, tgt, ref):
