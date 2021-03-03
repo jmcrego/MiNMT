@@ -9,12 +9,13 @@ Built on PyTorch (https://pytorch.org) employing:
 
 ## Clients
 
-Pre-processing:
-* `tools/spm_train.py` : Learns a SentencePiece model over raw (untokenized) text files
+Vocabulary:
+* `tools/build_vocab.py` : Learns source (target or joint) vocabulary based on frequency over (tokenized) text files
 
 Network:
 * `minmt-setup.py` : Creates the NMT network experiment
 * `minmt-train.py` : Runs learning 
+* `minmt-average.py` : Averages checkpoints
 * `minmt-translate.py`: Runs inference
 
 Run clients with the -h option for a detailed description of available options.
@@ -22,48 +23,33 @@ Run clients with the -h option for a detailed description of available options.
 ## Usage example:
 
 Hereinafter we consider `train.en, train.fr`, `valid.en, valid.fr` and `test.en` the respective train/valid/test files of our example.
-All files are formated with one sentence per line of untokenized (raw) text.
+All files are formated with one sentence per line of already tokenized text. You can tokenize your data using 
 
-### (1) Pre-processing
+### (1) Vocabulary
 
-* Build a tokenization (SentencePiece) model and vocabulary:
+* Create the vocabulary to be considered by the network using:
 ```
-python3 tools/spm_train.py -sp_model SP_enfr -i train.{en,fr}
+python3 tools/build_vocabulary.py < train.en > vocab.en
+python3 tools/build_vocabulary.py < train.fr > vocab.fr
 ```
-The script outputs `SP_enfr.model` and `SP_enfr.vocab` files for both, source and target, sides of parallel data. 
-By default, the vocabulary contains the 30,000 most frequent words. 
-
-Note that the vocabulary is not further needed as already contained in the model file.
-
-You can use separate SentencePiece models (vocabularies) for each translation side:
+You can use the same vocabulary for both sides:
 ```
-python3 tools/spm_train.py -sp_model SP_en -i train.en
-python3 tools/spm_train.py -sp_model SP_fr -i train.fr
+python3 tools/build_vocabulary.py < train.{en,fr} > vocab.en-fr
 ```
-
-Thus producing `SP_en.model`, `SP_en.vocab`, `SP_fr.model` and `SP_fr.vocab`.
-
-You can use the original spm_train binary (https://github.com/google/sentencepiece) with your preferred options making sure that you set: `--pad_id=0 --pad_piece='<pad>' --unk_id=1 --unk_piece='<unk>' --bos_id=2 --bos_piece='<bos>' --eos_id=3 --eos_piece='<eos>'`.
+By default, the script considers the 30,000 most frequent tokens appearing in the training files.
 
 ### (2) Create the network
 
-
-If you built a single model/vocabulary:
+If you built a single vocabulary:
 ```
-python3 minmt-setup.py -dnet $DNET -src_spm SP_enfr.model -tgt_spm SP_enfr.model
+python3 minmt-setup.py -dnet $DNET -src_voc vocab.en -tgt_voc vocab.fr
 ```
-
-Otherwise:
-```
-python3 minmt-setup.py -dnet $DNET -src_spm SP_en.model -tgt_spm SP_fr.model
-```
+Use `vocab.en-fr` for both options if you built a joint vocabulary file.
 
 The script creates the directory `$DNET` containing:
 * `network` (the network description file)
-* `src_pre` (source-side SentencePiece model)
-* `tgt_pre` (target-side SentencePiece model)
-
-(source and target vocabularies are contained in SentencePiece models)
+* `src_voc` (source-side vocabulary)
+* `tgt_voc` (target-side vocabulary)
 
 Default network options are:
 ```
@@ -103,7 +89,7 @@ Default learning options are:
 -noam_scale 2.0
 -noam_warmup 4000
 -label_smoothing 0.1
--loss KLDiv
+-loss NLL
 ```
 ```
 -shard_size 1000000
@@ -114,14 +100,20 @@ Default learning options are:
 
 Network checkpoints are built in `$DNET` directory named `network.checkpoint_????????.pt`.
 
-Remember that training and validation datasets are handled using the tokenization and vocabularies available in $DNET directory.
+### (4) Average checkpoints
 
-### (4) Inference
+Checkpoints available in `$DNET` are averaged in `network.checkpoint_XXXXXXXX_average.pt` with XXXXXXXX the last learning step found.
+```
+python3 minmt-average -dnet $DNET
+```
 
-To translate an input file (using the last network checkpoint), run the command:
+### (5) Inference
+
+To translate an input file, run the command:
 ```
 python3 minmt-translate.py -dnet $DNET -i test.en
 ```
+The last network checkpoint is considered unless the `-m FILE` option be used.
 
 Default inference options are:
 ```
@@ -145,14 +137,9 @@ Option `-format` specifies the fields to output for every sentence (TAB-separate
 [c] global hypothesis cost
 [j] input sentence (ids) : 104 17 71 406 4
 [s] input sentence (tok) : ▁This ▁is ▁an ▁example .
-[S] input sentence (raw) : This is an example.
 [i] hypothesis (ids) : 1738 40 44 551 4
 [t] hypothesis (tok) : ▁Ceci ▁est ▁un ▁exemple .
-[T] hypothesis (raw) : Ceci est un exemple.
 ```
-
-Same as Train/Validation datasets, test datasets are handled using `src_spm` and `tgt_spm` SentencePiece models existing in `$DNET` directory.
-
 
 ## Use of GPU:
 
