@@ -1,10 +1,6 @@
 # Minimalistic NMT toolkit using Transformers
 
-A toolkit developed for research purposes, aiming to be a clean and minimalistic code base achieving similar accuracy than other state-of-the art frameworks.
-
-Built on PyTorch (https://pytorch.org) employing:
-* OpenNMT tokenizer (https://github.com/OpenNMT/Tokenizer)
-* Google SentencePiece (https://github.com/google/sentencepiece)
+A toolkit built on PyTorch (https://pytorch.org) developed for research purposes, aiming to be a clean and minimalistic code base achieving similar accuracy than other state-of-the art frameworks.
 
 ## Clients
 
@@ -20,7 +16,9 @@ Run clients with the -h option for a detailed description of available options.
 
 Hereinafter we consider `train.en, train.fr`, `valid.en, valid.fr` and `test.en` the respective train/valid/test files of our running example.
 All files are formated with one sentence per line of already tokenized text. You can preprocess your data using any tokenization/sub-tokenization toolkit.
-In our `tools` directory we provide several scripts employing libraries of widely used toolkits (BPE/SentencePiece).
+In our `tools` directory we provide several scripts employing libraries of widely used toolkits (BPE/SentencePiece):
+* OpenNMT tokenizer (https://github.com/OpenNMT/Tokenizer)
+* Google SentencePiece (https://github.com/google/sentencepiece)
 
 ### (1) Vocabulary
 
