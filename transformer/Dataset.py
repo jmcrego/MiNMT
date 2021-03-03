@@ -135,7 +135,7 @@ class Dataset():
 						continue
 				shard_pos.append(pos)
 				shard_len.append(len(self.File_Line_Idx[0][pos]))
-			logging.debug('Built shard {}/{} ({} examples)'.format(s+1,len(shards),len(shard_pos)))
+			logging.info('Built shard {}/{} ({} examples)'.format(s+1,len(shards),len(shard_pos)))
 			###
 			### build batchs
 			########################
@@ -152,7 +152,7 @@ class Dataset():
 					b.add(pos,lens) ### add current example (may be discarded if it does not fit)
 			if len(b):
 				batchs.append(b.getPos_and_clean()) ### save batch
-			logging.debug('Built {} batchs'.format(len(batchs)))
+			logging.info('Built {} batchs in shard'.format(len(batchs)))
 			###
 			### yield batchs
 			########################
