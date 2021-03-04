@@ -127,7 +127,8 @@ class Learning():
       for batch_pos, batch_idxs in trainset:
         batch_src = batch_idxs[0]
         batch_tgt = batch_idxs[1]
-                 
+        logging.info("batch pos={}".format(' '.join(map(str,batch_pos))))
+        continue                 
         n_batch += 1
         self.model.train()
         ### forward
@@ -138,7 +139,6 @@ class Learning():
         loss_batch = self.criter(pred, ref) #sum of losses in batch
         ntok_batch = torch.sum(ref != self.idx_pad)
         loss_token = loss_batch / ntok_batch
-        logging.info("batch loss={} ntok={} pos={}".format(loss_batch.item(),ntok_batch.item(),' '.join(map(str,batch_pos))))
 
         ### optimize
         self.optScheduler.optimizer.zero_grad()                                        ### sets gradients to zero
