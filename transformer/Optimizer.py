@@ -38,13 +38,14 @@ class LabelSmoothing_NLL(torch.nn.Module):
     #pred is [bs,lt,Vt] #logits
     #gold is [bs,lt] #references
     pred = pred.contiguous().view(-1,pred.size(2)) #[bs*lt, Vt]
-    log_prob = F.log_softmax(pred, dim=1)
     gold = gold.contiguous().view(-1) #[bs*lt]
     ### smooth nll
     one_hot = torch.zeros_like(pred).scatter(1, gold.view(-1, 1), 1)
     one_hot = one_hot * (1 - self.smoothing) + (1 - one_hot) * self.smoothing / (self.nclasses - 1)
+    log_prb = F.log_softmax(pred, dim=1)
+
     non_pad_mask = gold.ne(self.pad_idx)
-    loss = -(one_hot * log_prob).sum(dim=1)
+    loss = -(one_hot * log_prb).sum(dim=1)
     loss = loss.masked_select(non_pad_mask).sum()
     return loss
 
