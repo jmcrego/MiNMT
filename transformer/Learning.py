@@ -23,11 +23,11 @@ class Score():
     self.nsteps = 0
     self.loss = 0.
     self.ntok = 0
-#    self.nok = 0
+    #self.nok = 0
     self.msec_epoch = time.time()
     #report
     self.loss_report = 0.
-#    self.nok_report = 0
+    #self.nok_report = 0
     self.ntok_report = 0
     self.nsteps_report = 0
     self.msec_report = self.msec_epoch
@@ -45,16 +45,16 @@ class Score():
 
     gold = gold.contiguous().view(-1) #[bs*lt]
     pred = pred.contiguous().view(-1,pred.size(2)) #[bs*lt, Vt]
- #   nok_batch = self.nOK(gold,pred,idx_pad)
+    #nok_batch = self.nOK(gold,pred,idx_pad)
 
     #global
     self.nsteps += 1
     self.loss += sum_loss_batch
- #   self.nok += nok_batch
+    #self.nok += nok_batch
     self.ntok += ntok_batch
     #report
     self.loss_report += sum_loss_batch
- #   self.nok_report += nok_batch
+    #self.nok_report += nok_batch
     self.ntok_report += ntok_batch
     self.nsteps_report += 1
 
@@ -63,35 +63,35 @@ class Score():
     if self.ntok_report and self.nsteps_report:
       #print('Report loss={:.5f} ntoks={}'.format(self.loss_report, self.ntok_report))
       loss_per_tok = self.loss_report / (1.0*self.ntok_report)
- #     acc_per_tok = self.nok_report / (1.0*self.ntok_report)
+      #acc_per_tok = self.nok_report / (1.0*self.ntok_report)
       ms_per_step = 1000.0 * (tnow - self.msec_report) / (1.0*self.nsteps_report)
     else:
       loss_per_tok = 0.
- #     acc_per_tok = 0.
+      #acc_per_tok = 0.
       ms_per_step = 0.
       logging.warning('Requested report after 0 tokens optimised')
     #initialize for next report
     self.loss_report = 0.
     self.ntok_report = 0
- #   self.nok_report = 0
+    #self.nok_report = 0
     self.nsteps_report = 0
     self.msec_report = tnow
-#    return acc_per_tok, loss_per_tok, ms_per_step
+    #return acc_per_tok, loss_per_tok, ms_per_step
     return loss_per_tok, ms_per_step
 
   def epoch(self):
     tnow = time.time()
     if self.ntok and self.nsteps:
       loss_per_tok = self.loss / (1.0*self.ntok)
-#      acc_per_tok = self.nok / (1.0*self.ntok)
+      #acc_per_tok = self.nok / (1.0*self.ntok)
       ms_epoch = 1000.0 * (tnow - self.msec_epoch)
     else:
       loss_per_tok = 0.
-#      acc_per_tok = 0.
+      #acc_per_tok = 0.
       ms_epoch = 0.
       logging.warning('Requested epoch report after 0 tokens optimised')
     #no need to initialize
-#    return acc_per_tok, loss_per_tok, ms_epoch
+    #return acc_per_tok, loss_per_tok, ms_epoch
     return loss_per_tok, ms_epoch
 
 ##############################################################################################################
@@ -148,8 +148,8 @@ class Learning():
 
         ### report
         if self.report_every and self.optScheduler._step % self.report_every == 0: 
-#          acc_per_tok, loss_per_tok, ms_per_step = score.report()
-#          logging.info('Learning step: {} epoch: {} batch: {} steps/sec: {:.2f} lr: {:.6f} Acc: {:.3f} Loss: {:.3f}'.format(self.optScheduler._step, n_epoch, n_batch, 1000.0/ms_per_step, self.optScheduler._rate, acc_per_tok, loss_per_tok))
+          #acc_per_tok, loss_per_tok, ms_per_step = score.report()
+          #logging.info('Learning step: {} epoch: {} batch: {} steps/sec: {:.2f} lr: {:.6f} Acc: {:.3f} Loss: {:.3f}'.format(self.optScheduler._step, n_epoch, n_batch, 1000.0/ms_per_step, self.optScheduler._rate, acc_per_tok, loss_per_tok))
           loss_per_tok, ms_per_step = score.report()
           logging.info('Learning step: {} epoch: {} batch: {} steps/sec: {:.2f} lr: {:.6f} Loss: {:.3f}'.format(self.optScheduler._step, n_epoch, n_batch, 1000.0/ms_per_step, self.optScheduler._rate, loss_per_tok))
           #self.writer.add_scalar('Loss/train', loss_per_tok, self.optScheduler._step)
@@ -171,8 +171,8 @@ class Learning():
           logging.info('Learning STOP by [steps={}]'.format(self.optScheduler._step))
           return
 
-#      acc_per_tok, loss_per_tok, ms_epoch = score.epoch()
-#      logging.info('EndOfEpoch: {} #batchs: {} Acc: {:.3f} Loss: {:.3f} sec: {:.2f}'.format(n_epoch,n_batch,acc_per_tok,loss_per_tok,ms_epoch/1000.0))
+      #acc_per_tok, loss_per_tok, ms_epoch = score.epoch()
+      #logging.info('EndOfEpoch: {} #batchs: {} Acc: {:.3f} Loss: {:.3f} sec: {:.2f}'.format(n_epoch,n_batch,acc_per_tok,loss_per_tok,ms_epoch/1000.0))
       loss_per_tok, ms_epoch = score.epoch()
       logging.info('EndOfEpoch: {} #batchs: {} Loss: {:.3f} sec: {:.2f}'.format(n_epoch,n_batch,loss_per_tok,ms_epoch/1000.0))
 
