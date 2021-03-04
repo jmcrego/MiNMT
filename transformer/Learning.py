@@ -23,60 +23,42 @@ class Score():
     self.nsteps = 0
     self.loss = 0.
     self.ntok = 0
-    #self.nok = 0
     self.msec_epoch = time.time()
     #report
     self.loss_report = 0.
-    #self.nok_report = 0
     self.ntok_report = 0
     self.nsteps_report = 0
     self.msec_report = self.msec_epoch
 
-#  def nOK(self, gold, pred, idx_pad):
-#    hyps = torch.nn.functional.log_softmax(pred, dim=-1) #[bs*lt, Vt]
-#    _, inds = torch.topk(hyps, k=1, dim=-1) #[bs*lt,1]
-#    inds = inds.squeeze(-1) #[bs*lt]
-#    nok = torch.sum(torch.logical_and((gold!=idx_pad), (inds==gold))) #sum(gold_is_not_pad AND inds_is_gold)
-#    return nok.item()
-
-  def step(self, sum_loss_batch, ntok_batch, gold, pred, idx_pad):
+  def step(self, sum_loss_batch, gold, pred, idx_pad):
     #gold is [bs, lt]
     #pred is [bs, lt, Vt]
-
     gold = gold.contiguous().view(-1) #[bs*lt]
     pred = pred.contiguous().view(-1,pred.size(2)) #[bs*lt, Vt]
-    #nok_batch = self.nOK(gold,pred,idx_pad)
-
+    ntok = torch.sum(gold != idx_pad)
     #global
     self.nsteps += 1
     self.loss += sum_loss_batch
-    #self.nok += nok_batch
-    self.ntok += ntok_batch
+    self.ntok += ntok
     #report
     self.loss_report += sum_loss_batch
-    #self.nok_report += nok_batch
-    self.ntok_report += ntok_batch
+    self.ntok_report += ntok
     self.nsteps_report += 1
 
   def report(self):
     tnow = time.time()
     if self.ntok_report and self.nsteps_report:
-      #print('Report loss={:.5f} ntoks={}'.format(self.loss_report, self.ntok_report))
       loss_per_tok = self.loss_report / (1.0*self.ntok_report)
-      #acc_per_tok = self.nok_report / (1.0*self.ntok_report)
       ms_per_step = 1000.0 * (tnow - self.msec_report) / (1.0*self.nsteps_report)
     else:
       loss_per_tok = 0.
-      #acc_per_tok = 0.
       ms_per_step = 0.
       logging.warning('Requested report after 0 tokens optimised')
     #initialize for next report
     self.loss_report = 0.
     self.ntok_report = 0
-    #self.nok_report = 0
     self.nsteps_report = 0
     self.msec_report = tnow
-    #return acc_per_tok, loss_per_tok, ms_per_step
     return loss_per_tok, ms_per_step
 
   def epoch(self):
@@ -139,8 +121,7 @@ class Learning():
         ### compute loss
         ###
         loss_batch = self.criter(pred, ref) #sum of losses in batch
-        ntok_batch = torch.sum(ref != self.idx_pad)
-        loss_token = loss_batch / ntok_batch
+        loss_token = loss_batch / torch.sum(ref != self.idx_pad) #ntok_batch
         ###
         ### optimize
         ###
@@ -152,7 +133,7 @@ class Learning():
         ###
         ### accumulate score
         ###
-        score.step(loss_batch.item(), ntok_batch, ref, pred, self.idx_pad)
+        score.step(loss_batch.item(), ref, pred, self.idx_pad)
         ###
         ### report
         ###
