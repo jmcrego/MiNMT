@@ -204,7 +204,7 @@ class AddPositionalEncoding(torch.nn.Module):
     super(AddPositionalEncoding, self).__init__()
     assert emb_dim%2 == 0, 'emb_dim must be pair'
     self.dropout = torch.nn.Dropout(dropout)
-    pe = torch.zeros(max_len, emb_dim) #[max_len, ed]
+    pe = torch.zeros(max_len, emb_dim) #[max_len=5000, ed]
     position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1) #[max_len, 1]
     div_term = torch.exp(torch.arange(0, emb_dim, 2).float() * (-math.log(10000.0) / emb_dim)) #[ed/2]
     pe[:, 0::2] = torch.sin(position*div_term) #[max_len, 1] * [1, ed/2] => [max_len, ed] (pairs of pe)
