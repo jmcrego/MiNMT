@@ -30,19 +30,16 @@ class Score():
     self.nsteps_report = 0
     self.msec_report = self.msec_epoch
 
-  def step(self, sum_loss_batch, gold, pred, idx_pad):
+  def step(self, sum_loss_batch, ntok_batch):
     #gold is [bs, lt]
     #pred is [bs, lt, Vt]
-    gold = gold.contiguous().view(-1) #[bs*lt]
-    pred = pred.contiguous().view(-1,pred.size(2)) #[bs*lt, Vt]
-    ntok = torch.sum(gold != idx_pad)
     #global
     self.nsteps += 1
     self.loss += sum_loss_batch
-    self.ntok += ntok
+    self.ntok += ntok_batch
     #report
     self.loss_report += sum_loss_batch
-    self.ntok_report += ntok
+    self.ntok_report += ntok_batch
     self.nsteps_report += 1
 
   def report(self):
@@ -107,8 +104,6 @@ class Learning():
       n_batch = 0
       score = Score()
       for batch_pos, [batch_src, batch_tgt] in trainset:
-#        batch_src = batch_idxs[0]
-#        batch_tgt = batch_idxs[1]
         n_batch += 1
         self.model.train()
         ###
@@ -133,7 +128,7 @@ class Learning():
         ###
         ### accumulate score
         ###
-        score.step(loss_batch.item(), ref, pred, self.idx_pad)
+        score.step(loss_batch.item(), torch.sum(ref!=self.idx_pad))
         ###
         ### report
         ###
