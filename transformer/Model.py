@@ -200,7 +200,7 @@ class Embedding(torch.nn.Module):
 ### PositionalEncoding #######################################################################################
 ##############################################################################################################
 class AddPositionalEncoding(torch.nn.Module):
-  def __init__(self, emb_dim, dropout, max_len=1000):
+  def __init__(self, emb_dim, dropout, max_len=5000):
     super(AddPositionalEncoding, self).__init__()
     assert emb_dim%2 == 0, 'emb_dim must be pair'
     self.dropout = torch.nn.Dropout(dropout)
