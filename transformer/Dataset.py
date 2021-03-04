@@ -7,20 +7,6 @@ import numpy as np
 from collections import defaultdict
 from tools.Tools import flatten_count
 
-def report_batch(pos, idxs_all):
-	print('POS',pos)
-	max_src = 0
-	max_tgt = 0
-	for idx_src in idxs_all[0]:
-		print('SRC [l={}]: '.format(len(idx_src)),idx_src)
-		max_src = max(len(idx_src),max_src)
-	for idx_tgt in idxs_all[1]:
-		print('TGT [l={}]: '.format(len(idx_tgt)),idx_tgt)
-		max_tgt = max(len(idx_tgt),max_tgt)
-	print('src_tokens = {} x {} = {}'.format(len(pos),max_src,len(pos)*max_src))
-	print('tgt_tokens = {} x {} = {}'.format(len(pos),max_tgt,len(pos)*max_tgt))
-
-
 #######################################################
 ### Vocab #############################################
 #######################################################
@@ -159,14 +145,10 @@ class Dataset():
 				if not b.add(pos,lens):
 					if len(b):
 						batchs.append(b.Pos) ### save batch
-						#print(' '.join(map(str,b.Pos)))
-						#print('batch_tokens', len(b.Pos), len(b.Pos)*b.max_lens[0], len(b.Pos)*b.max_lens[1])
 						b.reset(n_files)
 					b.add(pos,lens) ### add current example (may be discarded if it does not fit)
 			if len(b):
 				batchs.append(b.Pos) ### save batch
-				#print(' '.join(map(str,b.Pos)))
-				#print('batch_tokens', len(b.Pos), len(b.Pos)*b.max_lens[0], len(b.Pos)*b.max_lens[1])
 				b.reset(n_files)
 			logging.info('Built {} batchs in shard'.format(len(batchs)))
 			###
@@ -183,7 +165,6 @@ class Dataset():
 					for pos in POS:
 						idxs.append([self.idx_bos[n]] + self.File_Line_Idx[n][pos] + [self.idx_eos[n]])
 					idxs_all.append(idxs)
-				#report_batch(POS, idxs_all)
 				yield POS, idxs_all
 			
 if __name__ == '__main__':
