@@ -204,20 +204,17 @@ class AddPositionalEncoding(torch.nn.Module):
     super(AddPositionalEncoding, self).__init__()
     assert emb_dim%2 == 0, 'emb_dim must be pair'
     self.dropout = torch.nn.Dropout(dropout)
-
-    position = torch.arange(0, max_len).unsqueeze(1) #[max_len, 1]
-    div_term = torch.exp((torch.arange(0, emb_dim, 2, dtype=torch.float) * -(math.log(10000.0) / emb_dim))) #[ed/2]
-
     pe = torch.zeros(max_len, emb_dim) #[max_len, ed]
-    pe[:, 0::2] = torch.sin(position.float()*div_term) #[max_len, 1] * [1, ed/2] => [max_len, ed] (sets pairs of pe)
-    pe[:, 1::2] = torch.cos(position.float()*div_term) #[max_len, 1] * [1, ed/2] => [max_len, ed] (sets odds of pe)
+    position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1) #[max_len, 1]
+    div_term = torch.exp(torch.arange(0, emb_dim, 2, dtype=torch.float) * (-math.log(10000.0) / emb_dim)) #[ed/2]
+    pe[:, 0::2] = torch.sin(position*div_term) #[max_len, 1] * [1, ed/2] => [max_len, ed] (sets pairs of pe)
+    pe[:, 1::2] = torch.cos(position*div_term) #[max_len, 1] * [1, ed/2] => [max_len, ed] (sets odds of pe)
     pe = pe.unsqueeze(0) #[1, max_len=5000, ed]
-
     self.register_buffer('pe', pe) #register_buffer is for params which are saved&restored in state_dict but not trained 
 
   def forward(self, x):
     bs, l, ed = x.shape
-    x = x + self.pe[:, :l, :] #[bs, l, ed] + [1, l, ed] => [bs, l, ed]
+    x = x + self.pe[:, :l] #[bs, l, ed] + [1, l, ed] => [bs, l, ed]
     return self.dropout(x)
 
 ##############################################################################################################
@@ -327,7 +324,7 @@ class MultiHead_Attn(torch.nn.Module):
     self.WV = torch.nn.Linear(emb_dim, v_dim*n_heads)
     self.WO = torch.nn.Linear(v_dim*n_heads, emb_dim)
     self.dropout = torch.nn.Dropout(dropout)
-    self.softmax = torch.nn.Softmax(dim=-1)
+    #self.softmax = torch.nn.Softmax(dim=-1)
 
   def forward(self, q, k, v, msk=None):
     #q is [bs, lq, ed]
@@ -351,7 +348,8 @@ class MultiHead_Attn(torch.nn.Module):
     s = torch.matmul(Q, K.transpose(2, 3)) #[bs,nh,lq,qd] x [bs,nh,kd,lk] = [bs,nh,lq,lk] # thanks to qd==kd #in decoder lq are target words and lk are source words
     if msk is not None:
       s = s.masked_fill(msk == 0, float('-inf')) #score=-Inf to masked tokens
-    w = self.softmax(s) #[bs,nh,lq,lk] (these are the attention weights)
+    #w = self.softmax(s) #[bs,nh,lq,lk] (these are the attention weights)
+    w = torch.nn.functional.softmax(s, dim=-1)
     w = self.dropout(w) #[bs,nh,lq,lk] 
 
     z = torch.matmul(w,V) #[bs,nh,lq,lk] x [bs,nh,lv,vd] = [bs,nh,lq,vd] #thanks to lk==lv
