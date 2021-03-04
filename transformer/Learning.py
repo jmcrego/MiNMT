@@ -106,9 +106,9 @@ class Learning():
       logging.info('Epoch {}'.format(n_epoch))
       n_batch = 0
       score = Score()
-      for batch_pos, batch_idxs in trainset:
-        batch_src = batch_idxs[0]
-        batch_tgt = batch_idxs[1]
+      for batch_pos, [batch_src, batch_tgt] in trainset:
+#        batch_src = batch_idxs[0]
+#        batch_tgt = batch_idxs[1]
         n_batch += 1
         self.model.train()
         ###
@@ -138,11 +138,8 @@ class Learning():
         ### report
         ###
         if self.report_every and self.optScheduler._step % self.report_every == 0: 
-          #acc_per_tok, loss_per_tok, ms_per_step = score.report()
-          #logging.info('Learning step: {} epoch: {} batch: {} steps/sec: {:.2f} lr: {:.6f} Acc: {:.3f} Loss: {:.3f}'.format(self.optScheduler._step, n_epoch, n_batch, 1000.0/ms_per_step, self.optScheduler._rate, acc_per_tok, loss_per_tok))
           loss_per_tok, ms_per_step = score.report()
           logging.info('Learning step: {} epoch: {} batch: {} steps/sec: {:.2f} lr: {:.6f} Loss: {:.3f}'.format(self.optScheduler._step, n_epoch, n_batch, 1000.0/ms_per_step, self.optScheduler._rate, loss_per_tok))
-          #self.writer.add_scalar('Loss/train', loss_per_tok, self.optScheduler._step)
           if tensorboard:
             self.writer.add_scalar('Loss/train', loss_token.item(), self.optScheduler._step)
             self.writer.add_scalar('LearningRate', self.optScheduler._rate, self.optScheduler._step)
@@ -167,8 +164,6 @@ class Learning():
           logging.info('Learning STOP by [steps={}]'.format(self.optScheduler._step))
           return
 
-      #acc_per_tok, loss_per_tok, ms_epoch = score.epoch()
-      #logging.info('EndOfEpoch: {} #batchs: {} Acc: {:.3f} Loss: {:.3f} sec: {:.2f}'.format(n_epoch,n_batch,acc_per_tok,loss_per_tok,ms_epoch/1000.0))
       loss_per_tok, ms_epoch = score.epoch()
       logging.info('EndOfEpoch: {} #batchs: {} Loss: {:.3f} sec: {:.2f}'.format(n_epoch,n_batch,loss_per_tok,ms_epoch/1000.0))
       ###
