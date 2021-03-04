@@ -25,7 +25,6 @@ class OptScheduler(): ### Adam optimizer with scheduler
       p['lr'] = self._rate                
     self.optimizer.step()                 # parameters update (fwd) based on gradients and lrate
 
-
 class LabelSmoothing_NLL(torch.nn.Module):
   def __init__(self, nclasses, pad_idx, smoothing=0.0):
     super(LabelSmoothing_NLL, self).__init__()
