@@ -33,12 +33,12 @@ class LabelSmoothing_NLL(torch.nn.Module):
     self.smoothing = smoothing
 
   def forward(self, pred, gold):
-    (bs, lt, Vt) = pred.shape
+    #(bs, lt, Vt) = pred.shape
     #pred is [bs,lt,Vt] #logits
     #gold is [bs,lt] #references
     pred = pred.contiguous().view(-1,pred.size(2)) #[bs*lt, Vt]
     gold = gold.contiguous().view(-1) #[bs*lt]
-    ### smooth nll
+
     one_hot = torch.zeros_like(pred).scatter(1, gold.view(-1, 1), 1)
     one_hot = one_hot * (1 - self.smoothing) + (1 - one_hot) * self.smoothing / (self.nclasses - 1)
     log_prb = F.log_softmax(pred, dim=1)
