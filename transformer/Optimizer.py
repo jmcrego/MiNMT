@@ -33,7 +33,6 @@ class LabelSmoothing_NLL(torch.nn.Module):
     self.smoothing = smoothing
 
   def forward(self, pred, gold):
-    #(bs, lt, Vt) = pred.shape
     #pred is [bs,lt,Vt] #logits
     #gold is [bs,lt] #references
     pred = pred.contiguous().view(-1,pred.size(2)) #[bs*lt, Vt]
