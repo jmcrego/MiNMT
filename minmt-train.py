@@ -43,7 +43,7 @@ class Options():
     self.label_smoothing = 0.1
     self.loss = 'NLL'
     ### data
-    self.shard_size = 100000
+    self.shard_size = 500000
     self.max_length = 100
     self.batch_size = 4096
     self.batch_type = 'tokens'

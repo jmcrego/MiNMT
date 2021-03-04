@@ -1,7 +1,6 @@
 import os
 import sys
 import time
-#import pickle
 import codecs
 import logging
 import numpy as np
@@ -52,20 +51,16 @@ class Vocab():
 ### Batch #############################################
 #######################################################
 class Batch():
-	def __init__(self, batch_size, batch_type, n_files): 
+	def __init__(self, batch_size, batch_type): 
 		super(Batch, self).__init__()
 		self.batch_size = batch_size
 		self.batch_type = batch_type
-		self.Pos = []
-		self.max_lens = [0] * n_files
 		assert batch_type == 'sentences' or batch_type == 'tokens', 'Bad -batch_type option'
 
-	def getPos_and_clean(self):
-		Pos = self.Pos
+	def reset(self, n_files):
 		self.Pos = []
-		self.max_lens = [0] * len(self.max_lens)
-		return Pos
-		
+		self.max_lens = [0] * n_files
+
 	def add(self, pos, lens):
 		### checks wether the new example fits in current batch
 		if self.batch_type == 'tokens':
@@ -82,7 +77,7 @@ class Batch():
 		return True
 
 	def __len__(self):
-		return len(self.Pos)
+		return len(self.Pos) ### number of sentences not tokens
 	
 #######################################################
 ### Dataset ###########################################
@@ -143,15 +138,18 @@ class Dataset():
 			shard_pos = shard_pos[np.argsort(shard_len)] #sort by len (lower to higher lenghts)
 			logging.debug('Sorted examples by length')
 			batchs = []
-			b = Batch(self.batch_size, self.batch_type, n_files)
+			b = Batch(self.batch_size, self.batch_type)
+			b.reset(n_files)
 			for pos in shard_pos:
-				lens = [len(self.File_Line_Idx[n][pos]) for n in range(n_files)]
+				lens = [len(self.File_Line_Idx[n][pos])+2 for n in range(n_files)]
 				if not b.add(pos,lens):
 					if len(b):
-						batchs.append(b.getPos_and_clean()) ### save batch
+						batchs.append(b.Pos) ### save batch
+						b.reset(n_files)
 					b.add(pos,lens) ### add current example (may be discarded if it does not fit)
 			if len(b):
-				batchs.append(b.getPos_and_clean()) ### save batch
+				batchs.append(b.Pos) ### save batch
+				b.reset(n_files)
 			logging.info('Built {} batchs in shard'.format(len(batchs)))
 			###
 			### yield batchs
