@@ -26,12 +26,12 @@ We provide several scripts making use of the OpenNMT tokenizer library (https://
 
 ### (1) Vocabulary
 
-* Create the (source/target) vocabularies considered by the network, using:
+* Create the (source/target) vocabularies considered by the network:
 ```
 $ cat train.en | minmt-vocab.py > vocab.en
 $ cat train.fr | minmt-vocab.py > vocab.fr
 ```
-You can use a single joint vocabulary for both languages:
+If you prefere, you can use a single joint vocabulary for both languages:
 ```
 $ cat train.{en,fr} | minmt-vocab.py > vocab.en-fr
 ```
