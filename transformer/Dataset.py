@@ -116,10 +116,6 @@ class Dataset():
       logging.info('Read Corpus ({} lines ~ {} tokens ~ {} OOVs [{:.2f}%]) from {}'.format(len(idxs),n_tok,n_unk,100.0*n_unk/n_tok,files[n]))
       assert len(self.Idxs[0]) == len(self.Idxs[-1]), 'Non-parallel corpus in dataset'
 
-    if self.shard_size == 0:
-      self.shard_size = len(self.Idxs[0])
-      logging.info('shard_size set to {}'.format(self.shard_size))
-
 
   def build_batchs(self, lens, idxs_pos):
     assert len(lens) == len(idxs_pos)
@@ -168,8 +164,9 @@ class Dataset():
     ### randomize all data ###
     idxs_pos = [i for i in range(len(n_lines))]
     np.random.shuffle(idxs_pos)
-    logging.info('Shuffled Dataset ({} examples)'.format(len(n_lines)))
+    logging.info('Shuffled Dataset ({} examples)'.format(n_lines))
     ### split dataset in shards ###
+    self.shard_size = self.shard_size or len(self.Idxs[0])
     shards = [idxs_pos[i:i+self.shard_size] for i in range(0, n_lines, self.shard_size)]
     ### traverse shards ###
     for s,shard in enumerate(shards): #each shard is a list of positions in the original corpus self.Idxs
