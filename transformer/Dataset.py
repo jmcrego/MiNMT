@@ -162,7 +162,7 @@ class Dataset():
     n_files = len(self.Idxs)
     n_lines = len(self.Idxs[0])
     ### randomize all data ###
-    idxs_pos = [i for i in range(len(n_lines))]
+    idxs_pos = [i for i in range(n_lines)]
     np.random.shuffle(idxs_pos)
     logging.info('Shuffled Dataset ({} examples)'.format(n_lines))
     ### split dataset in shards ###
