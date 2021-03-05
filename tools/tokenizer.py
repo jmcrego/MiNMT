@@ -59,6 +59,7 @@ Consider for instance the next tok_config files:
     tokenizer = onmttok(tok_config, bpe_model=bpe_model, sp_model=sp_model)
     tic = time.time()
     for l in sys.stdin:
+        l = l.rstrip()
         if detok:
             print(tokenizer.detokenize(l.split()))
         else:
