@@ -98,7 +98,7 @@ Default learning options are:
 -batch_type tokens
 ```
 
-Network checkpoints are built in `$DNET` directory named `network.checkpoint_????????.pt`.
+Network checkpoints are built in `$DNET` directory named `network.checkpoint_????????.pt` with `????????` being the learning step.
 
 ### (4) Average checkpoints
 
@@ -106,7 +106,7 @@ Checkpoints available in `$DNET` can be averaged running:
 ```
 minmt-average -dnet $DNET
 ```
-The resulting network is available in `network.checkpoint_????????_average.pt` with `????????` being the last learning step found. Averaging last checkpoints typically results in a light performance improvement.
+The resulting network is available in `network.checkpoint_????????_average.pt`. Averaging last checkpoints typically results in a light performance improvement.
 
 
 ### (5) Inference
