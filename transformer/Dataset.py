@@ -93,13 +93,11 @@ class Batch():
 class Dataset():
   def __init__(self, vocs, files, shard_size=500000, batch_size=4096, batch_type='tokens', max_length=100):    
     super(Dataset, self).__init__()
-    assert len(vocs) == len(files), 'Dataset must be initialized with same number of vocs/files'
-    ### dataset options
+    assert len(vocs) == len(files), 'Dataset must be initialized with same number of vocs and files'
     self.shard_size = shard_size
     self.batch_type = batch_type
     self.batch_size = batch_size
     self.max_length = max_length
-    ### file/tokeniztion/vocabularies
     self.idx_pad = vocs[0].idx_pad
     self.idx_unk = vocs[0].idx_unk
     self.idx_bos = vocs[0].idx_bos
@@ -135,8 +133,8 @@ class Dataset():
     batchs = []
     b = Batch(self.batch_size, self.batch_type) #empty batch
     for pos in idxs_pos:
-      lsrc = len(self.idxs_src[pos]) + 2
-      ltgt = len(self.idxs_tgt[pos]) + 2 if self.idxs_tgt is not None else 0
+      lsrc = len(self.Idxs[0][pos]) + 2
+      ltgt = len(self.Idxs[1][pos]) + 2
 
       if not b.fits(lsrc,ltgt): ### cannot add in current batch b
         if len(b):
@@ -166,22 +164,6 @@ class Dataset():
         return True
     return False
 
-  def get_shard(self, shard):
-    ### for pos in shard:
-    ### filter out examples (self.length) and returns (len, pos) of those kept
-    shard_len = []
-    shard_pos = []
-    for pos in shard:
-      if self.filter_length(pos):
-        continue
-      ### ADD example ###
-      shard_pos.append(pos)
-      shard_len.append(len(self.idxs_src[pos]))
-      if len(shard_pos) == self.shard_size:
-        break
-    logging.info('Built shard with {} examples'.format(len(shard_pos)))
-    return shard_len, shard_pos
-
   def __iter__(self):
     ### randomize all data ###
     idxs_pos = [i for i in range(len(self.Idxs[0]))]
@@ -191,7 +173,9 @@ class Dataset():
     shards = [idxs_pos[i:i+self.shard_size] for i in range(0, len(idxs_pos), self.shard_size)]
     ### traverse shards ###
     for shard in shards: #each shard is a list of positions in the original corpus
-      ### format shard ###
+      ###################
+      ### build shard ###
+      ###################
       shard_len = []
       shard_pos = []
       for pos in shard:
@@ -201,19 +185,33 @@ class Dataset():
           if len(shard_pos) == self.shard_size:
             break
       logging.info('Built shard with {} examples'.format(len(shard_pos)))
+      ####################
       ### build batchs ###
+      ####################
       batchs = self.build_batchs(shard_len, shard_pos)
       idx_batchs = [i for i in range(len(batchs))]
       np.random.shuffle(idx_batchs)
       logging.info('Shuffled Shard with {} batchs'.format(len(idx_batchs)))
       for i in idx_batchs:
         batch_pos = batchs[i]
-        idxs_src = []
-        idxs_tgt = []
-        for pos in batch_pos:
-          idxs_src.append([self.idx_bos] + self.Idxs[0][pos] + [self.idx_eos]) 
-          idxs_tgt.append([self.idx_bos] + self.Idxs[1][pos] + [self.idx_eos])
-        yield batch_pos, [idxs_src, idxs_tgt]
+        batch_idx = [] #idxs_all[0] => source batch, idxs_all[1] => target batch, ...
+        for n in range(len(self.Idxs)):
+          idxs = []
+          for pos in batch_pos:
+            idxs.append([self.idx_bos] + self.Idxs[n][pos] + [self.idx_eos])
+          batch_idx.append(idxs)
+        yield batch_pos, batch_idx
+
+
+
+
+#        batch_pos = batchs[i]
+#        idxs_src = []
+#        idxs_tgt = []
+#        for pos in batch_pos:
+#          idxs_src.append([self.idx_bos] + self.Idxs[0][pos] + [self.idx_eos]) 
+#          idxs_tgt.append([self.idx_bos] + self.Idxs[1][pos] + [self.idx_eos])
+#        yield batch_pos, [idxs_src, idxs_tgt]
 
 
 
