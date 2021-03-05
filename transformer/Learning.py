@@ -82,22 +82,6 @@ class Learning():
         ###
         loss_batch = self.criter(pred, ref) #sum of losses in batch
         loss_token = loss_batch / torch.sum(ref != self.idx_pad) #ntok_batch
-
-
-        print('src')
-        for s in src:
-          print(' '.join(map(str,s.cpu().data.numpy())))
-        print('tgt')
-        for t in tgt:
-          print(' '.join(map(str,t.cpu().data.numpy())))
-        print('ref')
-        for r in ref:
-          print(' '.join(map(str,r.cpu().data.numpy())))
-        print(loss_batch)
-        print(loss_token)
-        sys.exit()        
-
-        ###
         ### optimize
         ###
         self.optScheduler.optimizer.zero_grad() ### sets gradients to zero
