@@ -19,9 +19,9 @@ All files are formated with one sentence per line of already tokenized text.
 
 You must preprocess your data using any tokenization/sub-tokenization toolkit.
 In our `tools` directory we provide several scripts making use of the OpenNMT tokenizer library (https://github.com/OpenNMT/Tokenizer) implementing widely used tokenization/sub-tokenization algorithms (BPE/SentencePiece).
-* `tools/learn_bpe.py` : learns BPE 
-* `tools/learn_sp.py` : learns SentencePiece
-* `tools/tokenizer.py` : tokenizes/detokenizes using any sub-tokenization model
+* `tools/learn_bpe.py` : learns BPE model
+* `tools/learn_sp.py` : learns SentencePiece model
+* `tools/tokenizer.py` : tokenizes/detokenizes using the previous sub-tokenization models
 
 
 ### (1) Vocabulary
