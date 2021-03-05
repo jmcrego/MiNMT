@@ -6,6 +6,7 @@ import logging
 import codecs
 import numpy as np
 from collections import defaultdict
+from tools.Tools import flatten_count
 
 #######################################################
 ### Vocab #############################################
