@@ -100,6 +100,8 @@ class Dataset():
     self.batch_size = batch_size
     self.max_length = max_length
     ### file/tokeniztion/vocabularies
+    self.idx_pad = None
+    self.idx_unk = None
     self.idx_bos = None
     self.idx_eos = None
     self.Idxs = []
@@ -110,6 +112,8 @@ class Dataset():
         sys.exit()
       voc = vocs[i]
       if self.idx_eos is None:
+        self.idx_pad = voc.idx_pad
+        self.idx_unk = voc.idx_unk
         self.idx_bos = voc.idx_bos
         self.idx_eos = voc.idx_eos
 
