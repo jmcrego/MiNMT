@@ -15,8 +15,14 @@ Run clients with the -h option for a detailed description of available options.
 ## Usage example:
 
 Hereinafter we consider `train.en, train.fr`, `valid.en, valid.fr` and `test.en` the respective train/valid/test files of our running example.
-All files are formated with one sentence per line of already tokenized text. You can preprocess your data using any tokenization/sub-tokenization toolkit.
+All files are formated with one sentence per line of already tokenized text. 
+
+You must preprocess your data using any tokenization/sub-tokenization toolkit.
 In our `tools` directory we provide several scripts making use of the OpenNMT tokenizer library (https://github.com/OpenNMT/Tokenizer) implementing widely used tokenization/sub-tokenization algorithms (BPE/SentencePiece).
+* `tools/learn_bpe.py` : learns BPE 
+* `tools/learn_sp.py` : learns SentencePiece
+* `tools/tokenizer.py` : tokenizes/detokenizes using any sub-tokenization model
+
 
 ### (1) Vocabulary
 
