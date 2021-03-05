@@ -31,21 +31,21 @@ class Vocab():
     assert self.tok_to_idx[self.str_eos] == 3, '<eos> must exist in vocab with id=3 while found id={}'.format(self.tok_to_idx[self.str_eos])
     logging.debug('Read Vocab ({} entries) from {}'.format(len(self.idx_to_tok), fvoc))
 
-    def __len__(self):
-      return len(self.idx_to_tok)
+  def __len__(self):
+    return len(self.idx_to_tok)
 
-    def __contains__(self, s): ### implementation of the method used when invoking : entry in vocab
-      if type(s) == int:
-        return s < len(self.idx_to_tok) ### testing an Idx
-      return s in self.tok_to_idx ### testing a string
+  def __contains__(self, s): ### implementation of the method used when invoking : entry in vocab
+    if type(s) == int:
+      return s < len(self.idx_to_tok) ### testing an Idx
+    return s in self.tok_to_idx ### testing a string
 
-    def __getitem__(self, s): ### implementation of the method used when invoking : vocab[entry]
-      if type(s) == int: ### return a string
-        return self.idx_to_tok[s]
-      if s in self.tok_to_idx: ### return an index
-        return self.tok_to_idx[s]
-      else:
-        return self.idx_unk
+  def __getitem__(self, s): ### implementation of the method used when invoking : vocab[entry]
+    if type(s) == int: ### return a string
+      return self.idx_to_tok[s]
+    if s in self.tok_to_idx: ### return an index
+      return self.tok_to_idx[s]
+    else:
+      return self.idx_unk
 
 
 ##############################################################################################################
