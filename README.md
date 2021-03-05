@@ -1,4 +1,4 @@
-# *Mi*nimalistic *NMT* toolkit using Transformers
+# Minimalistic NMT toolkit using Transformers
 
 A toolkit built on PyTorch (https://pytorch.org) developed for research purposes, aiming to be a clean and minimalistic code base achieving similar accuracy than other state-of-the art frameworks.
 
@@ -18,19 +18,19 @@ Hereinafter we consider `train.en, train.fr`, `valid.en, valid.fr` and `test.en`
 All files are formated one sentence per line of already preprocessed (tokenized) text. 
 
 You must preprocess your data using any tokenization/sub-tokenization toolkit.
-We provide theseveral scripts making use of the OpenNMT tokenizer library (https://github.com/OpenNMT/Tokenizer) implementing widely used tokenization/sub-tokenization algorithms (BPE/SentencePiece).
+We provide several scripts making use of the OpenNMT tokenizer library (https://github.com/OpenNMT/Tokenizer) implementing widely used tokenization/sub-tokenization algorithms (BPE/SentencePiece).
 * `tools/learn_bpe.py` : learns BPE model
 * `tools/learn_sp.py` : learns SentencePiece model
 * `tools/tokenizer.py` : tokenizes/detokenizes using the previous sub-tokenization models
 
 ### (1) Vocabulary
 
-* Create the vocabulary considered by the network, using:
+* Create the (source/target) vocabularies considered by the network, using:
 ```
 $ cat train.en | minmt-vocab.py > vocab.en
 $ cat train.fr | minmt-vocab.py > vocab.fr
 ```
-You can use a joint vocabulary:
+You can use a single joint vocabulary for both languages:
 ```
 $ cat train.{en,fr} | minmt-vocab.py > vocab.en-fr
 ```
