@@ -15,7 +15,7 @@ A toolkit built on PyTorch (https://pytorch.org) developed for research purposes
 + text in green
 ! text in orange
 # text in gray
-@@ text in purple (and bold)@@
+@ text in purple (and bold)@
 ```
 
 Run clients with the -h option for a detailed description of available options.
