@@ -1,4 +1,4 @@
-# Minimalistic NMT toolkit using Transformers
+# *Mi*nimalistic *NMT* toolkit using Transformers
 
 A toolkit built on PyTorch (https://pytorch.org) developed for research purposes, aiming to be a clean and minimalistic code base achieving similar accuracy than other state-of-the art frameworks.
 
