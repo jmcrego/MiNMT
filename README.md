@@ -23,7 +23,6 @@ In our `tools` directory we provide several scripts making use of the OpenNMT to
 * `tools/learn_sp.py` : learns SentencePiece model
 * `tools/tokenizer.py` : tokenizes/detokenizes using the previous sub-tokenization models
 
-
 ### (1) Vocabulary
 
 * Create the vocabulary considered by the network, using:
