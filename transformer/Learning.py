@@ -82,6 +82,17 @@ class Learning():
         ###
         loss_batch = self.criter(pred, ref) #sum of losses in batch
         loss_token = loss_batch / torch.sum(ref != self.idx_pad) #ntok_batch
+
+
+        print(src)
+        print(tgt)
+        print(ref)
+        print(msk_src)
+        print(msk_tgt)
+        print(loss_batch)
+        print(loss_token)
+        sys.exit()        
+
         ###
         ### optimize
         ###
