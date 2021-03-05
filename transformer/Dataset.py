@@ -53,21 +53,20 @@ class Vocab():
 ### Batch ####################################################################################################
 ##############################################################################################################
 class Batch():
-  def __init__(self, batch_size, batch_type):
+  def __init__(self, batch_size, batch_type, n_files=2):
     super(Batch, self).__init__()
     self.batch_size = batch_size
     self.batch_type = batch_type
+    self.n_files = n_files
     self.idxs_pos = []
-    self.max_lsrc = 0
-    self.max_ltgt = 0
+    self.max_lens = [0] * n_files
 
-  def fits(self, lsrc, ltgt):
+  def fits(self, lens):
     ### returns True if a new example with lengths (lsrc, ltgt) can be added in this batch; False otherwise
     if self.batch_type == 'tokens':
-      if max(lsrc,self.max_lsrc) * (len(self.idxs_pos)+1) > self.batch_size:
-        return False
-      if max(ltgt,self.max_ltgt) * (len(self.idxs_pos)+1) > self.batch_size:
-        return False
+      for n in range(n_files):
+        if max(lens[n],self.max_lens[n]) * (len(self.idxs_pos)+1) > self.batch_size:
+          return False
     elif self.batch_type == 'sentences':
       if len(self.idxs_pos) == self.batch_size:
         return False
@@ -76,12 +75,10 @@ class Batch():
       sys.exit()
     return True
 
-  def add(self, pos, lsrc, ltgt):
-    ### adds the example (pos) with lengths (lsrc, ltgt) in batch
+  def add(self, pos, lens):
     self.idxs_pos.append(pos)
-    self.max_lsrc = max(lsrc,self.max_lsrc)
-    self.max_ltgt = max(ltgt,self.max_ltgt)
-    return True
+    for n in range(self.n_files):
+      self.max_lens[n] = max(lens[n],self.max_lens[n])
 
   def __len__(self):
     return len(self.idxs_pos)
@@ -117,28 +114,27 @@ class Dataset():
       assert len(self.Idxs[0]) == len(self.Idxs[-1]), 'Non-parallel corpus in dataset'
 
 
-  def build_batchs(self, lens, idxs_pos):
+  def build_batchs(self, lens, idxs_pos, n_files):
     assert len(lens) == len(idxs_pos)
     ord_lens = np.argsort(lens) #sort by lens (lower to higher lenghts)
     idxs_pos = np.asarray(idxs_pos)
     idxs_pos = idxs_pos[ord_lens]
 
     batchs = []
-    b = Batch(self.batch_size, self.batch_type) #empty batch
+    b = Batch(self.batch_size, self.batch_type, n_files) #empty batch
     for pos in idxs_pos:
-      lsrc = len(self.Idxs[0][pos]) + 2
-      ltgt = len(self.Idxs[1][pos]) + 2
+      lens = self.lens(pos,add=2)
 
-      if not b.fits(lsrc,ltgt): ### cannot add in current batch b
+      if not b.fits(lens): ### cannot add in current batch b
         if len(b):
           ### save batch
           batchs.append(b.idxs_pos)
           ### start a new batch 
-          b = Batch(self.batch_size, self.batch_type) #empty batch
+          b = Batch(self.batch_size, self.batch_type, n_files) #empty batch
 
-      if b.fits(lsrc,ltgt):
+      if b.fits(lens):
         ### add current example
-        b.add(pos,lsrc,ltgt)
+        b.add(pos,lens)
       else:
         ### discard current example
         logging.warning('Example {} does not fit in empty batch [Discarded] ~ {}:{}'.format(pos,self.ftxt_src,self.ftxt_tgt))
@@ -147,7 +143,14 @@ class Dataset():
       ### save last batch
       batchs.append(b.idxs_pos)
 
+    logging.info('Built {} batchs in shard'.format(len(batchs)))
     return batchs
+
+  def lens(self, pos, add=2):
+    l = []
+    for n in range(len(self.Idxs)):
+      l.append(len(self.Idxs[n][pos]) + add)
+    return l
 
   def filter_length(self, pos):
     if self.max_length == 0:
@@ -164,7 +167,7 @@ class Dataset():
     ### randomize all data ###
     idxs_pos = [i for i in range(n_lines)]
     np.random.shuffle(idxs_pos)
-    logging.info('Shuffled Dataset ({} examples)'.format(n_lines))
+    logging.debug('Shuffled Dataset ({} examples)'.format(n_lines))
     ### split dataset in shards ###
     self.shard_size = self.shard_size or len(self.Idxs[0])
     shards = [idxs_pos[i:i+self.shard_size] for i in range(0, n_lines, self.shard_size)]
@@ -185,13 +188,13 @@ class Dataset():
       ####################
       ### build batchs ###
       ####################
-      batchs = self.build_batchs(shard_len, shard_pos)
+      batchs = self.build_batchs(shard_len, shard_pos, n_files)
       ####################
       ### yield batchs ###
       ####################
       idx_batchs = [i for i in range(len(batchs))]
       np.random.shuffle(idx_batchs)
-      logging.info('Shuffled {} batchs'.format(len(idx_batchs)))
+      logging.debug('Shuffled {} batchs'.format(len(idx_batchs)))
       for i in idx_batchs:
         batch_pos = batchs[i]
         batch_idx = [] #idxs_all[0] => source batch, idxs_all[1] => target batch, ...
