@@ -100,10 +100,10 @@ class Dataset():
     self.batch_size = batch_size
     self.max_length = max_length
     ### file/tokeniztion/vocabularies
-    self.idx_pad = None
-    self.idx_unk = None
-    self.idx_bos = None
-    self.idx_eos = None
+    self.idx_pad = vocs[0].idx_pad
+    self.idx_unk = vocs[0].idx_unk
+    self.idx_bos = vocs[0].idx_bos
+    self.idx_eos = vocs[0].idx_eos
     self.Idxs = []
 
     for i in range(len(files)):
@@ -111,12 +111,6 @@ class Dataset():
         logging.error('Cannot read file {}'.format(files[i]))
         sys.exit()
       voc = vocs[i]
-      if self.idx_eos is None:
-        self.idx_pad = voc.idx_pad
-        self.idx_unk = voc.idx_unk
-        self.idx_bos = voc.idx_bos
-        self.idx_eos = voc.idx_eos
-
       with codecs.open(files[i], 'r', 'utf-8') as fd:
         idxs = [[voc[t] for t in l.split()] for l in fd.read().splitlines()]
       self.Idxs.append(idxs)
@@ -168,40 +162,24 @@ class Dataset():
   def get_shard(self, shard):
     ### for pos in shard:
     ### filter out examples (self.length) and returns (len, pos) of those kept
-    idxs_len = []
-    idxs_pos = []
-    n_filtered = 0
-    n_src_tokens = 0
-    n_tgt_tokens = 0
-    n_src_unks = 0
-    n_tgt_unks = 0
+    shard_len = []
+    shard_pos = []
     for pos in shard:
-      if self.max_length and len(self.idxs_src[pos]) > self.max_length:
-        n_filtered += 1
-        continue
-
-      if self.max_length and len(self.idxs_tgt[pos]) > self.max_length:
-        n_filtered += 1
-        continue
-
+      if self.max_length:
+        ok = True
+        for n in len(self.Idxs):
+          if len(self.Idxs[n][pos]) > self.max_length:
+            ok = False
+            break
+        if not ok:
+          continue
       ### ADD example ###
-      idxs_pos.append(pos)
-      idxs_len.append(len(self.idxs_src[pos]))
-
-      n_src_tokens += len(self.idxs_src[pos])
-      n_src_unks += sum([i==self.idx_unk for i in self.idxs_src[pos]])
-
-      n_tgt_tokens += len(self.idxs_tgt[pos])
-      n_tgt_unks += sum([i==self.idx_unk for i in self.idxs_tgt[pos]])
-
-      if len(idxs_pos) == self.shard_size:
+      shard_pos.append(pos)
+      shard_len.append(len(self.idxs_src[pos]))
+      if len(shard_pos) == self.shard_size:
         break
-
-    perc_src = 100.0*n_src_unks/n_src_tokens if n_src_tokens else 0.0
-    perc_tgt = 100.0*n_tgt_unks/n_tgt_tokens if n_tgt_tokens else 0.0
-    logging.info('Built shard with {} examples ~ {}:{} tokens ~ {}:{} OOVs [{:.2f}%:{:.2f}%] ~ {} filtered examples'.format(len(idxs_pos), n_src_tokens, n_tgt_tokens, n_src_unks, n_tgt_unks, perc_src, perc_tgt, n_filtered))
-    return idxs_len, idxs_pos
-
+    logging.info('Built shard with {} examples'.format(len(shard_pos)))
+    return shard_len, shard_pos
 
   def __iter__(self):
     ### randomize all data ###
