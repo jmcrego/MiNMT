@@ -107,7 +107,6 @@ class Learning():
         ### validate
         ###
         if self.validate_every and self.optScheduler._step % self.validate_every == 0: 
-          sys.exit()
           if validset is not None:
             vloss = self.validate(validset, device)
         ###
