@@ -158,6 +158,13 @@ class Dataset():
 
     return batchs
 
+  def filter_length(self, pos):
+    if self.max_length == 0:
+      return False
+    for n in range(len(self.Idxs)):
+      if len(self.Idxs[n][pos]) > self.max_length:
+        return True
+    return False
 
   def get_shard(self, shard):
     ### for pos in shard:
@@ -165,14 +172,8 @@ class Dataset():
     shard_len = []
     shard_pos = []
     for pos in shard:
-      if self.max_length:
-        ok = True
-        for n in len(self.Idxs):
-          if len(self.Idxs[n][pos]) > self.max_length:
-            ok = False
-            break
-        if not ok:
-          continue
+      if self.filter_length(pos):
+        continue
       ### ADD example ###
       shard_pos.append(pos)
       shard_len.append(len(self.idxs_src[pos]))
@@ -183,7 +184,7 @@ class Dataset():
 
   def __iter__(self):
     ### randomize all data ###
-    idxs_pos = [i for i in range(len(self.idxs_src))]
+    idxs_pos = [i for i in range(len(self.Idxs[0]))]
     np.random.shuffle(idxs_pos)
     logging.info('Shuffled Dataset with {} examples'.format(len(idxs_pos)))
     ### split dataset in shards ###
@@ -191,9 +192,17 @@ class Dataset():
     ### traverse shards ###
     for shard in shards: #each shard is a list of positions in the original corpus
       ### format shard ###
-      lens, shard_pos = self.get_shard(shard)
+      shard_len = []
+      shard_pos = []
+      for pos in shard:
+        if not self.filter_length(pos):
+          shard_pos.append(pos)
+          shard_len.append(len(self.Idxs[0][pos]))
+          if len(shard_pos) == self.shard_size:
+            break
+      logging.info('Built shard with {} examples'.format(len(shard_pos)))
       ### build batchs ###
-      batchs = self.build_batchs(lens, shard_pos)
+      batchs = self.build_batchs(shard_len, shard_pos)
       idx_batchs = [i for i in range(len(batchs))]
       np.random.shuffle(idx_batchs)
       logging.info('Shuffled Shard with {} batchs'.format(len(idx_batchs)))
@@ -202,8 +211,8 @@ class Dataset():
         idxs_src = []
         idxs_tgt = []
         for pos in batch_pos:
-          idxs_src.append([self.idx_bos] + self.idxs_src[pos] + [self.idx_eos]) 
-          idxs_tgt.append([self.idx_bos] + self.idxs_tgt[pos] + [self.idx_eos])
+          idxs_src.append([self.idx_bos] + self.Idxs[0][pos] + [self.idx_eos]) 
+          idxs_tgt.append([self.idx_bos] + self.Idxs[1][pos] + [self.idx_eos])
         yield batch_pos, [idxs_src, idxs_tgt]
 
 
