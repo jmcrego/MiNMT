@@ -124,8 +124,6 @@ class Learning():
           save_checkpoint(self.suffix, self.model, self.optScheduler.optimizer, self.optScheduler._step, self.keep_last_n)
           logging.info('Learning STOP by [steps={}]'.format(self.optScheduler._step))
           return
-
-      logging.info('EndOfEpoch: {} #batchs: {}'.format(n_epoch,n_batch))
       ###
       ### stop by max_epochs
       ###
