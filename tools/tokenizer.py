@@ -21,13 +21,14 @@ if __name__ == '__main__':
 
 tok_config FILE is a yaml file describing onmt tokenization (further details in https://github.com/OpenNMT/Tokenizer/tree/master/bindings/python)
 BPE requires a word tokenization (mode: aggressive or conservative) while no word tokenization is typically used for SP (mode: space) 
+
 Consider for instance the next tok_config files:
 * for BPE:
- mode: aggressive
- joiner_annotate: True
+mode: aggressive
+joiner_annotate: True
 * for SP:
- mode: space
- spacer_annotate: True
+mode: space
+spacer_annotate: True
 '''.format(prog)
 
     while len(sys.argv):
