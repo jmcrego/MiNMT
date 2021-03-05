@@ -86,13 +86,13 @@ class Learning():
 
         print('src')
         for s in src:
-          print(' '.join(map(str,s)))
+          print(' '.join(map(str,s.cpu().data.numpy())))
         print('tgt')
         for t in tgt:
-          print(' '.join(map(str,t)))
+          print(' '.join(map(str,t.cpu().data.numpy())))
         print('ref')
         for r in ref:
-          print(' '.join(map(str,r)))
+          print(' '.join(map(str,r.cpu().data.numpy())))
         print(loss_batch)
         print(loss_token)
         sys.exit()        
