@@ -192,7 +192,7 @@ if __name__ == '__main__':
   device = torch.device('cuda' if o.cuda and torch.cuda.is_available() else 'cpu')
   model = Encoder_Decoder(n['n_layers'], n['ff_dim'], n['n_heads'], n['emb_dim'], n['qk_dim'], n['v_dim'], n['dropout'], n['share_embeddings'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
   logging.info('Built model (#params, size) = ({}) in device {}'.format(', '.join([str(f) for f in numparameters(model)]), next(model.parameters()).device ))
-  optim = torch.optim.Adam(model.parameters(), weight_decay=o.weight_decay, betas=(o.beta1, o.beta2), eps=o.eps)
+  optim = torch.optim.Adam(model.parameters(), betas=(o.beta1, o.beta2), eps=o.eps) #, weight_decay=o.weight_decay
   last_step, model, optim = load_checkpoint_or_initialise(o.dnet + '/network', model, optim, device)
   optScheduler = OptScheduler(optim, n['emb_dim'], o.noam_scale, o.noam_warmup, last_step)
 
