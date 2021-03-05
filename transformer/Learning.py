@@ -6,12 +6,12 @@ import logging
 import numpy as np
 import torch
 import time
+from transformer.Model import save_checkpoint, prepare_source, prepare_target
 try:
   from torch.utils.tensorboard import SummaryWriter
   tensorboard = True
 except ImportError:
   tensorboard = False
-from transformer.Model import save_checkpoint, prepare_source, prepare_target
 
 ##############################################################################################################
 ### Score ####################################################################################################
@@ -19,59 +19,24 @@ from transformer.Model import save_checkpoint, prepare_source, prepare_target
 
 class Score():
   def __init__(self):
-    #global
-    self.nsteps = 0
-    self.loss = 0.
-    self.ntok = 0
-    self.msec_epoch = time.time()
-    #report
-    self.loss_report = 0.
-    self.ntok_report = 0
+    self.sum_loss_report = 0.
+    self.sum_toks_report = 0
     self.nsteps_report = 0
-    self.msec_report = self.msec_epoch
+    self.start_report = time.time()
 
   def step(self, sum_loss_batch, ntok_batch):
-    #gold is [bs, lt]
-    #pred is [bs, lt, Vt]
-    #global
-    self.nsteps += 1
-    self.loss += sum_loss_batch
-    self.ntok += ntok_batch
-    #report
-    self.loss_report += sum_loss_batch
-    self.ntok_report += ntok_batch
+    self.sum_loss_report += sum_loss_batch
+    self.sum_toks_report += ntok_batch
     self.nsteps_report += 1
 
   def report(self):
-    tnow = time.time()
-    if self.ntok_report and self.nsteps_report:
-      loss_per_tok = self.loss_report / (1.0*self.ntok_report)
-      ms_per_step = 1000.0 * (tnow - self.msec_report) / (1.0*self.nsteps_report)
-    else:
-      loss_per_tok = 0.
-      ms_per_step = 0.
-      logging.warning('Requested report after 0 tokens optimised')
-    #initialize for next report
-    self.loss_report = 0.
-    self.ntok_report = 0
-    self.nsteps_report = 0
-    self.msec_report = tnow
-    return loss_per_tok, ms_per_step
-
-  def epoch(self):
-    tnow = time.time()
-    if self.ntok and self.nsteps:
-      loss_per_tok = self.loss / (1.0*self.ntok)
-      #acc_per_tok = self.nok / (1.0*self.ntok)
-      ms_epoch = 1000.0 * (tnow - self.msec_epoch)
-    else:
-      loss_per_tok = 0.
-      #acc_per_tok = 0.
-      ms_epoch = 0.
-      logging.warning('Requested epoch report after 0 tokens optimised')
-    #no need to initialize
-    #return acc_per_tok, loss_per_tok, ms_epoch
-    return loss_per_tok, ms_epoch
+    end_report= time.time()
+    if self.sum_toks_report and self.nsteps_report:
+      loss_per_tok = self.sum_loss_report / (1.0*self.sum_toks_report)
+      steps_per_sec = 1000.0 * self.nsteps_report / (end_report - self.start_report)
+      return loss_per_tok, steps_per_sec
+    logging.warning('Requested report after 0 tokens optimised')
+    return 0., 0
 
 ##############################################################################################################
 ### Learning #################################################################################################
@@ -120,11 +85,11 @@ class Learning():
         ###
         ### optimize
         ###
-        self.optScheduler.optimizer.zero_grad()                                        ### sets gradients to zero
-        loss_token.backward()
+        self.optScheduler.optimizer.zero_grad() ### sets gradients to zero
+        loss_token.backward() ### computes gradients
         if self.clip_grad_norm > 0.0:
           torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.clip_grad_norm) ### clip gradients to clip_grad_norm
-        self.optScheduler.step()                                                       ### updates model parameters after incrementing step and updating lr
+        self.optScheduler.step() ### updates model parameters after incrementing step and updating lr
         ###
         ### accumulate score
         ###
@@ -133,8 +98,9 @@ class Learning():
         ### report
         ###
         if self.report_every and self.optScheduler._step % self.report_every == 0: 
-          loss_per_tok, ms_per_step = score.report()
-          logging.info('Learning step: {} epoch: {} batch: {} steps/sec: {:.2f} lr: {:.6f} Loss: {:.3f}'.format(self.optScheduler._step, n_epoch, n_batch, 1000.0/ms_per_step, self.optScheduler._rate, loss_per_tok))
+          loss_per_tok, steps_per_sec = score.report()
+          logging.info('Learning step: {} epoch: {} batch: {} steps/sec: {:.2f} lr: {:.6f} Loss: {:.3f}'.format(self.optScheduler._step, n_epoch, n_batch, steps_per_sec, self.optScheduler._rate, loss_per_tok))
+          score = Score()
           if tensorboard:
             self.writer.add_scalar('Loss/train', loss_token.item(), self.optScheduler._step)
             self.writer.add_scalar('LearningRate', self.optScheduler._rate, self.optScheduler._step)
@@ -159,8 +125,7 @@ class Learning():
           logging.info('Learning STOP by [steps={}]'.format(self.optScheduler._step))
           return
 
-      loss_per_tok, ms_epoch = score.epoch()
-      logging.info('EndOfEpoch: {} #batchs: {} Loss: {:.3f} sec: {:.2f}'.format(n_epoch,n_batch,loss_per_tok,ms_epoch/1000.0))
+      logging.info('EndOfEpoch: {} #batchs: {}'.format(n_epoch,n_batch))
       ###
       ### stop by max_epochs
       ###
