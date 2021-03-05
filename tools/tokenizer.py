@@ -61,11 +61,11 @@ Consider for instance the next tok_config files:
     for l in sys.stdin:
         l = l.rstrip()
         if detok:
-            print('detok:',l.split())
-            #print(tokenizer.detokenize(l.split()))
+            #print('detok:',l.split())
+            print(tokenizer.detokenize(l.split()))
         else:
-            print('tok:',tokenizer.tokenize(l))
-            #print(' '.join(tokenizer.tokenize(l)))
+            #print('tok:',tokenizer.tokenize(l))
+            print(' '.join(tokenizer.tokenize(l)))
     toc = time.time()
     sys.stderr.write('Done ({:.2f} seconds)\n'.format(toc-tic))
 
