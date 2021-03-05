@@ -27,12 +27,12 @@ We provide theseveral scripts making use of the OpenNMT tokenizer library (https
 
 * Create the vocabulary considered by the network, using:
 ```
-cat train.en | minmt-vocab.py > vocab.en
-cat train.fr | minmt-vocab.py > vocab.fr
+$ cat train.en | minmt-vocab.py > vocab.en
+$ cat train.fr | minmt-vocab.py > vocab.fr
 ```
 You can use a joint vocabulary:
 ```
-cat train.{en,fr} | minmt-vocab.py > vocab.en-fr
+$ cat train.{en,fr} | minmt-vocab.py > vocab.en-fr
 ```
 Default vocabulary options are:
 ```
@@ -69,7 +69,7 @@ Default network options are:
 
 To start (or continue) learning, run the command:
 ```
-minmt-train.py -dnet $DNET -src_train train.en -tgt_train train.fr -src_valid valid.en -tgt_valid valid.fr
+$ minmt-train.py -dnet $DNET -src_train train.en -tgt_train train.fr -src_valid valid.en -tgt_valid valid.fr
 ```
 
 Default learning options are:
@@ -104,7 +104,7 @@ Network checkpoints are built in `$DNET` directory named `network.checkpoint_???
 
 Checkpoints available in `$DNET` can be averaged running:
 ```
-minmt-average -dnet $DNET
+$ minmt-average -dnet $DNET
 ```
 The resulting network is available in `network.checkpoint_????????_average.pt`. Averaging last checkpoints typically results in a light performance improvement.
 
@@ -113,7 +113,7 @@ The resulting network is available in `network.checkpoint_????????_average.pt`. 
 
 To translate an input file, run the command:
 ```
-minmt-translate.py -dnet $DNET -i test.en
+$ minmt-translate.py -dnet $DNET -i test.en
 ```
 The last network checkpoint is considered unless the `-m FILE` option be used.
 
@@ -148,8 +148,8 @@ It is highly recommended to use a GPU for learning/inference steps.
 If you have one, you can prefix the training/inference commands with the `CUDA_VISIBLE_DEVICES=i` envoronment variable as well as with the `-cuda` option. Ex:
 
 ```
-CUDA_VISIBLE_DEVICES=0 minmt-train.py -dnet $DNET -src_train train.en -tgt_train train.fr -src_valid valid.en -tgt_valid valid.fr -cuda
-CUDA_VISIBLE_DEVICES=0 minmt-translate.py -dnet $DNET -i test.en -cuda
+$ CUDA_VISIBLE_DEVICES=0 minmt-train.py -dnet $DNET -src_train train.en -tgt_train train.fr -src_valid valid.en -tgt_valid valid.fr -cuda
+$ CUDA_VISIBLE_DEVICES=0 minmt-translate.py -dnet $DNET -i test.en -cuda
 ```
 
 
