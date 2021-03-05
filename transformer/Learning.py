@@ -84,11 +84,15 @@ class Learning():
         loss_token = loss_batch / torch.sum(ref != self.idx_pad) #ntok_batch
 
 
-        print(src)
-        print(tgt)
-        print(ref)
-        print(msk_src)
-        print(msk_tgt)
+        print('src')
+        for s in src:
+          print(' '.join(map(str,s)))
+        print('tgt')
+        for t in tgt:
+          print(' '.join(map(str,t)))
+        print('ref')
+        for r in ref:
+          print(' '.join(map(str,r)))
         print(loss_batch)
         print(loss_token)
         sys.exit()        
