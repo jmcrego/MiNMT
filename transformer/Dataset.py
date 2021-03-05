@@ -64,7 +64,7 @@ class Batch():
   def fits(self, lens):
     ### returns True if a new example with lengths (lsrc, ltgt) can be added in this batch; False otherwise
     if self.batch_type == 'tokens':
-      for n in range(n_files):
+      for n in range(self.n_files):
         if max(lens[n],self.max_lens[n]) * (len(self.idxs_pos)+1) > self.batch_size:
           return False
     elif self.batch_type == 'sentences':
@@ -127,9 +127,7 @@ class Dataset():
 
       if not b.fits(lens): ### cannot add in current batch b
         if len(b):
-          ### save batch
-          batchs.append(b.idxs_pos)
-          ### start a new batch 
+          batchs.append(b.idxs_pos) ### save batch
           b = Batch(self.batch_size, self.batch_type, n_files) #empty batch
 
       if b.fits(lens):
