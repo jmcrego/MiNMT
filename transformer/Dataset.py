@@ -182,7 +182,7 @@ class Dataset():
           shard_len.append(len(self.Idxs[0][pos]))
           if len(shard_pos) == self.shard_size:
             break
-      logging.info('Built shard {}/{} ({} examples)'.format(s,len(shards),len(shard_pos)))
+      logging.info('Built shard {}/{} ({} examples)'.format(s+1,len(shards),len(shard_pos)))
       ####################
       ### build batchs ###
       ####################
