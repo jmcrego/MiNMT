@@ -10,7 +10,10 @@ A toolkit built on PyTorch (https://pytorch.org) developed for research purposes
 * `minmt-average.py` : Averages checkpoints
 * `minmt-translate.py`: Runs inference
 
-```diff - text in red```
+```diff
+- text in red
+```
+
 ```diff 
 + text in green
 ! text in orange
