@@ -28,7 +28,7 @@ class Vocab():
     assert self.tok_to_idx[self.str_pad] == 0, '<pad> must exist in vocab with id=0 while found id={}'.format(self.tok_to_idx[self.str_pad])
     assert self.tok_to_idx[self.str_unk] == 1, '<unk> must exist in vocab with id=1 while found id={}'.format(self.tok_to_idx[self.str_unk])
     assert self.tok_to_idx[self.str_bos] == 2, '<bos> must exist in vocab with id=2 while found id={}'.format(self.tok_to_idx[self.str_bos])
-                assert self.tok_to_idx[self.str_eos] == 3, '<eos> must exist in vocab with id=3 while found id={}'.format(self.tok_to_idx[self.str_eos])
+    assert self.tok_to_idx[self.str_eos] == 3, '<eos> must exist in vocab with id=3 while found id={}'.format(self.tok_to_idx[self.str_eos])
     logging.debug('Read Vocab ({} entries) from {}'.format(len(self.idx_to_tok), fvoc))
 
     def __len__(self):
@@ -111,11 +111,6 @@ class Dataset():
       if self.idx_eos is None:
         self.idx_bos = voc.idx_bos
         self.idx_eos = voc.idx_eos
-      else:
-        assert voc.idx_pad == self.idx_pad, 'vocabularies must have same idx_pad'
-        assert voc.idx_unk == self.idx_unk , 'vocabularies must have same idx_unk'
-        assert voc.idx_bos == self.idx_bos, 'vocabularies must have same idx_bos'
-        assert voc.idx_eos == self.idx_eos, 'vocabularies must have same idx_eos'
 
       with codecs.open(files[i], 'r', 'utf-8') as fd:
         idxs = [[voc[t] for t in l.split()] for l in fd.read().splitlines()]
