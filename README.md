@@ -11,7 +11,7 @@ A toolkit built on PyTorch (https://pytorch.org) developed for research purposes
 * `minmt-translate.py`: Runs inference
 
 
-:warning: Run clients with the -h option for a detailed description of available options.
+:information_source: Run clients with the -h option for a detailed description of available options.
 
 ## Usage example:
 
