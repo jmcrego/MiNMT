@@ -87,6 +87,13 @@ def load_checkpoint(suffix, model, device, fmodel=None):
   logging.info('Loaded model step={} from {}'.format(step,file))
   return step, model
 
+def initialise(model):
+    for p in model.parameters():
+      if p.dim() > 1:
+        torch.nn.init.xavier_uniform_(p)
+    logging.info('[network initialised]')
+    return model
+
 def load_checkpoint_or_initialise(suffix, model, optimizer, device):
   step = 0
   files = sorted(glob.glob("{}.checkpoint_????????.pt".format(suffix))) ### I check if there is one model

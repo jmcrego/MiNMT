@@ -91,6 +91,10 @@ def write_dnet(o):
     f.write('n_layers: {}\n'.format(o.n_layers))
     f.write('dropout: {}\n'.format(o.dropout))
     f.write('share_embeddings: {}\n'.format(o.share_embeddings))
+    f.write('weight_decay: {}\n'.format(o.weight_decay))
+    f.write('beta1: {}\n'.format(o.beta1))
+    f.write('beta2: {}\n'.format(o.beta2))
+    f.write('eps: {}\n'.format(o.eps))
 
   if o.src_voc == o.tgt_voc: ### joint voc
     shutil.copy(o.src_voc, o.dnet+'/joint_voc')

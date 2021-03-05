@@ -8,7 +8,7 @@ import logging
 import torch
 import numpy as np
 from transformer.Dataset import Dataset, Vocab
-from transformer.Model import Encoder_Decoder, load_checkpoint_or_initialise, save_checkpoint, load_checkpoint, numparameters
+from transformer.Model import Encoder_Decoder, load_checkpoint_or_initialise, save_checkpoint, load_checkpoint, numparameters, initialise
 from transformer.Optimizer import OptScheduler, LabelSmoothing_NLL, LabelSmoothing_KLDiv
 from transformer.Learning import Learning
 from tools.Tools import create_logger, read_dnet
@@ -76,14 +76,6 @@ class Options():
       elif tok=='-clip_grad_norm':
         self.clip_grad_norm = float(argv.pop(0))
 
-      elif tok=='-weight_decay':
-        self.weight_decay= float(argv.pop(0))
-      elif tok=='-beta1':
-        self.beta1 = float(argv.pop(0))
-      elif tok=='-beta2':
-        self.beta2 = float(argv.pop(0))
-      elif tok=='-eps':
-        self.eps = float(argv.pop(0))
       elif tok=='-noam_scale':
         self.noam_scale = float(argv.pop(0))
       elif tok=='-noam_warmup':
@@ -150,13 +142,11 @@ class Options():
    -keep_last_n       INT : save last INT checkpoints ({})
    -clip_grad_norm  FLOAT : clip gradients ({})
 
-   [Optimization]
-   -weight_decay    FLOAT : optimizer weight decay ({})
-   -beta1           FLOAT : beta1 for adam optimizer ({})
-   -beta2           FLOAT : beta2 for adam optimizer ({})
-   -eps             FLOAT : epsilon for adam optimizer ({})
+   [Scheduler]
    -noam_scale      FLOAT : scale of Noam decay for learning rate ({})
    -noam_warmup       INT : warmup steps of Noam decay for learning rate ({})
+
+   [Loss]
    -label_smoothing FLOAT : smoothing probability for label smoothing ({})
    -loss           STRING : loss function: KLDiv, NLL ({})
 
@@ -171,7 +161,7 @@ class Options():
    -log_file         FILE : log file  (stderr)
    -log_level      STRING : log level [debug, info, warning, critical, error] (info)
    -h                     : this help
-'''.format(self.prog, self.max_steps, self.max_epochs, self.validate_every, self.save_every, self.report_every, self.keep_last_n, self.clip_grad_norm, self.weight_decay, self.beta1, self.beta2, self.eps, self.noam_scale, self.noam_warmup, self.label_smoothing, self.loss, self.shard_size, self.max_length, self.batch_size, self.batch_type, self.cuda, self.seed))
+'''.format(self.prog, self.max_steps, self.max_epochs, self.validate_every, self.save_every, self.report_every, self.keep_last_n, self.clip_grad_norm, self.noam_scale, self.noam_warmup, self.label_smoothing, self.loss, self.shard_size, self.max_length, self.batch_size, self.batch_type, self.cuda, self.seed))
     sys.exit()
 
 ######################################################################
@@ -192,7 +182,7 @@ if __name__ == '__main__':
   device = torch.device('cuda' if o.cuda and torch.cuda.is_available() else 'cpu')
   model = Encoder_Decoder(n['n_layers'], n['ff_dim'], n['n_heads'], n['emb_dim'], n['qk_dim'], n['v_dim'], n['dropout'], n['share_embeddings'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
   logging.info('Built model (#params, size) = ({}) in device {}'.format(', '.join([str(f) for f in numparameters(model)]), next(model.parameters()).device ))
-  optim = torch.optim.Adam(model.parameters(), weight_decay=o.weight_decay, betas=(o.beta1, o.beta2), eps=o.eps) 
+  optim = torch.optim.Adam(model.parameters(), weight_decay=n['weight_decay'], betas=(n['beta1'], n['beta2']), eps=n['eps']) 
   last_step, model, optim = load_checkpoint_or_initialise(o.dnet + '/network', model, optim, device)
   optScheduler = OptScheduler(optim, n['emb_dim'], o.noam_scale, o.noam_warmup, last_step)
 
@@ -207,12 +197,9 @@ if __name__ == '__main__':
   ##################
   ### load data ####
   ##################
+  valid =None
   if o.src_valid is not None and o.tgt_valid is not None:
-    #valid = Dataset([o.src_valid,o.tgt_valid], [src_voc,tgt_voc], shard_size=o.shard_size, batch_size=o.batch_size, batch_type=o.batch_type, max_length=o.max_length)
     valid = Dataset([src_voc, tgt_voc], [o.src_valid, o.tgt_valid], o.shard_size, o.batch_size, o.batch_type, o.max_length)
-  else:
-    valid =None
-  #train = Dataset([o.src_train,o.tgt_train], [src_voc,tgt_voc], shard_size=o.shard_size, batch_size=o.batch_size, batch_type=o.batch_type, max_length=o.max_length)
   train = Dataset([src_voc, tgt_voc], [o.src_train, o.tgt_train], o.shard_size, o.batch_size, o.batch_type, o.max_length)
 
   #############
