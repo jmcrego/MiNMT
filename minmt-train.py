@@ -209,11 +209,11 @@ if __name__ == '__main__':
   ##################
   if o.src_valid is not None and o.tgt_valid is not None:
     #valid = Dataset([o.src_valid,o.tgt_valid], [src_voc,tgt_voc], shard_size=o.shard_size, batch_size=o.batch_size, batch_type=o.batch_type, max_length=o.max_length)
-    valid = Dataset(src_voc, tgt_voc, o.src_valid, o.tgt_valid, o.shard_size, o.batch_size, o.batch_type, o.max_length)
+    valid = Dataset([src_voc, tgt_voc], [o.src_valid, o.tgt_valid], o.shard_size, o.batch_size, o.batch_type, o.max_length)
   else:
     valid =None
   #train = Dataset([o.src_train,o.tgt_train], [src_voc,tgt_voc], shard_size=o.shard_size, batch_size=o.batch_size, batch_type=o.batch_type, max_length=o.max_length)
-  train = Dataset(src_voc, tgt_voc, o.src_train, o.tgt_train, o.shard_size, o.batch_size, o.batch_type, o.max_length)
+  train = Dataset([src_voc, tgt_voc], [o.src_train, o.tgt_train], o.shard_size, o.batch_size, o.batch_type, o.max_length)
 
   #############
   ### learn ###
