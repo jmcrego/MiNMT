@@ -61,7 +61,8 @@ Consider for instance the next tok_config files:
     for l in sys.stdin:
         l = l.rstrip()
         if detok:
-            print(tokenizer.detokenize(l.split()))
+            print('kk',l.split())
+            #print(tokenizer.detokenize(l.split()))
         else:
             print(' '.join(tokenizer.tokenize(l)))
     toc = time.time()
