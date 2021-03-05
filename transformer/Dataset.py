@@ -104,23 +104,20 @@ class Dataset():
     self.idx_eos = vocs[0].idx_eos
     self.Idxs = []
 
-    for i in range(len(files)):
-      if not os.path.isfile(files[i]):
-        logging.error('Cannot read file {}'.format(files[i]))
+    for n in range(len(files)):
+      if not os.path.isfile(files[n]):
+        logging.error('Cannot read file {}'.format(files[n]))
         sys.exit()
-      voc = vocs[i]
-      with codecs.open(files[i], 'r', 'utf-8') as fd:
-        idxs = [[voc[t] for t in l.split()] for l in fd.read().splitlines()]
+      with codecs.open(files[n], 'r', 'utf-8') as fd:
+        idxs = [[vocs[n][t] for t in l.split()] for l in fd.read().splitlines()]
       self.Idxs.append(idxs)
       ### compute tokens and OOVs
-      n_tok, n_unk = flatten_count(self.Idxs, [voc.idx_unk])
-      logging.info('Read Corpus ({} lines ~ {} tokens ~ {} OOVs [{:.2f}%]) from {}'.format(len(idxs),n_tok,n_unk,100.0*n_unk/n_tok,files[i]))
+      n_tok, n_unk = flatten_count(self.Idxs, [self.idx_unk])
+      logging.info('Read Corpus ({} lines ~ {} tokens ~ {} OOVs [{:.2f}%]) from {}'.format(len(idxs),n_tok,n_unk,100.0*n_unk/n_tok,files[n]))
       assert len(self.Idxs[0]) == len(self.Idxs[-1]), 'Non-parallel corpus in dataset'
 
-    self.idxs_src = self.Idxs[0]
-    self.idxs_tgt = self.Idxs[1]
     if self.shard_size == 0:
-      self.shard_size = len(self.idxs_src)
+      self.shard_size = len(self.Idxs[0])
       logging.info('shard_size set to {}'.format(self.shard_size))
 
 
@@ -165,14 +162,17 @@ class Dataset():
     return False
 
   def __iter__(self):
+    assert len(self.Idxs) > 0, 'Empty dataset'
+    n_files = len(self.Idxs)
+    n_lines = len(self.Idxs[0])
     ### randomize all data ###
-    idxs_pos = [i for i in range(len(self.Idxs[0]))]
+    idxs_pos = [i for i in range(len(n_lines))]
     np.random.shuffle(idxs_pos)
-    logging.info('Shuffled Dataset with {} examples'.format(len(idxs_pos)))
+    logging.info('Shuffled Dataset ({} examples)'.format(len(n_lines)))
     ### split dataset in shards ###
-    shards = [idxs_pos[i:i+self.shard_size] for i in range(0, len(idxs_pos), self.shard_size)]
+    shards = [idxs_pos[i:i+self.shard_size] for i in range(0, n_lines, self.shard_size)]
     ### traverse shards ###
-    for shard in shards: #each shard is a list of positions in the original corpus
+    for s,shard in enumerate(shards): #each shard is a list of positions in the original corpus self.Idxs
       ###################
       ### build shard ###
       ###################
@@ -184,35 +184,26 @@ class Dataset():
           shard_len.append(len(self.Idxs[0][pos]))
           if len(shard_pos) == self.shard_size:
             break
-      logging.info('Built shard with {} examples'.format(len(shard_pos)))
+      logging.info('Built shard {}/{} ({} examples)'.format(s,len(shards),len(shard_pos)))
       ####################
       ### build batchs ###
       ####################
       batchs = self.build_batchs(shard_len, shard_pos)
+      ####################
+      ### yield batchs ###
+      ####################
       idx_batchs = [i for i in range(len(batchs))]
       np.random.shuffle(idx_batchs)
-      logging.info('Shuffled Shard with {} batchs'.format(len(idx_batchs)))
+      logging.info('Shuffled {} batchs'.format(len(idx_batchs)))
       for i in idx_batchs:
         batch_pos = batchs[i]
         batch_idx = [] #idxs_all[0] => source batch, idxs_all[1] => target batch, ...
-        for n in range(len(self.Idxs)):
+        for n in range(n_files):
           idxs = []
           for pos in batch_pos:
             idxs.append([self.idx_bos] + self.Idxs[n][pos] + [self.idx_eos])
           batch_idx.append(idxs)
         yield batch_pos, batch_idx
-
-
-
-
-#        batch_pos = batchs[i]
-#        idxs_src = []
-#        idxs_tgt = []
-#        for pos in batch_pos:
-#          idxs_src.append([self.idx_bos] + self.Idxs[0][pos] + [self.idx_eos]) 
-#          idxs_tgt.append([self.idx_bos] + self.Idxs[1][pos] + [self.idx_eos])
-#        yield batch_pos, [idxs_src, idxs_tgt]
-
 
 
 
