@@ -24,20 +24,21 @@ def read_dnet(dnet):
   if not os.path.isfile(dnet + '/network'):
     logging.error('cannot find network file: {}'.format(dnet + '/network'))
     sys.exit()
-  if not os.path.isfile(dnet + '/src_voc') or not os.path.isfile(dnet + '/tgt_voc'):
-    logging.error('cannot find vocabulary file/s')
+  if not os.path.isfile(dnet + '/src_voc'):
+    logging.error('cannot find {}/src_voc file'.format(dnet))
+    sys.exit()
+  if not os.path.isfile(dnet + '/tgt_voc'):
+    logging.error('cannot find {}/tgt_voc file'.format(dnet))
     sys.exit()
 
   with open(dnet + '/network', 'r') as f:
     s = f.read()
-  n = eval(s)
-
-  logging.info("Network = {}".format(n))
-
+  net = eval(s)
+  logging.info("Network = {}".format(net))
   src_voc = dnet + '/src_voc'
   tgt_voc = dnet + '/tgt_voc'
 
-  return n, src_voc, tgt_voc
+  return net, src_voc, tgt_voc
 
 
 def write_dnet(o):
