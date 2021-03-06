@@ -56,6 +56,30 @@ if __name__ == '__main__':
 
   tic = time.time()
   o = Options(sys.argv)
-  average_models(o.dnet + '/network')
+
+  model_files = sorted(glob.glob("{}.checkpoint_????????.pt".format(o.dnet + '/network'))) ### I check if there is one model
+  if len(model_files) == 0:
+    logging.error('No checkpoint found')
+    sys.exit()
+
+  avg_model = None
+  final_step = 0
+  for i, model_file in enumerate(model_files):
+    m = torch.load(model_file, map_location='cpu')
+    model = m['model']
+    step = m['step']
+    logging.info('Loading checkpoint step={} file={}'.format(step,model_file))
+    if step > final_step:
+      final_step = step 
+
+    if i == 0:
+      avg_model = model
+    else:
+      for (k, v) in avg_model.items():
+        avg_model[k].mul_(i).add_(model[k]).div_(i + 1)
+
+  final = {"model": avg_model, "step": final_step}
+  torch.save(final, "{}.checkpoint_{:08d}_average.pt".format(suffix,final_step))
+
   toc = time.time()
   logging.info('Done ({:.2f} seconds)'.format(toc-tic))
