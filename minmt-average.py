@@ -71,13 +71,12 @@ if __name__ == '__main__':
     logging.info('Loading checkpoint step={} file={}'.format(step,model_file))
     if step > final_step:
       final_step = step 
-
     if i == 0:
       avg_model = model
     else:
       for (k, v) in avg_model.items():
         avg_model[k].mul_(i).add_(model[k]).div_(i + 1)
-
+  #dump averaged network
   final = {"model": avg_model, "step": final_step}
   torch.save(final, "{}.checkpoint_{:08d}_average.pt".format(suffix,final_step))
 
