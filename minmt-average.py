@@ -30,6 +30,9 @@ class Options():
       elif tok=="-log_level" and len(argv):
         log_level = argv.pop(0)
 
+      else:
+        self.usage('Unrecognized {} option'.format(tok))
+
     create_logger(log_file,log_level)
     if self.dnet is None:
       logging.error('missing -dnet option')

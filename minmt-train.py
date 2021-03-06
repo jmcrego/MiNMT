@@ -111,6 +111,9 @@ class Options():
       elif tok=="-log_level" and len(argv):
         log_level = argv.pop(0)
 
+      else:
+        self.usage('Unrecognized {} option'.format(tok))
+
     if self.dnet is None:
       self.usage('missing -dnet option')
 

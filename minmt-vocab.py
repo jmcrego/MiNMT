@@ -26,6 +26,11 @@ if __name__ == '__main__':
     elif tok=="-max_size":
       max_size = int(sys.argv.pop(0))
 
+    else:
+      sys.stderr.write('Unrecognized {} option\n'.format(tok))
+      sys.stderr.write(usage)
+      sys.exit()
+
   create_logger(None, 'info')
   logging.info('min_freq = {}'.format(min_freq))
   logging.info('max_size = {}'.format(max_size))
