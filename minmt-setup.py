@@ -134,7 +134,10 @@ if __name__ == '__main__':
   device = torch.device('cpu')
   model = Encoder_Decoder(o.net['n_layers'], o.net['ff_dim'], o.net['n_heads'], o.net['emb_dim'], o.net['qk_dim'], o.net['v_dim'], o.net['dropout'], o.net['share_embeddings'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
   logging.info('Built model (#params, size) = ({}) in device {}'.format(', '.join([str(f) for f in numparameters(model)]), next(model.parameters()).device ))
-  model = initialise_model(model)
+  for p in model.parameters():
+    if p.dim() > 1:
+      torch.nn.init.xavier_uniform_(p)
+  logging.info('[network initialised]')
   optim = torch.optim.Adam(model.parameters(), weight_decay=o.net['weight_decay'], betas=(o.net['beta1'], o.net['beta2']), eps=o.net['eps']) 
   save_checkpoint(o.dnet+ '/network', model, optim, 0, 0) ### saves model checkpoint and optimizer
   toc = time.time()

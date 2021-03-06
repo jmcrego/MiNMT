@@ -53,13 +53,6 @@ def average_models(suffix):
   final = {"model": avg_model, "step": final_step}
   torch.save(final, "{}.checkpoint_{:08d}_average.pt".format(suffix,final_step))
 
-def initialise_model(model):
-    for p in model.parameters():
-      if p.dim() > 1:
-        torch.nn.init.xavier_uniform_(p)
-    logging.info('[network initialised]')
-    return model
-
 def load_checkpoint(suffix, model, optimizer, device):
   step = 0
   files = sorted(glob.glob("{}.checkpoint_????????.pt".format(suffix))) ### I check if there is one model
@@ -92,7 +85,6 @@ def load_model(suffix, model, device, fmodel=None):
       logging.error('No model found')
       sys.exit()
     file = fmodel
-
   else:
     files = sorted(glob.glob("{}.checkpoint_????????.pt".format(suffix))) ### I check if there is one model
     if len(files) == 0:
