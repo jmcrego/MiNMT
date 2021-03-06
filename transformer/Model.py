@@ -112,11 +112,6 @@ def prepare_source(batch_src, idx_pad, device):
   src = [torch.tensor(seq) for seq in batch_src] #[bs, ls]
   src = torch.nn.utils.rnn.pad_sequence(src, batch_first=True, padding_value=idx_pad).to(device) #[bs,ls]
   msk_src = (src != idx_pad).unsqueeze(-2) #[bs,1,ls] (False where <pad> True otherwise)
-  if False:
-    print('batch')
-    for i in range(len(src)):
-      print('src[{}]: '.format(i) + ' '.join(['{: ^5}'.format(t) for t in src[i].tolist()]))
-      print('msk[{}]: '.format(i) + ' '.join(['{: ^5}'.format(t) for t in msk_src[i,0].tolist()]))
   return src, msk_src
 
 def prepare_target(batch_tgt, idx_pad, device):
@@ -125,12 +120,6 @@ def prepare_target(batch_tgt, idx_pad, device):
   ref = [torch.tensor(seq[1:])  for seq in batch_tgt] #delete <bos>
   ref = torch.nn.utils.rnn.pad_sequence(ref, batch_first=True, padding_value=idx_pad).to(device)
   msk_tgt = (tgt != idx_pad).unsqueeze(-2) & (1 - torch.triu(torch.ones((1, tgt.size(1), tgt.size(1)), device=tgt.device), diagonal=1)).bool() #[bs,lt,lt]
-  if False:
-    for i in range(len(tgt)):
-      print('tgt[{}]: '.format(i) + ' '.join(['{: ^5}'.format(t) for t in tgt[i].tolist()]))
-      print('ref[{}]: '.format(i) + ' '.join(['{: ^5}'.format(t) for t in ref[i].tolist()]))
-      for j in range(len(msk_tgt[i])):
-        print('msk[{}]: '.format(i) + ' '.join(['{: ^5}'.format(t) for t in msk_tgt[i,j].tolist()]))
   return tgt, ref, msk_tgt
 
 ##############################################################################################################
