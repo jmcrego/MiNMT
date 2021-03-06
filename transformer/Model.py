@@ -53,6 +53,27 @@ def average_models(suffix):
   final = {"model": avg_model, "step": final_step}
   torch.save(final, "{}.checkpoint_{:08d}_average.pt".format(suffix,final_step))
 
+def initialise_model(model):
+    for p in model.parameters():
+      if p.dim() > 1:
+        torch.nn.init.xavier_uniform_(p)
+    logging.info('[network initialised]')
+    return model
+
+def load_checkpoint(suffix, model, optimizer, device):
+  step = 0
+  files = sorted(glob.glob("{}.checkpoint_????????.pt".format(suffix))) ### I check if there is one model
+  if len(files) == 0:
+    logging.info('No model found')
+    sys.exit()
+
+  file = files[-1] ### last is the newest
+  checkpoint = torch.load(file, map_location=device)
+  step = checkpoint['step']
+  model.load_state_dict(checkpoint['model'])
+  optimizer.load_state_dict(checkpoint['optimizer'])
+  logging.info('Loaded model/optimizer step={} from {}'.format(step,file))
+  return step, model, optimizer ### this is for learning
 
 def save_checkpoint(suffix, model, optimizer, step, keep_last_n):
   checkpoint = { 'step': step, 'model': model.state_dict(), 'optimizer': optimizer.state_dict() }
@@ -64,7 +85,7 @@ def save_checkpoint(suffix, model, optimizer, step, keep_last_n):
     os.remove(f) ### first is the oldest
     logging.debug('Removed checkpoint {}'.format(f))
 
-def load_checkpoint(suffix, model, device, fmodel=None):
+def load_model(suffix, model, device, fmodel=None):
   step = 0
   if fmodel is not None:
     if not os.path.isfile(fmodel):
@@ -86,37 +107,6 @@ def load_checkpoint(suffix, model, device, fmodel=None):
   model.load_state_dict(checkpoint['model'])
   logging.info('Loaded model step={} from {}'.format(step,file))
   return step, model
-
-def initialise(model):
-    for p in model.parameters():
-      if p.dim() > 1:
-        torch.nn.init.xavier_uniform_(p)
-    logging.info('[network initialised]')
-    return model
-
-def load_checkpoint_or_initialise(suffix, model, optimizer, device):
-  step = 0
-  files = sorted(glob.glob("{}.checkpoint_????????.pt".format(suffix))) ### I check if there is one model
-  if len(files) == 0:
-    for p in model.parameters():
-      if p.dim() > 1:
-        torch.nn.init.xavier_uniform_(p)
-    logging.info('No model found [network initialised]')
-    return step, model, optimizer
-
-  file = files[-1] ### last is the newest
-  logging.info('Loading checkpoint file={}'.format(file))
-  checkpoint = torch.load(file, map_location=device)
-  step = checkpoint['step']
-  ### assert checkpoint['model'] has same options than model
-  model.load_state_dict(checkpoint['model'])
-  if optimizer is None:
-    logging.info('Loaded model step={} from {}'.format(step,file))
-    return step, model, optimizer ### this is for inference
-
-  optimizer.load_state_dict(checkpoint['optimizer'])
-  logging.info('Loaded model/optimizer step={} from {}'.format(step,file))
-  return step, model, optimizer ### this is for learning
 
 def prepare_source(batch_src, idx_pad, device):
   src = [torch.tensor(seq) for seq in batch_src] #[bs, ls]

@@ -7,7 +7,7 @@ import logging
 import torch
 #import yaml
 from transformer.Dataset import Dataset, Vocab
-from transformer.Model import Encoder_Decoder, load_checkpoint_or_initialise, save_checkpoint, load_checkpoint, numparameters
+from transformer.Model import Encoder_Decoder, load_model, numparameters
 from transformer.Inference import Inference
 from tools.Tools import create_logger, read_dnet
 
@@ -140,7 +140,7 @@ if __name__ == '__main__':
   device = torch.device('cuda' if o.cuda and torch.cuda.is_available() else 'cpu')
   model = Encoder_Decoder(n['n_layers'], n['ff_dim'], n['n_heads'], n['emb_dim'], n['qk_dim'], n['v_dim'], n['dropout'], n['share_embeddings'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
   logging.info('Built model (#params, size) = ({}) in device {}'.format(', '.join([str(f) for f in numparameters(model)]), next(model.parameters()).device ))
-  step, model = load_checkpoint(o.dnet + '/network', model, device, o.model)
+  step, model = load_model(o.dnet + '/network', model, device, o.model)
 
   ##################
   ### load test ####

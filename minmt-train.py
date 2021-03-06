@@ -8,7 +8,7 @@ import logging
 import torch
 import numpy as np
 from transformer.Dataset import Dataset, Vocab
-from transformer.Model import Encoder_Decoder, load_checkpoint_or_initialise, save_checkpoint, load_checkpoint, numparameters, initialise
+from transformer.Model import Encoder_Decoder, load_checkpoint, numparameters
 from transformer.Optimizer import OptScheduler, LabelSmoothing_NLL, LabelSmoothing_KLDiv
 from transformer.Learning import Learning
 from tools.Tools import create_logger, read_dnet
@@ -186,7 +186,7 @@ if __name__ == '__main__':
   model = Encoder_Decoder(n['n_layers'], n['ff_dim'], n['n_heads'], n['emb_dim'], n['qk_dim'], n['v_dim'], n['dropout'], n['share_embeddings'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
   logging.info('Built model (#params, size) = ({}) in device {}'.format(', '.join([str(f) for f in numparameters(model)]), next(model.parameters()).device ))
   optim = torch.optim.Adam(model.parameters(), weight_decay=n['weight_decay'], betas=(n['beta1'], n['beta2']), eps=n['eps']) 
-  last_step, model, optim = load_checkpoint_or_initialise(o.dnet + '/network', model, optim, device)
+  last_step, model, optim = load_checkpoint(o.dnet + '/network', model, optim, device)
 
   ############################
   ### build scheduler/loss ###
