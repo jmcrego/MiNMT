@@ -5,7 +5,6 @@ import sys
 import torch
 import logging
 from tools.Tools import create_logger
-from transformer.Model import average_models
 
 ######################################################################
 ### Options ##########################################################
