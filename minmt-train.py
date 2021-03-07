@@ -32,7 +32,7 @@ class Options():
     self.save_every =5000
     self.report_every = 100
     self.keep_last_n = 5
-    self.clip_grad_norm = 0.0
+    self.clip_grad_norm = 0.5
     ### optimization
     self.weight_decay = 0.0
     self.beta1 = 0.9
