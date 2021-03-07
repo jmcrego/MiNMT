@@ -7,7 +7,7 @@ import logging
 import torch
 from tools.Tools import create_logger, write_dnet
 from transformer.Dataset import Vocab
-from transformer.Model import Encoder_Decoder, save_checkpoint, numparameters, initialise_model
+from transformer.Model import Encoder_Decoder, save_checkpoint, numparameters
 import numpy as np
 
 ######################################################################
