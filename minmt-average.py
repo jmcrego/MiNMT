@@ -78,7 +78,7 @@ if __name__ == '__main__':
         avg_model[k].mul_(i).add_(model[k]).div_(i + 1)
   #dump averaged network
   final = {"model": avg_model, "step": final_step}
-  torch.save(final, "{}.checkpoint_{:08d}_average.pt".format(suffix,final_step))
+  torch.save(final, "{}.checkpoint_{:08d}_average.pt".format(o.dnet+'/network',final_step))
 
   toc = time.time()
   logging.info('Done ({:.2f} seconds)'.format(toc-tic))
