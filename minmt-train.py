@@ -33,13 +33,10 @@ class Options():
     self.report_every = 100
     self.keep_last_n = 5
     self.clip_grad_norm = 0.5
-    ### optimization
-    self.weight_decay = 0.0
-    self.beta1 = 0.9
-    self.beta2 = 0.998
-    self.eps = 1e-9
+    ### scheduler
     self.noam_scale = 2.0
     self.noam_warmup = 4000
+    ### loss
     self.label_smoothing = 0.1
     self.loss = 'NLL'
     ### data
