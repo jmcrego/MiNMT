@@ -54,25 +54,13 @@ def save_checkpoint(suffix, model, optimizer, step, keep_last_n):
     logging.debug('Removed checkpoint {}'.format(f))
 
 def load_model(suffix, model, device, fmodel=None):
-  step = 0
-  if fmodel is not None:
-    if not os.path.isfile(fmodel):
-      logging.error('No model found')
-      sys.exit()
-    file = fmodel
-  else:
-    files = sorted(glob.glob("{}.checkpoint_????????.pt".format(suffix))) ### I check if there is one model
-    if len(files) == 0:
-      logging.error('No checkpoint found')
-      sys.exit()
-    file = files[-1] ### last is the newest
-
-  logging.info('Loading checkpoint file={}'.format(file))
-  checkpoint = torch.load(file, map_location=device)
+  if fmodel is None or not os.path.isfile(fmodel):
+    logging.error('No model found')
+    sys.exit()
+  checkpoint = torch.load(fmodel, map_location=device)
   step = checkpoint['step']
-  ### assert checkpoint['model'] has same options than model
   model.load_state_dict(checkpoint['model'])
-  logging.info('Loaded model step={} from {}'.format(step,file))
+  logging.info('Loaded model step={} from {}'.format(step,fmodel))
   return step, model
 
 def prepare_source(batch_src, idx_pad, device):
