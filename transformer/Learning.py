@@ -55,7 +55,7 @@ class Learning():
     self.save_every = ol.save_every
     self.report_every = ol.report_every
     self.keep_last_n = ol.keep_last_n
-    self.clip_grad_norm = ol.clip_grad_norm
+    self.clip = ol.clip
     self.idx_pad = idx_pad
     if tensorboard:
       self.writer = SummaryWriter(log_dir=ol.dnet, comment='', purge_step=None, max_queue=10, flush_secs=60, filename_suffix='')
@@ -86,8 +86,8 @@ class Learning():
         ###
         self.optScheduler.optimizer.zero_grad() ### sets gradients to zero
         loss_token.backward() ### computes gradients
-        if self.clip_grad_norm > 0.0:
-          torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.clip_grad_norm) ### clip gradients to clip_grad_norm
+        if self.clip > 0.0: ### clip gradients norm
+          torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.clip)
         self.optScheduler.step() ### updates model parameters after incrementing step and updating lr
         ###
         ### accumulate score
