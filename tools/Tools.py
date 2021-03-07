@@ -56,7 +56,7 @@ def write_dnet(o):
   logging.info('created network directory: {}'.format(o.dnet))
 
   with open(o.dnet + '/network', 'w') as f:
-    f.write(str(o.n))
+    f.write(str(o.net))
 
   shutil.copy(o.src_voc, o.dnet+'/src_voc')
   logging.info('copied source vocabulary {} into {}/src_voc'.format(o.src_voc, o.dnet))
