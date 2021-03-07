@@ -133,7 +133,7 @@ class Options():
    -src_valid        FILE : source-side validation file
    -tgt_valid        FILE : target-side validation file
 
-   [learning]
+   [Learning]
    -max_steps         INT : maximum number of training updates ({})
    -max_epochs        INT : maximum number of training epochs ({})
    -validate_every    INT : validation every INT model updates ({})
@@ -146,8 +146,8 @@ class Options():
    -noam_warmup       INT : warmup steps of Noam decay for learning rate ({})
 
    [Optim]
-   -label_smoothing FLOAT : smoothing probability for label smoothing ({})
    -loss           STRING : loss function: KLDiv, NLL ({})
+   -label_smoothing FLOAT : smoothing probability for label smoothing ({})
    -clip            FLOAT : clips gradient norm of parameters ({})
 
    [Data]
