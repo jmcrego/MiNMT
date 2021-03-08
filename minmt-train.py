@@ -32,13 +32,12 @@ class Options():
     self.save_every =5000
     self.report_every = 100
     self.keep_last_n = 5
-    ### scheduler
+    ### optim
     self.noam_scale = 2.0
     self.noam_warmup = 4000
-    ### optim
-    self.clip = 0.5
     self.label_smoothing = 0.1
     self.loss = 'NLL'
+    self.clip = 0.5
     ### data
     self.shard_size = 500000
     self.max_length = 100
@@ -70,8 +69,6 @@ class Options():
         self.report_every = int(argv.pop(0))
       elif tok=='-keep_last_n':
         self.keep_last_n = int(argv.pop(0))
-      elif tok=='-clip':
-        self.clip = float(argv.pop(0))
 
       elif tok=='-noam_scale':
         self.noam_scale = float(argv.pop(0))
@@ -81,6 +78,8 @@ class Options():
         self.label_smoothing = float(argv.pop(0))
       elif tok=='-loss':
         self.loss = argv.pop(0)
+      elif tok=='-clip':
+        self.clip = float(argv.pop(0))
 
       elif tok=='-src_train':
         self.src_train = argv.pop(0)
@@ -141,14 +140,12 @@ class Options():
    -report_every      INT : report every INT model updates ({})
    -keep_last_n       INT : save last INT checkpoints ({})
 
-   [Scheduler]
+   [Optimization]
+   -label_smoothing FLOAT : label smoothing probability ({})
+   -loss           STRING : loss function: KLDiv, NLL ({})
+   -clip            FLOAT : clips gradient norm of parameters ({})
    -noam_scale      FLOAT : scale of Noam decay for learning rate ({})
    -noam_warmup       INT : warmup steps of Noam decay for learning rate ({})
-
-   [Optim]
-   -loss           STRING : loss function: KLDiv, NLL ({})
-   -label_smoothing FLOAT : smoothing probability for label smoothing ({})
-   -clip            FLOAT : clips gradient norm of parameters ({})
 
    [Data]
    -shard_size        INT : maximum shard size ({}) use 0 to consider all data in a single shard
@@ -161,7 +158,7 @@ class Options():
    -log_file         FILE : log file  (stderr)
    -log_level      STRING : log level [debug, info, warning, critical, error] (info)
    -h                     : this help
-'''.format(self.prog, self.max_steps, self.max_epochs, self.validate_every, self.save_every, self.report_every, self.keep_last_n, self.clip, self.noam_scale, self.noam_warmup, self.label_smoothing, self.loss, self.shard_size, self.max_length, self.batch_size, self.batch_type, self.cuda, self.seed))
+'''.format(self.prog, self.max_steps, self.max_epochs, self.validate_every, self.save_every, self.report_every, self.keep_last_n, self.label_smoothing, self.loss, self.clip, self.noam_scale, self.noam_warmup, self.shard_size, self.max_length, self.batch_size, self.batch_type, self.cuda, self.seed))
     sys.exit()
 
 ######################################################################
