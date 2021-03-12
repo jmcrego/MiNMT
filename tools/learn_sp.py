@@ -14,7 +14,6 @@ if __name__ == '__main__':
     prog = sys.argv.pop(0)
     usage = '''usage: {} -sp_model FILE [-vocab_size INT] [-character_coverage FLOAT] [-i FILES]
     -sp_model            FILE : bpe model to build
-    -tok_config          FILE : base tokenization config file
     -vocab_size           INT : vocabulary size ({})
     -character_coverage FLOAT : character coverage ({})
     -i                  FILES : comma-separated list of files ({})
