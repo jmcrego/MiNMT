@@ -48,6 +48,7 @@ def learn_bpe(tok_config, bpe_model, symbols=32000, files=[]):
             sys.stderr.write('Ingest file={}\n'.format(f))
             learner.ingest_file(f)
     else:
+        sys.stderr.write('Ingest stdin\n')
         for l in sys.stdin:
             learner.ingest(l)
     learner.learn(bpe_model)
@@ -60,6 +61,7 @@ def learn_sp(sp_model, vocab_size=32000, character_coverage=0.98, files=[]):
             sys.stderr.write('Ingest file={}\n'.format(f))
             learner.ingest_file(f)
     else:
+        sys.stderr.write('Ingest stdin\n')
         for l in sys.stdin:
             learner.ingest(l)
     learner.learn(sp_model)    
