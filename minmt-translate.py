@@ -20,6 +20,7 @@ class Options():
     self.prog = argv.pop(0)
     self.dnet = None
     self.input = None
+    self.prefix = None
     self.output = '-'
     self.model = None
     self.beam_size = 4
@@ -55,6 +56,8 @@ class Options():
         self.format = argv.pop(0)
       elif tok=='-i' and len(argv):
         self.input = argv.pop(0)
+      elif tok=='-p' and len(argv):
+        self.prefix = argv.pop(0)
       elif tok=='-o' and len(argv):
         self.output = argv.pop(0)
       elif tok=='-m' and len(argv):
@@ -92,6 +95,7 @@ class Options():
     sys.stderr.write('''usage: {} -dnet DIR -i FILE [Options]
    -dnet          DIR : network directory [must exist]
    -i            FILE : input file to translate
+   -p            FILE : file with prefixs for input file (force decoding)
    -o            FILE : output file ({})
    -m            FILE : use this model file (last checkpoint)
 
@@ -145,7 +149,10 @@ if __name__ == '__main__':
   ##################
   ### load test ####
   ##################
-  test = Dataset([src_voc], [o.input], shard_size=o.shard_size, batch_size=o.batch_size, batch_type=o.batch_type, max_length=o.max_length)
+  if o.prefix is not None:
+    test = Dataset([src_voc,tgt_voc], [o.input,o.prefix], shard_size=o.shard_size, batch_size=o.batch_size, batch_type=o.batch_type, max_length=o.max_length)
+  else:
+    test = Dataset([src_voc], [o.input], shard_size=o.shard_size, batch_size=o.batch_size, batch_type=o.batch_type, max_length=o.max_length)
 
   ##################
   ### Inference ####

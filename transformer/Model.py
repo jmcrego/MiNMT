@@ -76,6 +76,11 @@ def prepare_source(batch_src, idx_pad, device):
   msk_src = (src != idx_pad).unsqueeze(-2) #[bs,1,ls] (False where <pad> True otherwise)
   return src, msk_src
 
+def prepare_prefix(batch_pre, idx_pad, device):
+  pre = [torch.tensor(seq) for seq in batch_pre] #[bs, lp]
+  pre = torch.nn.utils.rnn.pad_sequence(pre, batch_first=True, padding_value=idx_pad).to(device) #[bs,lp]
+  return pre
+
 def prepare_target(batch_tgt, idx_pad, device):
   tgt = [torch.tensor(seq[:-1]) for seq in batch_tgt] #delete <eos>
   tgt = torch.nn.utils.rnn.pad_sequence(tgt, batch_first=True, padding_value=idx_pad).to(device) 
