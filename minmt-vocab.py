@@ -19,8 +19,8 @@ Next tokens are built by default:
 <unk>
 <bos>
 <eos>
-<sep>
-<msk>
+⸨sep⸩
+⸨msk⸩
 '''.format(prog,min_freq,max_size)
 
   while len(sys.argv):
