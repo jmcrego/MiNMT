@@ -21,10 +21,10 @@ class Vocab():
     self.str_bos = '<bos>'
     self.idx_eos = 3
     self.str_eos = '<eos>'
-    self.idx_eos = 4
-    self.str_eos = '<sep>'
-    self.idx_eos = 5
-    self.str_eos = '<msk>'
+    self.idx_sep = 4
+    self.str_sep = '<sep>'
+    self.idx_msk = 5
+    self.str_msk = '<msk>'
     self.tok_to_idx = defaultdict()
     self.idx_to_tok = []
     with codecs.open(fvoc, 'r', 'utf-8') as fd:
