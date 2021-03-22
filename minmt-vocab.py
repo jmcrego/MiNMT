@@ -50,13 +50,15 @@ if __name__ == '__main__':
   print('<unk>')
   print('<bos>')
   print('<eos>')
-  n = 4
+  print('<sep>')
+  print('<msk>')
+  n = 6
   for tok, count in freq.most_common():
     if max_size and n >= max_size:
       break
     if count < min_freq:
       break
-    if tok=='<pad>' or tok=='<unk>' or tok=='<bos>' or tok=='<eos>':
+    if tok=='<pad>' or tok=='<unk>' or tok=='<bos>' or tok=='<eos>' or tok=='<eos>' or tok=='<msk>':
       continue
     print(tok)
     f = count
