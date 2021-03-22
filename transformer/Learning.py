@@ -43,7 +43,7 @@ class Score():
 ##############################################################################################################
 
 class Learning():
-  def __init__(self, model, optScheduler, criter, suffix, idx_pad, ol):
+  def __init__(self, model, optScheduler, criter, suffix, idx_pad, idx_sep, idx_msk, ol):
     super(Learning, self).__init__()
     self.model = model
     self.optScheduler = optScheduler
@@ -57,6 +57,9 @@ class Learning():
     self.keep_last_n = ol.keep_last_n
     self.clip = ol.clip
     self.idx_pad = idx_pad
+    self.idx_sep = idx_sep if ol.mask_prefix else None
+    self.idx_msk = idx_msk if ol.mask_prefix else None
+
     if tensorboard:
       self.writer = SummaryWriter(log_dir=ol.dnet, comment='', purge_step=None, max_queue=10, flush_secs=60, filename_suffix='')
 
@@ -75,7 +78,7 @@ class Learning():
         ### forward
         ###
         src, msk_src = prepare_source(batch_src, self.idx_pad, device)
-        tgt, ref, msk_tgt = prepare_target(batch_tgt, self.idx_pad, device)
+        tgt, ref, msk_tgt = prepare_target(batch_tgt, self.idx_pad, self.idx_sep, self.idx_msk, device)
         pred = self.model.forward(src, tgt, msk_src, msk_tgt) #no log_softmax is applied
         ###
         ### compute loss
@@ -144,7 +147,7 @@ class Learning():
         batch_tgt = batch_idxs[1]
         n_batch += 1
         src, msk_src = prepare_source(batch_src, self.idx_pad, device)
-        tgt, ref, msk_tgt = prepare_target(batch_tgt, self.idx_pad, device)
+        tgt, ref, msk_tgt = prepare_target(batch_tgt, self.idx_pad, self.idx_sep, self.idx_msk, device)
         pred = self.model.forward(src, tgt, msk_src, msk_tgt) #no log_softmax is applied
         loss = self.criter(pred, ref) ### batch loss
         valid_loss += loss.item() / torch.sum(ref != self.idx_pad)

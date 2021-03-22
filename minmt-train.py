@@ -32,6 +32,7 @@ class Options():
     self.save_every =5000
     self.report_every = 100
     self.keep_last_n = 5
+    self.mask_prefix = False
     ### optim
     self.noam_scale = 2.0
     self.noam_warmup = 4000
@@ -69,7 +70,8 @@ class Options():
         self.report_every = int(argv.pop(0))
       elif tok=='-keep_last_n':
         self.keep_last_n = int(argv.pop(0))
-
+      elif tok=='-mask_prefix':
+        self.mask_prefix = True
       elif tok=='-noam_scale':
         self.noam_scale = float(argv.pop(0))
       elif tok=='-noam_warmup':
@@ -139,6 +141,7 @@ class Options():
    -save_every        INT : save model every INT model updates ({})
    -report_every      INT : report every INT model updates ({})
    -keep_last_n       INT : save last INT checkpoints ({})
+   -mask_prefix           : mask prefix tokens not appearing in target ({})
 
    [Optimization]
    -label_smoothing FLOAT : label smoothing probability ({})
@@ -158,7 +161,7 @@ class Options():
    -log_file         FILE : log file  (stderr)
    -log_level      STRING : log level [debug, info, warning, critical, error] (info)
    -h                     : this help
-'''.format(self.prog, self.max_steps, self.max_epochs, self.validate_every, self.save_every, self.report_every, self.keep_last_n, self.label_smoothing, self.loss, self.clip, self.noam_scale, self.noam_warmup, self.shard_size, self.max_length, self.batch_size, self.batch_type, self.cuda, self.seed))
+'''.format(self.prog, self.max_steps, self.max_epochs, self.validate_every, self.save_every, self.report_every, self.keep_last_n, self.mask_prefix, self.label_smoothing, self.loss, self.clip, self.noam_scale, self.noam_warmup, self.shard_size, self.max_length, self.batch_size, self.batch_type, self.cuda, self.seed))
     sys.exit()
 
 ######################################################################
@@ -205,7 +208,7 @@ if __name__ == '__main__':
   #############
   ### learn ###
   #############
-  learning = Learning(model, optScheduler, criter, o.dnet + '/network', src_voc.idx_pad, o)
+  learning = Learning(model, optScheduler, criter, o.dnet + '/network', src_voc.idx_pad, tgt_voc.idx_sep, tgt_voc.idx_msk, o)
   learning.learn(train, valid, device)
 
   toc = time.time()
