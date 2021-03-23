@@ -87,11 +87,11 @@ def prepare_target(batch_tgt, idx_pad, idx_sep, idx_msk, device):
   ref = [torch.tensor(seq[1:])  for seq in batch_tgt] #delete <bos> 
   ref = torch.nn.utils.rnn.pad_sequence(ref, batch_first=True, padding_value=idx_pad).to(device)
   if idx_sep is not None and idx_msk is not None:
-    ref = mask_prefix_notin_target(ref, idx_sep, idx_msk)
+    ref = mask_prefix(ref, idx_sep, idx_msk)
   msk_tgt = (tgt != idx_pad).unsqueeze(-2) & (1 - torch.triu(torch.ones((1, tgt.size(1), tgt.size(1)), device=tgt.device), diagonal=1)).bool() #[bs,lt,lt]
   return tgt, ref, msk_tgt
 
-def mask_prefix_notin_target(ref, idx_sep, idx_msk):
+def mask_prefix(ref, idx_sep, idx_msk):
   #ref is [bs,lt]: idx_pref0 idx_pref1 ... idx_sep idx_tgt0 idx_tgt1 ... <eos> <pad> ...
   #replace tokens of prefix by idx_msk if not present in target
   ind_sep = (ref == idx_sep).nonzero(as_tuple=True)[1] #[bs] position of idx_sep tokens in ref (one per line)
@@ -207,7 +207,7 @@ class Stacked_Encoder(torch.nn.Module):
 ### Stacked_Decoder ##########################################################################################
 ##############################################################################################################
 class Stacked_Decoder(torch.nn.Module):
-  def __init__(self, n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout): 
+  def __init__(self, n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout):
     super(Stacked_Decoder, self).__init__()
     self.decoderlayers = torch.nn.ModuleList([Decoder(ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout) for _ in range(n_layers)])
     self.norm = torch.nn.LayerNorm(emb_dim, eps=1e-6) 
