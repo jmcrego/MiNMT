@@ -28,14 +28,10 @@ class Inference():
     self.n_best = oi.n_best
     self.alpha = oi.alpha
     self.format = oi.format
-#    self.idx_bos = tgt_voc.idx_bos
-#    self.idx_eos = tgt_voc.idx_eos
     self.Vt = len(tgt_voc)
     self.N = oi.n_best
     self.K = oi.beam_size
     self.device = device
-#    self.force_eos = torch.ones(len(self.tgt_voc), dtype=torch.float32, device=self.device) * float('Inf') #[Vt]
-#    self.force_eos[self.idx_eos] = 1.0
     self.next_wrds = torch.tensor([i for i in range(self.Vt)], dtype=int, device=self.device).view(1,-1) #[1,Vt]
 
 
@@ -51,7 +47,7 @@ class Inference():
       self.model.eval()
       for pos, batch_idxs in testset:
         if len(batch_idxs) == 2:
-          self.batch_pre = prepare_prefix(batch_idxs[1], self.tgt_voc.idx_pad, self.device)  #pre is [bs, lp] 
+          self.batch_pre = prepare_prefix(batch_idxs[1], self.tgt_voc.idx_pad, self.device)  #pre is [bs, lp]
         else:
           self.batch_pre = None
 
