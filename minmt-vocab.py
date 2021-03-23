@@ -65,7 +65,7 @@ Next tokens are built by default:
       break
     if count < min_freq:
       break
-    if tok=='<pad>' or tok=='<unk>' or tok=='<bos>' or tok=='<eos>' or tok=='<eos>' or tok=='⸨msk⸩' or tok=='⸨sep⸩':
+    if tok=='<pad>' or tok=='<unk>' or tok=='<bos>' or tok=='<eos>' or tok=='⸨msk⸩' or tok=='⸨sep⸩':
       continue
     print(tok)
     f = count
