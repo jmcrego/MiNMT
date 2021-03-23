@@ -13,6 +13,17 @@ try:
 except ImportError:
   tensorboard = False
 
+def pad_prefix(ref, idx_sep, idx_pad):
+  #ref is [bs, lt]
+  ind_sep = (ref == idx_sep).nonzero(as_tuple=True)[1] #[bs] position of idx_sep tokens in ref (one per line)
+  assert ref.shape[0] == ind_sep.shape[0], 'each reference must contain one and no more than one idx_sep tokens {}!={}'.format(ref.shape,ind_sep.shape)
+  seqs_sep = [torch.ones([l], dtype=torch.long) for l in ind_sep]
+  padding = torch.nn.utils.rnn.pad_sequence(seqs_sep, batch_first=True, padding_value=0) 
+  if padding.shape[1] < ref.shape[1]:
+    extend = torch.zeros([ref.shape[0], ref.shape[1]-padding.shape[1]], dtype=torch.long)
+    padding = torch.cat((padding, extension), 0)
+  return torch.where(padding==1,idx_pad,ref)
+
 ##############################################################################################################
 ### Score ####################################################################################################
 ##############################################################################################################
@@ -83,6 +94,8 @@ class Learning():
         ###
         ### compute loss
         ###
+        if self.idx_sep is not None:
+          ref = prd_prefix(ref, self.idx_sep, self.idx_pad)
         loss_batch = self.criter(pred, ref) #sum of losses in batch
         loss_token = loss_batch / torch.sum(ref != self.idx_pad) #ntok_batch
         ### optimize
@@ -149,6 +162,8 @@ class Learning():
         src, msk_src = prepare_source(batch_src, self.idx_pad, device)
         tgt, ref, msk_tgt = prepare_target(batch_tgt, self.idx_pad, self.idx_sep, self.idx_msk, device)
         pred = self.model.forward(src, tgt, msk_src, msk_tgt) #no log_softmax is applied
+        if self.idx_sep is not None:
+          ref = pad_prefix(ref, self.idx_sep, self.idx_pad)
         loss = self.criter(pred, ref) ### batch loss
         valid_loss += loss.item() / torch.sum(ref != self.idx_pad)
         if n_batch == 1:
