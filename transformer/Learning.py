@@ -67,9 +67,11 @@ class Learning():
     self.report_every = ol.report_every
     self.keep_last_n = ol.keep_last_n
     self.clip = ol.clip
-    self.idx_pad = idx_pad
-    self.idx_sep = idx_sep if ol.mask_prefix else None
-    self.idx_msk = idx_msk if ol.mask_prefix else None
+    self.mask_prefix = ol.mask_prefix
+    self.pad_prefix = ol.pad_prefix
+    self.idx_pad = idx_pad    
+    self.idx_sep = idx_sep
+    self.idx_msk = idx_msk
 
     if tensorboard:
       self.writer = SummaryWriter(log_dir=ol.dnet, comment='', purge_step=None, max_queue=10, flush_secs=60, filename_suffix='')
@@ -89,12 +91,12 @@ class Learning():
         ### forward
         ###
         src, msk_src = prepare_source(batch_src, self.idx_pad, device)
-        tgt, ref, msk_tgt = prepare_target(batch_tgt, self.idx_pad, self.idx_sep, self.idx_msk, device)
+        tgt, ref, msk_tgt = prepare_target(batch_tgt, self.idx_pad, self.idx_sep, self.idx_msk, self.mask_prefix, device)
         pred = self.model.forward(src, tgt, msk_src, msk_tgt) #no log_softmax is applied
         ###
         ### compute loss
         ###
-        if self.idx_sep is not None:
+        if self.pad_prefix:
           ref = prd_prefix(ref, self.idx_sep, self.idx_pad)
         loss_batch = self.criter(pred, ref) #sum of losses in batch
         loss_token = loss_batch / torch.sum(ref != self.idx_pad) #ntok_batch
@@ -160,9 +162,9 @@ class Learning():
         batch_tgt = batch_idxs[1]
         n_batch += 1
         src, msk_src = prepare_source(batch_src, self.idx_pad, device)
-        tgt, ref, msk_tgt = prepare_target(batch_tgt, self.idx_pad, self.idx_sep, self.idx_msk, device)
+        tgt, ref, msk_tgt = prepare_target(batch_tgt, self.idx_pad, self.idx_sep, self.idx_msk, self.mask_prefix, device)
         pred = self.model.forward(src, tgt, msk_src, msk_tgt) #no log_softmax is applied
-        if self.idx_sep is not None:
+        if self.pad_prefix:
           ref = pad_prefix(ref, self.idx_sep, self.idx_pad)
         loss = self.criter(pred, ref) ### batch loss
         valid_loss += loss.item() / torch.sum(ref != self.idx_pad)

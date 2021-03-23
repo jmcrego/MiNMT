@@ -81,12 +81,12 @@ def prepare_prefix(batch_pre, idx_pad, device):
   pre = torch.nn.utils.rnn.pad_sequence(pre, batch_first=True, padding_value=idx_pad).to(device) #[bs,lp]
   return pre
 
-def prepare_target(batch_tgt, idx_pad, idx_sep, idx_msk, device):
+def prepare_target(batch_tgt, idx_pad, idx_sep, idx_msk, mask_prefix, device):
   tgt = [torch.tensor(seq[:-1]) for seq in batch_tgt] #delete <eos>
   tgt = torch.nn.utils.rnn.pad_sequence(tgt, batch_first=True, padding_value=idx_pad).to(device) 
   ref = [torch.tensor(seq[1:])  for seq in batch_tgt] #delete <bos> 
   ref = torch.nn.utils.rnn.pad_sequence(ref, batch_first=True, padding_value=idx_pad).to(device)
-  if idx_sep is not None and idx_msk is not None:
+  if mask_prefix:
     ref = mask_prefix(ref, idx_sep, idx_msk)
   msk_tgt = (tgt != idx_pad).unsqueeze(-2) & (1 - torch.triu(torch.ones((1, tgt.size(1), tgt.size(1)), device=tgt.device), diagonal=1)).bool() #[bs,lt,lt]
   return tgt, ref, msk_tgt
