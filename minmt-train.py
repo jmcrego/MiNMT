@@ -33,6 +33,7 @@ class Options():
     self.report_every = 100
     self.keep_last_n = 5
     self.mask_prefix = False
+    self.pad_prefix = False
     ### optim
     self.noam_scale = 2.0
     self.noam_warmup = 4000
@@ -72,6 +73,8 @@ class Options():
         self.keep_last_n = int(argv.pop(0))
       elif tok=='-mask_prefix':
         self.mask_prefix = True
+      elif tok=='-pad_prefix':
+        self.pad_prefix = True
       elif tok=='-noam_scale':
         self.noam_scale = float(argv.pop(0))
       elif tok=='-noam_warmup':
@@ -142,6 +145,7 @@ class Options():
    -report_every      INT : report every INT model updates ({})
    -keep_last_n       INT : save last INT checkpoints ({})
    -mask_prefix           : mask prefix tokens not appearing in target ({})
+   -pad_prefix            : pad prefix tokens to compute loss ({})
 
    [Optimization]
    -label_smoothing FLOAT : label smoothing probability ({})
@@ -161,7 +165,7 @@ class Options():
    -log_file         FILE : log file  (stderr)
    -log_level      STRING : log level [debug, info, warning, critical, error] (info)
    -h                     : this help
-'''.format(self.prog, self.max_steps, self.max_epochs, self.validate_every, self.save_every, self.report_every, self.keep_last_n, self.mask_prefix, self.label_smoothing, self.loss, self.clip, self.noam_scale, self.noam_warmup, self.shard_size, self.max_length, self.batch_size, self.batch_type, self.cuda, self.seed))
+'''.format(self.prog, self.max_steps, self.max_epochs, self.validate_every, self.save_every, self.report_every, self.keep_last_n, self.mask_prefix, self.pad_prefix, self.label_smoothing, self.loss, self.clip, self.noam_scale, self.noam_warmup, self.shard_size, self.max_length, self.batch_size, self.batch_type, self.cuda, self.seed))
     sys.exit()
 
 ######################################################################
