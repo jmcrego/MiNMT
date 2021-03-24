@@ -14,7 +14,7 @@ if __name__ == '__main__':
    -min_freq INT : minimum frequence to keep a word, 1 keeps all (default {})
    -max_size INT : maximum number of words in vocab, 0 keeps all (default {})
    -h            : this help
-Next tokens are built by default:
+Tokens always used:
 <pad>
 <unk>
 <bos>

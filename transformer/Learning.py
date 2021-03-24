@@ -15,14 +15,20 @@ except ImportError:
 
 def pad_prefix(ref, idx_sep, idx_pad):
   #ref is [bs, lt]
-  ind_sep = (ref == idx_sep).nonzero(as_tuple=True)[1] #[bs] position of idx_sep tokens in ref (one per line)
-  assert ref.shape[0] == ind_sep.shape[0], 'each reference must contain one and no more than one idx_sep tokens {}!={}'.format(ref.shape,ind_sep.shape)
-  seqs_sep = [torch.ones([l], dtype=torch.long) for l in ind_sep]
+  inds_sep = (ref == idx_sep).nonzero(as_tuple=True)[1] #[bs] position of idx_sep tokens in ref (one per line)
+  #logging.info('inds_sep = {}'.format(inds_sep))
+  assert ref.shape[0] == inds_sep.shape[0], 'each reference must contain one and no more than one idx_sep tokens {}!={}'.format(ref.shape,inds_sep.shape)
+  seqs_sep = [torch.ones([l], dtype=torch.long) for l in inds_sep]
+  #logging.info('seqs_sep = {}'.format(seqs_sep))
   padding = torch.nn.utils.rnn.pad_sequence(seqs_sep, batch_first=True, padding_value=0) 
+  #logging.info('padding = {}'.format(padding))
   if padding.shape[1] < ref.shape[1]:
     extend = torch.zeros([ref.shape[0], ref.shape[1]-padding.shape[1]], dtype=torch.long)
-    padding = torch.cat((padding, extension), 0)
-  return torch.where(padding==1,idx_pad,ref)
+    padding = torch.cat((padding, extend), 1)
+  #logging.info('padding = {}'.format(padding))
+  ref = torch.where(padding==1,idx_pad,ref)
+  #logging.info('ref = {}'.format(ref))
+  return ref
 
 ##############################################################################################################
 ### Score ####################################################################################################
@@ -97,7 +103,7 @@ class Learning():
         ### compute loss
         ###
         if self.pad_prefix:
-          ref = prd_prefix(ref, self.idx_sep, self.idx_pad)
+          ref = pad_prefix(ref, self.idx_sep, self.idx_pad)
         loss_batch = self.criter(pred, ref) #sum of losses in batch
         loss_token = loss_batch / torch.sum(ref != self.idx_pad) #ntok_batch
         ### optimize
