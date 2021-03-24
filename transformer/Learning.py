@@ -20,7 +20,7 @@ def pad_prefix(ref, idx_sep, idx_pad):
   assert ref.shape[0] == inds_sep.shape[0], 'each reference must contain one and no more than one idx_sep tokens {}!={}'.format(ref.shape,inds_sep.shape)
   seqs_sep = [torch.ones([l], dtype=torch.long) for l in inds_sep]
   #logging.info('seqs_sep = {}'.format(seqs_sep))
-  padding = torch.nn.utils.rnn.pad_sequence(seqs_sep, batch_first=True, padding_value=0) 
+  padding = torch.nn.utils.rnn.pad_sequence(seqs_sep, batch_first=True, padding_value=0).device(ref.device)
   #logging.info('padding = {}'.format(padding))
   if padding.shape[1] < ref.shape[1]:
     extend = torch.zeros([ref.shape[0], ref.shape[1]-padding.shape[1]], dtype=torch.long)
