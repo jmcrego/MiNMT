@@ -23,7 +23,7 @@ def pad_prefix(ref, idx_sep, idx_pad):
   padding = torch.nn.utils.rnn.pad_sequence(seqs_sep, batch_first=True, padding_value=0).to(ref.device)
   #logging.info('padding = {}'.format(padding))
   if padding.shape[1] < ref.shape[1]:
-    extend = torch.zeros([ref.shape[0], ref.shape[1]-padding.shape[1]], dtype=torch.long)
+    extend = torch.zeros([ref.shape[0], ref.shape[1]-padding.shape[1]], dtype=torch.long, device=ref.device)
     padding = torch.cat((padding, extend), 1)
   #logging.info('padding = {}'.format(padding))
   ref = torch.where(padding==1,idx_pad,ref)
