@@ -56,10 +56,12 @@ class Score():
     if self.sum_toks_report and self.nsteps_report:
       loss_per_tok = self.sum_loss_report / (1.0*self.sum_toks_report)
       steps_per_sec = self.nsteps_report / (end_report - self.start_report)
-      logging.info('m_msk = {}'.format(self.n_msk))
-      return loss_per_tok, steps_per_sec, self.n_ok_msk/self.n_msk if self.n_msk else 0.0
+      logging.info('n_msk: {} => {:.2f}'.format(self.n_msk, self.n_ok_msk/self.n_msk))
+      if n_msk > 0:
+        logging.info('n_msk: {} acc_msk: {:.2f}'.format(self.n_msk, 100.0*self.n_ok_msk/self.n_msk))
+      return loss_per_tok, steps_per_sec
     logging.warning('Requested report after 0 tokens optimised')
-    return 0., 0, 0.0
+    return 0., 0
 
   def eval_msk(self, pred, gold, idx_msk):
     bs, lt, ed = pred.shape
@@ -140,8 +142,8 @@ class Learning():
         ### report
         ###
         if self.report_every and self.optScheduler._step % self.report_every == 0: 
-          loss_per_tok, steps_per_sec, avg_msk = score.report()
-          logging.info('Learning step: {} epoch: {} batch: {} steps/sec: {:.2f} avg_msk: {:.2f} lr: {:.6f} Loss: {:.3f}'.format(self.optScheduler._step, n_epoch, n_batch, steps_per_sec, avg_msk, self.optScheduler._rate, loss_per_tok))
+          loss_per_tok, steps_per_sec = score.report()
+          logging.info('Learning step: {} epoch: {} batch: {} steps/sec: {:.2f} lr: {:.6f} Loss: {:.3f}'.format(self.optScheduler._step, n_epoch, n_batch, steps_per_sec, self.optScheduler._rate, loss_per_tok))
           score = Score()
           if tensorboard:
             self.writer.add_scalar('Loss/train', loss_token.item(), self.optScheduler._step)
