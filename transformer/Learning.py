@@ -56,6 +56,7 @@ class Score():
     if self.sum_toks_report and self.nsteps_report:
       loss_per_tok = self.sum_loss_report / (1.0*self.sum_toks_report)
       steps_per_sec = self.nsteps_report / (end_report - self.start_report)
+      logging.info('m_msk = {}'.format(self.n_msk))
       return loss_per_tok, steps_per_sec, self.n_ok_msk/self.n_msk if self.n_msk else 0.0
     logging.warning('Requested report after 0 tokens optimised')
     return 0., 0, 0.0
