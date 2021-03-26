@@ -56,7 +56,6 @@ class Score():
     if self.sum_toks_report and self.nsteps_report:
       loss_per_tok = self.sum_loss_report / (1.0*self.sum_toks_report)
       steps_per_sec = self.nsteps_report / (end_report - self.start_report)
-      logging.info('n_msk: {} => {:.2f}'.format(self.n_msk, self.n_ok_msk/self.n_msk))
       if n_msk > 0:
         logging.info('n_msk: {} acc_msk: {:.2f}'.format(self.n_msk, 100.0*self.n_ok_msk/self.n_msk))
       return loss_per_tok, steps_per_sec
