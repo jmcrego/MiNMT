@@ -81,12 +81,12 @@ def prepare_prefix(batch_pre, idx_pad, device):
   pre = torch.nn.utils.rnn.pad_sequence(pre, batch_first=True, padding_value=idx_pad).to(device) #[bs,lp]
   return pre
 
-def prepare_target(batch_tgt, idx_pad, idx_sep, idx_msk, mask_prefix, device):
+def prepare_target(batch_tgt, idx_pad, idx_sep, idx_msk, do_mask_prefix, device):
   tgt = [torch.tensor(seq[:-1]) for seq in batch_tgt] #delete <eos>
   tgt = torch.nn.utils.rnn.pad_sequence(tgt, batch_first=True, padding_value=idx_pad).to(device) 
   ref = [torch.tensor(seq[1:])  for seq in batch_tgt] #delete <bos> 
   ref = torch.nn.utils.rnn.pad_sequence(ref, batch_first=True, padding_value=idx_pad).to(device)
-  if mask_prefix:
+  if do_mask_prefix:
     ref = mask_prefix(ref, idx_sep, idx_msk)
   msk_tgt = (tgt != idx_pad).unsqueeze(-2) & (1 - torch.triu(torch.ones((1, tgt.size(1), tgt.size(1)), device=tgt.device), diagonal=1)).bool() #[bs,lt,lt]
   return tgt, ref, msk_tgt
@@ -98,12 +98,13 @@ def mask_prefix(ref, idx_sep, idx_msk):
   assert ref.shape[0] == ind_sep.shape[0], 'each reference must contain one and no more than one idx_sep tokens {}!={}'.format(ref.shape,ind_sep.shape)
 
   for b in range(ind_sep.shape[0]):
-    #logging.info('[post] ref_b = {}'.format(ref[b].tolist()))
+    #logging.info('[prev] ref_b = {}'.format(ref[b].tolist()))
     ind = ind_sep[b].item()
     prefix = ref[b,:ind].tolist()
     target = set(ref[b,ind+1:].tolist())
     for i in range(len(prefix)):
       if prefix[i] not in target:
+        #logging.info('masking i={} idx={} idx={}'.format(i, prefix[i], ref[b][i]))
         ref[b][i] = idx_msk
     #logging.info('[post] ref_b = {}'.format(ref[b].tolist()))
   return ref

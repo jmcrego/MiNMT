@@ -17,7 +17,7 @@ def pad_prefix(ref, idx_sep, idx_pad):
   #ref is [bs, lt]
   inds_sep = (ref == idx_sep).nonzero(as_tuple=True)[1] #[bs] position of idx_sep tokens in ref (one per line)
   #logging.info('inds_sep = {}'.format(inds_sep))
-  assert ref.shape[0] == inds_sep.shape[0], 'each reference must contain one and no more than one idx_sep tokens {}!={}'.format(ref.shape,inds_sep.shape)
+  assert ref.shape[0] == inds_sep.shape[0], 'references must contain one and no more than one idx_sep tokens {}!={}'.format(ref.shape,inds_sep.shape)
   seqs_sep = [torch.ones([l+1], dtype=torch.long) for l in inds_sep]
   #logging.info('seqs_sep = {}'.format(seqs_sep))
   padding = torch.nn.utils.rnn.pad_sequence(seqs_sep, batch_first=True, padding_value=0).to(ref.device)
@@ -39,21 +39,39 @@ class Score():
     self.sum_loss_report = 0.
     self.sum_toks_report = 0
     self.nsteps_report = 0
+    self.n_msk = 0
+    self.n_ok_msk = 0
     self.start_report = time.time()
 
-  def step(self, sum_loss_batch, ntok_batch):
+  def step(self, sum_loss_batch, ntok_batch, pred, gold, idx_msk):
     self.sum_loss_report += sum_loss_batch
     self.sum_toks_report += ntok_batch
     self.nsteps_report += 1
+    n_msk, n_ok_msk = self.eval_msk(pred, gold, idx_msk)
+    self.n_msk += n_msk 
+    self.n_ok_msk += n_ok_msk 
 
   def report(self):
     end_report= time.time()
     if self.sum_toks_report and self.nsteps_report:
       loss_per_tok = self.sum_loss_report / (1.0*self.sum_toks_report)
       steps_per_sec = self.nsteps_report / (end_report - self.start_report)
-      return loss_per_tok, steps_per_sec
+      return loss_per_tok, steps_per_sec, self.n_ok_msk/self.n_msk if self.n_msk else 0.0
     logging.warning('Requested report after 0 tokens optimised')
-    return 0., 0
+    return 0., 0, 0.0
+
+  def eval_msk(self, pred, gold, idx_msk):
+    bs, lt, ed = pred.shape
+    gold = gold.contiguous().view([bs*lt])
+    pred = pred.contiguous().view([bs*lt,-1])
+    inds_gold_msk = (gold==idx_msk).nonzero(as_tuple=True)[0] #[n] indexs i of gold where gold[i]=idx_msk
+    n_ok_msk = 0
+    n_msk = torch.numel(inds_gold_msk)
+    if n_msk > 0:
+      _, inds_pred = torch.topk(pred, k=1, dim=1)
+      inds_pred_msk = inds_pred[inds_gold_msk].squeeze()
+      n_ok_msk = torch.sum(inds_pred_msk==idx_msk) #.nonzero(as_tuple=False)
+    return n_msk, n_ok_msk
 
 ##############################################################################################################
 ### Learning #################################################################################################
@@ -102,7 +120,7 @@ class Learning():
         ###
         ### compute loss
         ###
-        if self.pad_prefix:
+        if self.pad_prefix: #do not compute loss over prefix tokens
           ref = pad_prefix(ref, self.idx_sep, self.idx_pad)
         loss_batch = self.criter(pred, ref) #sum of losses in batch
         loss_token = loss_batch / torch.sum(ref != self.idx_pad) #ntok_batch
@@ -116,13 +134,13 @@ class Learning():
         ###
         ### accumulate score
         ###
-        score.step(loss_batch.item(), torch.sum(ref!=self.idx_pad))
+        score.step(loss_batch.item(), torch.sum(ref!=self.idx_pad), pred, ref, self.idx_msk)
         ###
         ### report
         ###
         if self.report_every and self.optScheduler._step % self.report_every == 0: 
-          loss_per_tok, steps_per_sec = score.report()
-          logging.info('Learning step: {} epoch: {} batch: {} steps/sec: {:.2f} lr: {:.6f} Loss: {:.3f}'.format(self.optScheduler._step, n_epoch, n_batch, steps_per_sec, self.optScheduler._rate, loss_per_tok))
+          loss_per_tok, steps_per_sec, avg_msk = score.report()
+          logging.info('Learning step: {} epoch: {} batch: {} steps/sec: {:.2f} avg_msk: {:.2f} lr: {:.6f} Loss: {:.3f}'.format(self.optScheduler._step, n_epoch, n_batch, steps_per_sec, avg_msk, self.optScheduler._rate, loss_per_tok))
           score = Score()
           if tensorboard:
             self.writer.add_scalar('Loss/train', loss_token.item(), self.optScheduler._step)
