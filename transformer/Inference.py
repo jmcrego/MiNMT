@@ -98,7 +98,6 @@ class Inference():
 
       elif self.batch_pre is not None and lt < lp: #force decoding using prefix
         forced = self.force_prefix(y_next, hyps, logP, bs) 
-        logging.info('lt={} forced = {}'.format(lt, forced.shape))
         y_next *= forced
 
       hyps, logP = self.expansion(y_next, hyps, logP, self.K, bs) #both are [bs*K,lt]
@@ -109,9 +108,6 @@ class Inference():
       index_of_finals = (hyps[:,-1]==self.tgt_voc.idx_eos).nonzero(as_tuple=False).squeeze(-1) #[n] n being the number of final hyps found
       for i in index_of_finals:
         b = i//self.K
-        logging.info('i={}'.format(i))
-        logging.info('b={}'.format(b))
-        logging.info('finals[{}]={}'.format(b,finals[b]))
         if len(finals[b]) < self.K:
           hyp = ' '.join(map(str,hyps[i].tolist()))
           cst = sum(logP[i])
