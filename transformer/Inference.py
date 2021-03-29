@@ -94,10 +94,12 @@ class Inference():
 
       if lt == self.max_size - 1: #last extension (force <eos> to appear in all hypotheses)
         forced = self.force_eos() #[Vt]
+        logging.info('(eos) forced = {}'.format(forced.shape))
         y_next[:,] *= forced
 
       elif self.batch_pre is not None and lt < lp: #force decoding using prefix
         forced = self.force_prefix(y_next, hyps, logP, bs) 
+        logging.info('(prefix) forced = {}'.format(forced.shape))
         y_next *= forced
 
       hyps, logP = self.expansion(y_next, hyps, logP, self.K, bs) #both are [bs*K,lt]
