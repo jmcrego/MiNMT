@@ -160,6 +160,7 @@ class Inference():
 
   def force_prefix(self, y_next, hyps, logP):
     I, lt = hyps.shape
+    bs =  self.z_src.shape[0]
     ### mask for y_next to keep logP of current forced words (self.batch_pre[lt])
     force_mask = torch.ones_like(y_next, dtype=torch.float32, device=self.device) * float('Inf') #[I,Vt] to multiply by y_next containing 1.0 (force to keep) -Inf (force to disappear)
     ### current self.batch_pre[lt] idxs are multiplied by 1.0
