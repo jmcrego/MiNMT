@@ -173,8 +173,8 @@ class Inference():
     force_mask[eos.long(),:] = 1.0 #all tokens of hyps pointed by eos set to 1.0
     pad = (pref_idx==self.tgt_voc.idx_pad).nonzero(as_tuple=False) #[I] do not force if pref_idx == idx_pad
     force_mask[pad.long(),:] = 1.0 #all tokens of hyps pointed by pad set to 1.0
-    msk = self.best_is_msk(y_next, hyps, logP, 1)                  #[I] do not force if y_next == idx_msk
-    force_mask[msk.long(),:] = 1.0 #all tokens of hyps pointed by msk set to 1.0
+    #msk = self.best_is_msk(y_next, hyps, logP, 1)                  #[I] do not force if y_next == idx_msk
+    #force_mask[msk.long(),:] = 1.0 #all tokens of hyps pointed by msk set to 1.0
 
 
   def print_beam(self, bs, lt):
