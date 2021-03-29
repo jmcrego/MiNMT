@@ -55,9 +55,6 @@ class Inference():
         ### encode batch
         src, self.msk_src = prepare_source(batch_src, self.src_voc.idx_pad, self.device) #src is [bs, ls] msk_src is [bs,1,ls]
         self.z_src = self.model.encode(src, self.msk_src) #[bs,ls,ed]
-        ### decode batch step-by-step
-        #if self.K == 1: finals = self.translate_greedy()
-        #else: finals = self.translate_beam()
         finals = self.translate_beam()
         for b in range(len(finals)):
           for n, (hyp, logp) in enumerate(sorted(finals[b].items(), key=lambda kv: kv[1], reverse=True)):
@@ -89,7 +86,9 @@ class Inference():
         self.msk_src = self.msk_src.repeat_interleave(repeats=self.K, dim=0) #[bs,1,ls] => [bs*K,1,ls]
         #logging.info('z_src = {} msk_src = {}'.format(self.z_src.shape, self.msk_src.shape))
 
+      ##############
       ### DECODE ###
+      ##############
       msk_tgt = (1 - torch.triu(torch.ones((1, lt, lt), device=self.device), diagonal=1)).bool()
       y_next = self.model.decode(self.z_src, hyps, self.msk_src, msk_tgt=msk_tgt)[:,-1,:] #[I,lt,Vt] => [I,Vt]
       #logging.info('y_next = {}'.format(y_next.shape))
@@ -100,12 +99,14 @@ class Inference():
 
       elif self.batch_pre is not None and lt < lp: #force decoding using prefix
         forced = self.force_prefix(y_next, hyps, logP) #
-        logging.info('forced = {}'.format(forced.shape))
+        logging.info('lt={} forced = {}'.format(lt, forced.shape))
         y_next *= forced
 
       hyps, logP = self.expansion(y_next, hyps, logP, self.K) #both are [bs*K,lt]
 
+      ##############
       ### FINALS ###
+      ##############
       index_of_finals = (hyps[:,-1]==self.tgt_voc.idx_eos).nonzero(as_tuple=False).squeeze(-1) #[n] n being the number of final hyps found
       for i in index_of_finals:
         b = i//self.K
