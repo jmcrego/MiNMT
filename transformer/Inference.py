@@ -162,20 +162,20 @@ class Inference():
     I, lt = hyps.shape
     bs =  self.z_src.shape[0]
     ### mask for y_next to keep logP of current forced words (self.batch_pre[lt])
-    force_mask = torch.ones_like(y_next, dtype=torch.float32, device=self.device) * float('Inf') #[I,Vt] to multiply by y_next containing 1.0 (force to keep) -Inf (force to disappear)
+    force_prefix = torch.ones_like(y_next, dtype=torch.float32, device=self.device) * float('Inf') #[I,Vt] to multiply by y_next containing 1.0 (force to keep) -Inf (force to disappear)
     ### current self.batch_pre[lt] idxs are multiplied by 1.0
     pref_idx = self.batch_pre[:,lt] #[bs] idx's of current expansion to force for each hypothesis I
     if I > bs:
       pref_idx = pref_idx.repeat_interleave(repeats=self.K, dim=0) #[bs] => [bs*K] or [I]
-    force_mask[torch.arange(I, dtype=torch.long, device=self.device), pref_idx] = 1.0
+    force_prefix[torch.arange(I, dtype=torch.long, device=self.device), pref_idx] = 1.0
     ### despite runnig force decoding, tokens in hyp are not forced (set force_msk to 1.0) if prefix is one of these:
     eos = (pref_idx==self.tgt_voc.idx_eos).nonzero(as_tuple=False) #[I] do not force if pref_idx == idx_eos
-    force_mask[eos.long(),:] = 1.0 #all tokens of hyps pointed by eos set to 1.0
+    force_prefix[eos.long(),:] = 1.0 #all tokens of hyps pointed by eos set to 1.0
     pad = (pref_idx==self.tgt_voc.idx_pad).nonzero(as_tuple=False) #[I] do not force if pref_idx == idx_pad
-    force_mask[pad.long(),:] = 1.0 #all tokens of hyps pointed by pad set to 1.0
+    force_prefix[pad.long(),:] = 1.0 #all tokens of hyps pointed by pad set to 1.0
     #msk = self.best_is_msk(y_next, hyps, logP, 1)                  #[I] do not force if y_next == idx_msk
-    #force_mask[msk.long(),:] = 1.0 #all tokens of hyps pointed by msk set to 1.0
-
+    #force_prefix[msk.long(),:] = 1.0 #all tokens of hyps pointed by msk set to 1.0
+    return force_prefix
 
   def print_beam(self, bs, lt):
     hyps_bs_k = hyps.view(bs,self.K,lt)
