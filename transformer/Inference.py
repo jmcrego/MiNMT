@@ -106,12 +106,12 @@ class Inference():
         if I > bs:
           pref_idx = pref_idx.repeat_interleave(repeats=self.K, dim=0) #[bs] => [bs*K]
         force_mask[torch.arange(I, dtype=torch.long, device=self.device), pref_idx] = 1.0
-        #logging.info('pref_idx = {}'.format(['{}:{}'.format(t,self.tgt_voc[t.item()]) for t in pref_idx]))
-        ### idx_pad and idx_eos tokens appearing in self.batch_pre[lt] are not in prefix (all tokens multiplied by 1.0)
-        pad_eos = torch.logical_or(torch.logical_or(pref_idx==self.tgt_voc.idx_pad, pref_idx==self.tgt_voc.idx_eos), pref_idx==self.tgt_voc.idx_msk).nonzero(as_tuple=False) #do not force words of hyps for which pref_idx[i] == idx_pad/idx_eos
-        force_mask[pad_eos.long(),:] = 1.0
-        #logging.info('pad_eos = {}'.format(pad_eos.tolist()))
-        ### force decoding
+        ### despite runnig force decoding, some tokens in prefix must not be forced:
+        eos = (pref_idx==self.tgt_voc.idx_eos).nonzero(as_tuple=False) #do not force if pref_idx == idx_eos
+        force_mask[eos.long(),:] = 1.0
+        pad = (pref_idx==self.tgt_voc.idx_pad).nonzero(as_tuple=False) #do not force if pref_idx == idx_pad
+        force_mask[pad.long(),:] = 1.0
+        ### apply force decoding
         y_next *= force_mask 
 
 
