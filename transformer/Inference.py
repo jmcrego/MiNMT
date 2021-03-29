@@ -109,7 +109,7 @@ class Inference():
       index_of_finals = (hyps[:,-1]==self.tgt_voc.idx_eos).nonzero(as_tuple=False).squeeze(-1) #[n] n being the number of final hyps found
       for i in index_of_finals:
         b = i//self.K
-        logging.info('b={} finals[b]={}'.format(b,finals[b]))
+        logging.info('i={} b={} finals[b]={}'.format(i,b,finals[b]))
         if len(finals[b]) < self.K:
           hyp = ' '.join(map(str,hyps[i].tolist()))
           cst = sum(logP[i])
