@@ -97,11 +97,11 @@ class Inference():
         y_next[:,] *= forced
 
       elif self.batch_pre is not None and lt < lp: #force decoding using prefix
-        forced = self.force_prefix(y_next, hyps, logP) #
+        forced = self.force_prefix(y_next, hyps, logP, bs) 
         logging.info('lt={} forced = {}'.format(lt, forced.shape))
         y_next *= forced
 
-      hyps, logP = self.expansion(y_next, hyps, logP, self.K) #both are [bs*K,lt]
+      hyps, logP = self.expansion(y_next, hyps, logP, self.K, bs) #both are [bs*K,lt]
 
       ##############
       ### FINALS ###
@@ -111,7 +111,7 @@ class Inference():
         b = i//self.K
         logging.info('i={}'.format(i))
         logging.info('b={}'.format(b))
-        logging.info('finals[b]={}'.format(finals[b]))
+        logging.info('finals[{}]={}'.format(b,finals[b]))
         if len(finals[b]) < self.K:
           hyp = ' '.join(map(str,hyps[i].tolist()))
           cst = sum(logP[i])
@@ -125,9 +125,8 @@ class Inference():
         return finals
 
 
-  def expansion(self, y_next, hyps, logP, best_k):
+  def expansion(self, y_next, hyps, logP, best_k, bs):
     I, lt = hyps.shape 
-    bs =  self.z_src.shape[0]
     #y_next is [I,Vt], I is either bs*1 or bs*K
     next_logP = y_next.contiguous().view(-1,1) #[I*Vt,1]
     #logging.info('next_logP = {}'.format(next_logP.shape))
@@ -164,9 +163,8 @@ class Inference():
     force_eos[self.tgt_voc.idx_eos] = 1.0
     return force_eos
 
-  def force_prefix(self, y_next, hyps, logP):
+  def force_prefix(self, y_next, hyps, logP, bs):
     I, lt = hyps.shape
-    bs =  self.z_src.shape[0]
     ### mask for y_next to keep logP of current forced words (self.batch_pre[lt])
     force_prefix = torch.ones_like(y_next, dtype=torch.float32, device=self.device) * float('Inf') #[I,Vt] to multiply by y_next containing 1.0 (force to keep) -Inf (force to disappear)
     ### current self.batch_pre[lt] idxs are multiplied by 1.0
@@ -228,57 +226,6 @@ class Inference():
         sys.exit()
     return '\t'.join(out)
 
-
-
-  def translate_greedy(self):
-    bs =  self.z_src.shape[0]
-    finals = [defaultdict() for i in range(bs)] #list with hyps reaching <eos> and overall score
-    hyps = torch.ones([bs,1], dtype=int).to(self.device) * self.tgt_voc.idx_bos #[bs,lt=1]
-    logP = torch.zeros([bs,1], dtype=torch.float32).to(self.device)     #[bs,lt=1]
-    next_wrds = self.next_wrds.repeat_interleave(repeats=bs, dim=0).view(bs*self.Vt,1) #[1,Vt] => [bs*1,Vt] => [bs*Vt,1]
-
-    while True:
-      lt = hyps.shape[1]
-
-      ### DECODE ###
-      msk_tgt = (1 - torch.triu(torch.ones((1, lt, lt), device=self.device), diagonal=1)).bool()
-      y_next = self.model.decode(self.z_src, hyps, self.msk_src, msk_tgt=msk_tgt)[:,-1,:] #[bs,lt,Vt] => [bs,Vt]
- 
-      if lt == self.max_size - 1: #last extension
-        y_next[:,] *= self.force_eos #all words are assigned -Inf except <eos> which keeps its logP
-
-      next_logP = y_next.contiguous().view(bs*self.Vt,1)
-      #logging.info('next_logP = {}'.format(next_logP.shape))
-
-      ### EXPAND ###
-      hyps_extended = hyps.repeat_interleave(repeats=self.Vt, dim=0) #[bs,lt] => [bs*Vt,lt]
-      logP_extended = logP.repeat_interleave(repeats=self.Vt, dim=0) #[bs,lt] => [bs*Vt,lt]
-
-      hyps_extended = torch.cat((hyps_extended, next_wrds), dim=-1).view(bs,self.Vt,lt+1) #[bs,Vt,lt+1]
-      logP_extended = torch.cat((logP_extended, next_logP), dim=-1).view(bs,self.Vt,lt+1) #[bs,Vt,lt+1]
-      lt = hyps_extended.shape[2] #new hypothesis length
-
-      ### KEEP K-best expansions of each hypothesis I ###
-      sum_logP = torch.sum(logP_extended,dim=2) #[bs,Vt]
-      _, ind_best = torch.topk(sum_logP, k=1, dim=1) #[bs,1]
-
-      hyps = torch.stack([hyps_extended[b][ind] for b,ind in enumerate(ind_best)], dim=0).contiguous().view(bs,lt) #[bs,1,lt] => [bs,lt]
-      logP = torch.stack([logP_extended[b][ind] for b,ind in enumerate(ind_best)], dim=0).contiguous().view(bs,lt) #[bs,1,lt] => [bs,lt]
-
-      ### FINALS ###
-      index_of_finals = (hyps[:,-1]==self.tgt_voc.idx_eos).nonzero(as_tuple=False).squeeze(-1) #[n] n being the number of final hyps found
-      for b in index_of_finals:
-        if len(finals[b]) < 1: ### not already finished
-          hyp = ' '.join(map(str,hyps[b].tolist()))
-          cst = sum(logP[b])
-          if self.alpha:
-            cst = cst / norm_length(hyps.shape[1],self.alpha)
-          #logging.info('[FINAL b={}]\t{:6f}\t{}'.format(b,sum_logp,hyp))
-          finals[b][hyp] = cst.item()
-          logP[b,-1] = -float('Inf')
-
-      if sum([len(d) for d in finals]) == bs:
-        return finals
 
 
 
