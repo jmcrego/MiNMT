@@ -73,6 +73,7 @@ class Inference():
 
   def translate_beam(self):
     bs =  self.z_src.shape[0]
+    logging.info('bs={}'.format(bs))
     finals = [defaultdict() for i in range(bs)] #list with hyps reaching <eos> and overall score
     hyps = torch.ones([bs,1], dtype=int).to(self.device) * self.tgt_voc.idx_bos #[bs,lt=1]
     logP = torch.zeros([bs,1], dtype=torch.float32).to(self.device)     #[bs,lt=1]
