@@ -123,6 +123,7 @@ class Inference():
 
   def expansion(self, y_next, hyps, logP, best_k):
     I, lt = hyps.shape 
+    bs =  self.z_src.shape[0]
     #y_next is [I,Vt], I is either bs*1 or bs*K
     next_logP = y_next.contiguous().view(-1,1) #[I*Vt,1]
     #logging.info('next_logP = {}'.format(next_logP.shape))
