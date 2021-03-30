@@ -30,6 +30,7 @@ class Options():
     self.format = 'pt'
     self.shard_size = 0
     self.max_length = 0
+    self.mask_prefix = False
     self.batch_size = 30
     self.batch_type = 'sentences'    
     self.cuda = False
@@ -70,6 +71,8 @@ class Options():
         self.batch_size = int(argv.pop(0))
       elif tok=='-batch_type' and len(argv):
         self.batch_type = argv.pop(0)
+      elif tok=='-mask_prefix':
+        self.mask_prefix = True
 
       elif tok=="-cuda":
         self.cuda = True
