@@ -176,6 +176,7 @@ class Inference():
 
     _, best = torch.topk(sum_logP, k=1, dim=1) #both are [bs,1], best token (idx) for each b in bs
     best = best.view(bs) #[bs]
+    logging.info('best={}'.format(best.tolist()))
 
     for b in range(pref.shape[0]):
       logging.info('b={} pref={} {}'.format(b,pref[b],self.tgt_voc[pref[b].item()]))
