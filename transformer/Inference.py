@@ -176,6 +176,7 @@ class Inference():
     best, _ = self.Kbest(hyps,logP)
     best = best.view(bs,-1,lt)
     best = best[:,0,-1]
+    logging.info('best = {} pref = {}'.format(best.shape,pref.shape))
 
 #    logP = logP.contiguous().view(bs,-1,self.Vt,lt) #[bs,n,Vt,lt]
 #    sum_logP = torch.sum(logP.view(bs,n_times_Vt,lt),dim=2) #[bs,n_times_Vt]
