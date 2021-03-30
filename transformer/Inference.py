@@ -80,7 +80,6 @@ class Inference():
     while True:
       #hyps is [I,lt] ; K is 1*K OR bs*K ; lt is the hyp length [1, 2, ..., max_size)
       I, lt = hyps.shape 
-      logging.info('lt = {}'.format(lt))
 
       if lt == 2:
         self.z_src = self.z_src.repeat_interleave(repeats=self.K, dim=0) #[bs,ls,ed] => [bs*K,ls,ed]
@@ -96,11 +95,9 @@ class Inference():
       
       if lt == self.max_size - 1: #last extension (force <eos> to appear in all hypotheses)
         logP = self.force_eos(logP) #both are [bs,1*Vt,lt] OR [[bs,K*Vt,lt]
-        logging.info('force_eos logP={}'.format(logP.shape))
 
-      #elif self.batch_pre is not None and lt < lp: #force decoding using prefix
-      #  logP = self.force_prefix(logP, self.batch_pre[:,lt]) #both are [bs,1*Vt,lt] OR [[bs,K*Vt,lt]
-      #  logging.info('force_prefix logP={}'.format(logP.shape))
+      elif self.batch_pre is not None and lt < lp: #force decoding using prefix
+        logP = self.force_prefix(logP, self.batch_pre[:,lt]) #both are [bs,1*Vt,lt] OR [[bs,K*Vt,lt]
 
       hyps, logP = self.Kbest(hyps, logP) #both are [bs*K,lt]
 
@@ -153,7 +150,7 @@ class Inference():
     _, kbest_inds = torch.topk(sum_logP, k=self.K, dim=1) #both are [bs,K] (finds the K-best of dimension 1) no need to norm-length since all have same length
     hyps = torch.stack([hyps[b][inds] for b,inds in enumerate(kbest_inds)], dim=0).contiguous().view(bs*self.K,lt) #[bs,K,lt] => [bs*K,lt]
     logP = torch.stack([logP[b][inds] for b,inds in enumerate(kbest_inds)], dim=0).contiguous().view(bs*self.K,lt) #[bs,K,lt] => [bs*K,lt]
-    self.print_beam(hyps, logP, bs, lt)
+    #self.print_beam(hyps, logP, bs, lt)
     return hyps, logP 
 
 
@@ -162,7 +159,7 @@ class Inference():
     bs, n_times_Vt, lt = logP.shape
     logP = logP.contiguous().view(bs,-1,self.Vt,lt)
 
-    #set -Inf all but idx_eos of last added tokens
+    #set -Inf to all last added tokens but idx_eos 
     all_but_eos = torch.cat( (torch.arange(0,self.tgt_voc.idx_eos), torch.arange(self.tgt_voc.idx_eos+1,self.Vt)) )
     logP[:,:,all_but_eos,-1] = float('-Inf') 
 
