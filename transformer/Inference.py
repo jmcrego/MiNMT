@@ -172,30 +172,26 @@ class Inference():
     #logP is [bs, 1*Vt, lt] or [bs, K*Vt, lt]
     #pref is [bs] (the prefix to be used for each bs)
     bs, n_times_Vt, lt = logP.shape
-
-    best, _ = self.Kbest(hyps,logP)
-    best = best.view(bs,-1,lt)
-    best = best[:,0,-1]
+    best, _ = self.Kbest(hyps,logP) #[bs*K,lt] (K-best hypotheses)
+    best = best.view(bs,-1,lt) #[bs,K,lt] 
+    best = best[:,0,-1].view(bs) #(last added one-best hypothesis for each b in bs)
     logging.info('pref={}:{}:{} best={}:{}:{}'.format(pref.shape,pref.tolist(),self.tgt_voc[pref[0].item()],best.shape,best.tolist(),self.tgt_voc[best[0].item()]))
-
     logP = logP.contiguous().view(bs,-1,self.Vt,lt) #[bs,n,Vt,lt]
-#    sum_logP = torch.sum(logP.view(bs,n_times_Vt,lt),dim=2) #[bs,n_times_Vt]
-#    _, best = torch.topk(sum_logP, k=1, dim=1) #both are [bs,1], best token (idx) for each b in bs
-#    best = best.view(bs) #[bs]
 
     for b in range(pref.shape[0]):
-      logging.info('b={} pref={} {}'.format(b,pref[b],self.tgt_voc[pref[b].item()]))
-      if pref[b] == self.tgt_voc.idx_eos: ### do not force if pref_idx is idx_eos
+      idx_pref = pref[b].item()
+      idx_best = best[b].item()
+      if idx_pref == self.tgt_voc.idx_eos: ### do not force if pref_idx is idx_eos
         logging.info('pref is <eos>')
         continue
-      elif pref[b] == self.tgt_voc.idx_pad: ### do not force if pref_idx is idx_pad
+      elif idx_pref == self.tgt_voc.idx_pad: ### do not force if pref_idx is idx_pad
         logging.info('pref is <pad>')
         continue
-      elif best[b] == self.tgt_voc.idx_msk: ### do not force if best is idx_msk
+      elif idx_best == self.tgt_voc.idx_msk: ### do not force if best is idx_msk
         logging.info('best is <msk>')
         continue
       logging.info('force')
-      all_Inf_but_pref = torch.cat( (torch.arange(0,pref[b]), torch.arange(pref[b]+1,self.Vt)) )
+      all_Inf_but_pref = torch.cat( (torch.arange(0,idx_pref), torch.arange(idx_pref+1,self.Vt)) )
       logP[b,:,all_Inf_but_pref,-1] = float('-Inf') 
 
     logP = logP.contiguous().view(bs,n_times_Vt,lt)
