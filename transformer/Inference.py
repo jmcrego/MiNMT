@@ -163,7 +163,7 @@ class Inference():
     logP = logP.contiguous().view(bs,-1,self.Vt,lt)
 
     #set -Inf all but idx_eos of last added tokens
-    all_but_eos = torch.cat(torch.arange(0,self.tgt_voc.idx_eos), torch.arange(self.tgt_voc.idx_eos+1,self.Vt))
+    all_but_eos = torch.cat( (torch.arange(0,self.tgt_voc.idx_eos), torch.arange(self.tgt_voc.idx_eos+1,self.Vt)) )
     logP[:,:,all_but_eos,-1] = float('-Inf') 
 
     logP = logP.contiguous().view(bs,n_times_Vt,lt)
