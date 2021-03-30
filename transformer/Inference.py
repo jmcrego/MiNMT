@@ -56,8 +56,8 @@ class Inference():
         ### encode
         self.z_src = self.model.encode(src, self.msk_src) #[bs,ls,ed]
         ### decode step-by-step
-        #finals = self.traverse_beam()
-        finals = self.translate_beam()
+        finals = self.traverse_beam()
+        #finals = self.translate_beam()
         ### eoutput
         for b in range(len(finals)):
           for n, (hyp, logp) in enumerate(sorted(finals[b].items(), key=lambda kv: kv[1], reverse=True)):
