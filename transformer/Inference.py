@@ -52,10 +52,13 @@ class Inference():
           self.batch_pre = None
 
         batch_src = batch_idxs[0]
-        ### encode batch
         src, self.msk_src = prepare_source(batch_src, self.src_voc.idx_pad, self.device) #src is [bs, ls] msk_src is [bs,1,ls]
+        ### encode
         self.z_src = self.model.encode(src, self.msk_src) #[bs,ls,ed]
+        ### decode step-by-step
+        #finals = self.traverse_beam()
         finals = self.translate_beam()
+        ### eoutput
         for b in range(len(finals)):
           for n, (hyp, logp) in enumerate(sorted(finals[b].items(), key=lambda kv: kv[1], reverse=True)):
             hyp = list(map(int,hyp.split(' ')))
@@ -68,7 +71,7 @@ class Inference():
       fh.close()
 
 
-  def translate_beam(self):
+  def traverse_beam(self):
     bs =  self.z_src.shape[0]
     finals = [defaultdict() for i in range(bs)] #list with hyps reaching <eos> and overall score
     hyps = torch.ones([bs,1], dtype=int).to(self.device) * self.tgt_voc.idx_bos #[bs,lt=1]
@@ -76,33 +79,31 @@ class Inference():
     lp = self.batch_pre.shape[1] if self.batch_pre is not None else 0 #max length of prefixes
 
     while True:
-      I, lt = hyps.shape #I corresponds to: bs OR bs*K, lt is the hyp length
-      #logging.info('hyps = {} logP = {}'.format(hyps.shape, logP.shape))
-      #logging.info('lt = {}'.format(lt))
+      #hyps is [I,lt] ; K is 1*K OR bs*K ; lt is the hyp length [1, 2, ..., max_size)
+      I, lt = hyps.shape 
+      logging.info('lt = {}'.format(lt))
 
       if lt == 2:
         self.z_src = self.z_src.repeat_interleave(repeats=self.K, dim=0) #[bs,ls,ed] => [bs*K,ls,ed]
         self.msk_src = self.msk_src.repeat_interleave(repeats=self.K, dim=0) #[bs,1,ls] => [bs*K,1,ls]
-        #logging.info('z_src = {} msk_src = {}'.format(self.z_src.shape, self.msk_src.shape))
 
       ##############
       ### DECODE ###
       ##############
       msk_tgt = (1 - torch.triu(torch.ones((1, lt, lt), device=self.device), diagonal=1)).bool()
       y_next = self.model.decode(self.z_src, hyps, self.msk_src, msk_tgt=msk_tgt)[:,-1,:] #[I,lt,Vt] => [I,Vt]
-      #logging.info('y_next = {}'.format(y_next.shape))
 
-      if lt == self.max_size - 1: #last extension (force <eos> to appear in all hypotheses)
-        forced = self.force_eos() #[Vt]
-        logging.info('(eos) forced = {}'.format(forced.shape))
-        y_next[:,] *= forced
+      hyps, logP = self.expand(y_next, hyps, logP, bs) #both are [bs,1*Vt,lt] OR [[bs,K*Vt,lt]
+      
+      #if lt == self.max_size - 1: #last extension (force <eos> to appear in all hypotheses)
+      #  logP = self.force_eos(logP) #both are [bs,1*Vt,lt] OR [[bs,K*Vt,lt]
+      #  logging.info('force_eos logP={}'.format(logP.shape))
 
-      elif self.batch_pre is not None and lt < lp: #force decoding using prefix
-        forced = self.force_prefix(y_next, hyps, logP, bs) 
-        logging.info('(prefix) forced = {}'.format(forced.shape))
-        y_next *= forced
+      #elif self.batch_pre is not None and lt < lp: #force decoding using prefix
+      #  logP = self.force_prefix(logP, self.batch_pre[:,lt]) #both are [bs,1*Vt,lt] OR [[bs,K*Vt,lt]
+      #  logging.info('force_prefix logP={}'.format(logP.shape))
 
-      hyps, logP = self.expansion(y_next, hyps, logP, self.K, bs) #both are [bs*K,lt]
+      hyps, logP = self.Kbest(hyps, logP) #both are [bs*K,lt]
 
       ##############
       ### FINALS ###
@@ -115,7 +116,6 @@ class Inference():
           cst = sum(logP[i])
           if self.alpha:
             cst = cst / norm_length(hyps.shape[1],self.alpha)
-          #logging.info('[FINAL b={}]\t{:6f}\t{}'.format(b,sum_logp,hyp))
           finals[b][hyp] = cst.item() # keep record of final hypothesis
           logP[i,-1] = -float('Inf') # force the hypothesis to disappear in next step
 
@@ -123,68 +123,84 @@ class Inference():
         return finals
 
 
-  def expansion(self, y_next, hyps, logP, best_k, bs):
-    I, lt = hyps.shape 
-    #y_next is [I,Vt], I is either bs*1 or bs*K
+  def expand(self, y_next, hyps, logP, bs):
+    #y_next is [I,Vt], I is either bs*1 OR bs*K
+    #hyps is [I,lt]
+    #logP is [I,lt]
+    I, lt = hyps.shape
     next_logP = y_next.contiguous().view(-1,1) #[I*Vt,1]
-    #logging.info('next_logP = {}'.format(next_logP.shape))
     next_wrds = self.next_wrds.repeat_interleave(repeats=I, dim=0).view(-1,1) #[1,Vt] => [1*I,Vt] => [I*Vt,1]
-    #logging.info('next_wrds = {}'.format(next_wrds.shape))
     ##############
     ### EXPAND ###
     ##############
-    hyps_extended = hyps.repeat_interleave(repeats=self.Vt, dim=0) #[I,lt] => [I*Vt,lt]
-    logP_extended = logP.repeat_interleave(repeats=self.Vt, dim=0) #[I,lt] => [I*Vt,lt]
-    #logging.info('hyps_extended = {} logP_extended = {}'.format(hyps_extended.shape, logP_extended.shape))
+    hyps_expanded = hyps.repeat_interleave(repeats=self.Vt, dim=0) #[I,lt] => [I*Vt,lt]
+    logP_expanded = logP.repeat_interleave(repeats=self.Vt, dim=0) #[I,lt] => [I*Vt,lt]
     ##############
     ### CONCAT ###
-    ##############
-    hyps_extended = torch.cat((hyps_extended, next_wrds), dim=-1) #[I*Vt,lt+1]
-    logP_extended = torch.cat((logP_extended, next_logP), dim=-1) #[I*Vt,lt+1]
-    #logging.info('hyps_extended = {} logP_extended = {}'.format(hyps_extended.shape, logP_extended.shape))
-    lt = hyps_extended.shape[1] #new hyp length
-    hyps_extended = hyps_extended.contiguous().view(bs,-1,lt) #[bs,1*Vt,lt] or [bs,K*Vt,lt]
-    logP_extended = logP_extended.contiguous().view(bs,-1,lt) #[bs,1*Vt,lt] or [bs,K*Vt,lt]
-    #logging.info('hyps_extended = {} logP_extended = {}'.format(hyps_extended.shape, logP_extended.shape))
-    ###################################################
-    ### KEEP K-best expansions of each hypothesis I ###
-    ###################################################
-    sum_logP_extended = torch.sum(logP_extended,dim=2) #[bs,1*Vt] or [bs,K*Vt]
-    _, kbest_inds = torch.topk(sum_logP_extended, k=best_k, dim=1) #both are [bs,K] (finds the K-best of dimension 1) no need to norm-length since all have same length
-    hyps = torch.stack([hyps_extended[b][inds] for b,inds in enumerate(kbest_inds)], dim=0).contiguous().view(bs*best_k,lt) #[bs,K,lt] => [bs*K,lt]
-    logP = torch.stack([logP_extended[b][inds] for b,inds in enumerate(kbest_inds)], dim=0).contiguous().view(bs*best_k,lt) #[bs,K,lt] => [bs*K,lt]
-    return hyps, logP #both are [bs*K,lt]
+    ############## 
+    hyps_expanded = torch.cat((hyps_expanded, next_wrds), dim=-1) #[I*Vt,lt+1]
+    logP_expanded = torch.cat((logP_expanded, next_logP), dim=-1) #[I*Vt,lt+1]
+    lt = hyps_expanded.shape[1] #new hyp length
+    hyps_expanded = hyps_expanded.contiguous().view(bs,-1,lt) #[bs,1*Vt,lt] OR [bs,K*Vt,lt]
+    logP_expanded = logP_expanded.contiguous().view(bs,-1,lt) #[bs,1*Vt,lt] OR [bs,K*Vt,lt]
+    return hyps_expanded, logP_expanded
 
-  def force_eos(self):
-    #all words are assigned -Inf except <eos> which keeps its logP
-    force_eos = torch.ones(len(self.tgt_voc), dtype=torch.float32, device=self.device) * float('Inf') #[Vt]
-    force_eos[self.tgt_voc.idx_eos] = 1.0
-    return force_eos
 
-  def force_prefix(self, y_next, hyps, logP, bs):
-    I, lt = hyps.shape
-    ### mask for y_next to keep logP of current forced words (self.batch_pre[lt])
-    force_prefix = torch.ones_like(y_next, dtype=torch.float32, device=self.device) * float('Inf') #[I,Vt] to multiply by y_next containing 1.0 (force to keep) -Inf (force to disappear)
-    ### current self.batch_pre[lt] idxs are multiplied by 1.0
-    pref_idx = self.batch_pre[:,lt] #[bs] idx's of current expansion to force for each hypothesis I
-    if I > bs:
-      pref_idx = pref_idx.repeat_interleave(repeats=self.K, dim=0) #[bs] => [bs*K] or [I]
-    force_prefix[torch.arange(I, dtype=torch.long, device=self.device), pref_idx] = 1.0
-    ### despite runnig force decoding, tokens in hyp are not forced (set force_msk to 1.0) if prefix is one of these:
-    eos = (pref_idx==self.tgt_voc.idx_eos).nonzero(as_tuple=False) #[I] do not force if pref_idx == idx_eos
-    force_prefix[eos.long(),:] = 1.0 #all tokens of hyps pointed by eos set to 1.0
-    pad = (pref_idx==self.tgt_voc.idx_pad).nonzero(as_tuple=False) #[I] do not force if pref_idx == idx_pad
-    force_prefix[pad.long(),:] = 1.0 #all tokens of hyps pointed by pad set to 1.0
-    #msk = self.best_is_msk(y_next, hyps, logP, 1)                  #[I] do not force if y_next == idx_msk
-    #force_prefix[msk.long(),:] = 1.0 #all tokens of hyps pointed by msk set to 1.0
-    return force_prefix
+  def Kbest(self, hyps, logP):
+    #hyps is [bs,n_times_Vt,lt] n is 1 or K
+    #logP is [bs,n_times_Vt,lt]
+    bs, n_times_Vt, lt = logP.shape
+    sum_logP = torch.sum(logP,dim=2) #[bs,n_times_Vt] 
+    _, kbest_inds = torch.topk(sum_logP, k=self.K, dim=1) #both are [bs,K] (finds the K-best of dimension 1) no need to norm-length since all have same length
+    hyps = torch.stack([hyps[b][inds] for b,inds in enumerate(kbest_inds)], dim=0).contiguous().view(bs*self.K,lt) #[bs,K,lt] => [bs*K,lt]
+    logP = torch.stack([logP[b][inds] for b,inds in enumerate(kbest_inds)], dim=0).contiguous().view(bs*self.K,lt) #[bs,K,lt] => [bs*K,lt]
+    self.print_beam(hyps, logP, bs, lt)
+    return hyps, logP 
 
-  def print_beam(self, bs, lt):
+
+  def force_eos(self, logP):
+    #logP is [bs, 1*Vt, lt] or [bs, K*Vt, lt]
+    bs, n_times_Vt, lt = logP.shape
+    logP = logP.contiguous().view(bs,-1,self.Vt,lt)
+
+    #set -Inf all but idx_eos of last added tokens
+    all_but_eos = torch.cat(torch.arange(0,self.tgt_voc.idx_eos), torch.arange(self.tgt_voc.idx_eos+1,self.Vt))
+    logP[:,:,all_but_eos,-1] = float('-Inf') 
+
+    logP = logP.contiguous().view(bs,n_times_Vt,lt)
+    return logP
+
+
+  def force_prefix(self, logP, pref):
+    #logP is [bs, 1*Vt, lt] or [bs, K*Vt, lt]
+    #pref is [bs] (the prefix to be used for each bs)
+    bs, n_times_Vt, lt = logP.shape
+    logP = logP.contiguous().view(bs,-1,self.Vt,lt) #[bs,n,Vt,lt]
+    sum_logP = torch.sum(logP.view(bs,n_times_Vt,lt),dim=2) #[bs,n_times_Vt]
+
+    _, best = torch.topk(sum_logP, k=1, dim=1) #both are [bs,1], best token (idx) for each b in bs
+    best = best.view(bs) #[bs]
+
+    for b in range(pref.shape[0]):
+      if pref[b] == self.tgt_voc.idx_eos: ### do not force if pref_idx is idx_eos
+        continue
+      elif pref[b] == self.tgt_voc.idx_pad: ### do not force if pref_idx is idx_pad
+        continue
+      elif best[b] == self.tgt_voc.idx_msk: ### do not force if best is idx_msk
+        continue
+      all_but_pref = torch.cat( (torch.arange(0,pref[b]), torch.arange(pref[b]+1,self.Vt)) )
+      logP[b,:,all_but_pref,-1] = float('-Inf') 
+
+    logP = logP.contiguous().view(bs,n_times_Vt,lt)
+    return logP
+
+
+  def print_beam(self, hyps, logP, bs, lt):    
     hyps_bs_k = hyps.view(bs,self.K,lt)
     logP_bs_k = logP.view(bs,self.K,lt)
     for b in range(hyps_bs_k.shape[0]):
       for k in range(hyps_bs_k.shape[1]):
-        logging.debug('batch {} beam {}\tlogP={:.6f}\t{}'.format(b, k, sum(logP_bs_k[b,k]), ' '.join([self.tgt_voc[t] for t in hyps_bs_k[b,k].tolist()]) ))
+        logging.info('batch {} beam {}\tlogP={:.6f}\t{}'.format(b, k, sum(logP_bs_k[b,k]), ' '.join([self.tgt_voc[t] for t in hyps_bs_k[b,k].tolist()]) ))
 
 
   def format_hyp(self, p, n, c, tgt_idx, src_idx): 
@@ -223,6 +239,104 @@ class Inference():
         logging.error('Invalid format option {} in {}'.format(ch,self.format))
         sys.exit()
     return '\t'.join(out)
+
+
+
+
+
+
+
+
+
+
+
+
+  def translate_beam(self):
+    bs =  self.z_src.shape[0]
+    finals = [defaultdict() for i in range(bs)] #list with hyps reaching <eos> and overall score
+    hyps = torch.ones([bs,1], dtype=int).to(self.device) * self.tgt_voc.idx_bos #[bs,lt=1]
+    logP = torch.zeros([bs,1], dtype=torch.float32).to(self.device)     #[bs,lt=1]
+    lp = self.batch_pre.shape[1] if self.batch_pre is not None else 0 #max length of prefixes
+
+    while True:
+      I, lt = hyps.shape #I corresponds to: bs OR bs*K, lt is the hyp length
+      #logging.info('hyps = {} logP = {}'.format(hyps.shape, logP.shape))
+      #logging.info('lt = {}'.format(lt))
+
+      if lt == 2:
+        self.z_src = self.z_src.repeat_interleave(repeats=self.K, dim=0) #[bs,ls,ed] => [bs*K,ls,ed]
+        self.msk_src = self.msk_src.repeat_interleave(repeats=self.K, dim=0) #[bs,1,ls] => [bs*K,1,ls]
+        #logging.info('z_src = {} msk_src = {}'.format(self.z_src.shape, self.msk_src.shape))
+
+      ### DECODE ###
+      msk_tgt = (1 - torch.triu(torch.ones((1, lt, lt), device=self.device), diagonal=1)).bool()
+      y_next = self.model.decode(self.z_src, hyps, self.msk_src, msk_tgt=msk_tgt)[:,-1,:] #[I,lt,Vt] => [I,Vt]
+      #logging.info('y_next = {}'.format(y_next.shape))
+
+      if lt == self.max_size - 1: #last extension (force <eos>)
+        force_eos = torch.ones(len(self.tgt_voc), dtype=torch.float32, device=self.device) * float('Inf') #[Vt]
+        force_eos[self.tgt_voc.idx_eos] = 1.0
+        y_next[:,] *= force_eos #all words are assigned -Inf except <eos> which keeps its logP
+
+      elif self.batch_pre is not None and lt < lp: #force decoding
+        ### mask for y_next to keep logP of current forced words (self.batch_pre[lt])
+        force_mask = torch.ones_like(y_next, dtype=torch.float32, device=self.device) * float('Inf') #[I,Vt] to multiply by y_next containing 1.0 (force to keep) -Inf (force to disappear)
+        ### current self.batch_pre[lt] idxs are multiplied by 1.0
+        pref_idx = self.batch_pre[:,lt] #[bs] idx's of current expansion to force for each hypothesis I
+        if I > bs:
+          pref_idx = pref_idx.repeat_interleave(repeats=self.K, dim=0) #[bs] => [bs*K]
+        force_mask[torch.arange(I, dtype=torch.long, device=self.device), pref_idx] = 1.0
+        ### despite runnig force decoding, some tokens in prefix must not be forced:
+        eos = (pref_idx==self.tgt_voc.idx_eos).nonzero(as_tuple=False) #do not force if pref_idx == idx_eos
+        force_mask[eos.long(),:] = 1.0
+        pad = (pref_idx==self.tgt_voc.idx_pad).nonzero(as_tuple=False) #do not force if pref_idx == idx_pad
+        force_mask[pad.long(),:] = 1.0
+        ### apply force decoding
+        y_next *= force_mask 
+
+
+      next_logP = y_next.contiguous().view(-1,1) #[I*Vt,1]
+      #logging.info('next_logP = {}'.format(next_logP.shape))
+      next_wrds = self.next_wrds.repeat_interleave(repeats=I, dim=0).view(-1,1) #[1,Vt] => [1*I,Vt] => [I*Vt,1]
+      #logging.info('next_wrds = {}'.format(next_wrds.shape))
+
+      ### EXPAND ###
+      hyps_extended = hyps.repeat_interleave(repeats=self.Vt, dim=0) #[I,lt] => [I*Vt,lt]
+      logP_extended = logP.repeat_interleave(repeats=self.Vt, dim=0) #[I,lt] => [I*Vt,lt]
+      #logging.info('hyps_extended = {} logP_extended = {}'.format(hyps_extended.shape, logP_extended.shape))
+
+      hyps_extended = torch.cat((hyps_extended, next_wrds), dim=-1) #[I*Vt,lt+1]
+      logP_extended = torch.cat((logP_extended, next_logP), dim=-1) #[I*Vt,lt+1]
+      #logging.info('hyps_extended = {} logP_extended = {}'.format(hyps_extended.shape, logP_extended.shape))
+      lt = hyps_extended.shape[1] #new hyp length
+
+      ### KEEP K-best expansions of each hypothesis I ###
+      hyps_extended = hyps_extended.contiguous().view(bs,-1,lt) #[bs,1*Vt,lt] or [bs,K*Vt,lt]
+      logP_extended = logP_extended.contiguous().view(bs,-1,lt) #[bs,1*Vt,lt] or [bs,K*Vt,lt]
+      #logging.info('hyps_extended = {} logP_extended = {}'.format(hyps_extended.shape, logP_extended.shape))
+      sum_logP_extended = torch.sum(logP_extended,dim=2) #[bs,1*Vt] or [bs,K*Vt]
+
+      _, kbest_inds = torch.topk(sum_logP_extended, k=self.K, dim=1) #both are [bs, K] (finds the K-best of dimension 1 (I*K)) no need to norm-length since all have same length
+      hyps = torch.stack([hyps_extended[b][inds] for b,inds in enumerate(kbest_inds)], dim=0).contiguous().view(bs*self.K,lt) #[bs,K,lt] => [bs*K,lt]
+      logP = torch.stack([logP_extended[b][inds] for b,inds in enumerate(kbest_inds)], dim=0).contiguous().view(bs*self.K,lt) #[bs,K,lt] => [bs*K,lt]
+      #logging.info('hyps = {} logP = {}'.format(hyps.shape, logP.shape))
+      #self.print_beam(bs, lt)
+
+      ### FINALS ###
+      index_of_finals = (hyps[:,-1]==self.tgt_voc.idx_eos).nonzero(as_tuple=False).squeeze(-1) #[n] n being the number of final hyps found
+      for i in index_of_finals:
+        b = i//self.K
+        if len(finals[b]) < self.K:
+          hyp = ' '.join(map(str,hyps[i].tolist()))
+          cst = sum(logP[i])
+          if self.alpha:
+            cst = cst / norm_length(hyps.shape[1],self.alpha)
+          #logging.info('[FINAL b={}]\t{:6f}\t{}'.format(b,sum_logp,hyp))
+          finals[b][hyp] = cst.item() # keep record of final hypothesis
+          logP[i,-1] = -float('Inf') # force the hypothesis to disappear in next step
+
+      if sum([len(d) for d in finals]) == bs*self.K:
+        return finals
 
 
 
