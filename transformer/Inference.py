@@ -176,13 +176,12 @@ class Inference():
     best, _ = self.Kbest(hyps,logP)
     best = best.view(bs,-1,lt)
     best = best[:,0,-1]
-    logging.info('best = {} pref = {}'.format(best.shape,pref.shape))
+    logging.info('pref={}:{} best={}:{}'.format(pref.shape,pref.tolist(),best.shape,best.tolist()))
 
 #    logP = logP.contiguous().view(bs,-1,self.Vt,lt) #[bs,n,Vt,lt]
 #    sum_logP = torch.sum(logP.view(bs,n_times_Vt,lt),dim=2) #[bs,n_times_Vt]
 #    _, best = torch.topk(sum_logP, k=1, dim=1) #both are [bs,1], best token (idx) for each b in bs
 #    best = best.view(bs) #[bs]
-    logging.info('pref={} best={}'.format(pref.tolist(),best.tolist()))
 
     for b in range(pref.shape[0]):
       logging.info('b={} pref={} {}'.format(b,pref[b],self.tgt_voc[pref[b].item()]))
