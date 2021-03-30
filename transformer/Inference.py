@@ -97,7 +97,7 @@ class Inference():
         logP = self.force_eos(logP) #both are [bs,1*Vt,lt] OR [[bs,K*Vt,lt]
 
       elif self.batch_pre is not None and lt < lp: #force decoding using prefix
-        logP = self.force_prefix(logP, self.batch_pre[:,lt]) #both are [bs,1*Vt,lt] OR [[bs,K*Vt,lt]
+        logP = self.force_prefix(hyps, logP, self.batch_pre[:,lt]) #both are [bs,1*Vt,lt] OR [[bs,K*Vt,lt]
 
       hyps, logP = self.Kbest(hyps, logP) #both are [bs*K,lt]
 
@@ -167,7 +167,8 @@ class Inference():
     return logP
 
 
-  def force_prefix(self, logP, pref):
+  def force_prefix(self, hyps, logP, pref):
+    #hyps is [bs, 1*Vt, lt] or [bs, K*Vt, lt]
     #logP is [bs, 1*Vt, lt] or [bs, K*Vt, lt]
     #pref is [bs] (the prefix to be used for each bs)
     bs, n_times_Vt, lt = logP.shape
