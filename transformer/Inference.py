@@ -178,7 +178,7 @@ class Inference():
     best = best.view(bs) #[bs]
 
     for b in range(pref.shape[0]):
-      logging.info('b={} pref={} {}'.format(b,pref[b],self.tgt_voc[pref[b]]))
+      logging.info('b={} pref={} {}'.format(b,pref[b],self.tgt_voc[pref[b].item()]))
       if pref[b] == self.tgt_voc.idx_eos: ### do not force if pref_idx is idx_eos
         continue
       elif pref[b] == self.tgt_voc.idx_pad: ### do not force if pref_idx is idx_pad
