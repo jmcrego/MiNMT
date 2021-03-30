@@ -91,7 +91,7 @@ class Inference():
       msk_tgt = (1 - torch.triu(torch.ones((1, lt, lt), device=self.device), diagonal=1)).bool()
       y_next = self.model.decode(self.z_src, hyps, self.msk_src, msk_tgt=msk_tgt)[:,-1,:] #[I,lt,Vt] => [I,Vt]
 
-      hyps, logP = self.expand(y_next, hyps, logP, bs) #both are [bs,1*Vt,lt] OR [[bs,K*Vt,lt]
+      hyps, logP = self.expand(y_next, hyps, logP, bs) #both are [bs,1*Vt,lt] OR [bs,K*Vt,lt]
       
       if lt == self.max_size - 1: #last extension (force <eos> to appear in all hypotheses)
         logP = self.force_eos(logP) #both are [bs,1*Vt,lt] OR [[bs,K*Vt,lt]
@@ -178,6 +178,7 @@ class Inference():
     best = best.view(bs) #[bs]
 
     for b in range(pref.shape[0]):
+      logging.info('b={} pref={}'.format(b,pref[b]))
       if pref[b] == self.tgt_voc.idx_eos: ### do not force if pref_idx is idx_eos
         continue
       elif pref[b] == self.tgt_voc.idx_pad: ### do not force if pref_idx is idx_pad
