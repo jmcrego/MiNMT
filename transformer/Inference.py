@@ -175,20 +175,20 @@ class Inference():
     best, _ = self.Kbest(hyps,logP) #[bs*K,lt] (K-best hypotheses)
     best = best.view(bs,-1,lt) #[bs,K,lt] 
     best = best[:,0,-1].view(bs) #(last added one-best hypothesis for each b in bs)
-    logging.info('pref={}:{}:{} best={}:{}:{}'.format(pref.shape,pref.tolist(),self.tgt_voc[pref[0].item()],best.shape,best.tolist(),self.tgt_voc[best[0].item()]))
+    logging.info('pref={}:{}:{} ****** best={}:{}:{}'.format(pref.shape,pref.tolist(),self.tgt_voc[pref[0].item()],best.shape,best.tolist(),self.tgt_voc[best[0].item()]))
     logP = logP.contiguous().view(bs,-1,self.Vt,lt) #[bs,n,Vt,lt]
 
     for b in range(pref.shape[0]):
       idx_pref = pref[b].item()
       idx_best = best[b].item()
       if idx_pref == self.tgt_voc.idx_eos: ### do not force if pref_idx is idx_eos
-        logging.info('pref is <eos>')
+#        logging.info('pref is <eos>')
         continue
       elif idx_pref == self.tgt_voc.idx_pad: ### do not force if pref_idx is idx_pad
-        logging.info('pref is <pad>')
+#        logging.info('pref is <pad>')
         continue
       elif idx_best == self.tgt_voc.idx_msk: ### do not force if best is idx_msk
-        logging.info('best is <msk>')
+#        logging.info('best is <msk>')
         continue
       logging.info('force')
       all_Inf_but_pref = torch.cat( (torch.arange(0,idx_pref), torch.arange(idx_pref+1,self.Vt)) )
