@@ -174,18 +174,22 @@ class Inference():
     logP = logP.contiguous().view(bs,-1,self.Vt,lt) #[bs,n,Vt,lt]
     sum_logP = torch.sum(logP.view(bs,n_times_Vt,lt),dim=2) #[bs,n_times_Vt]
 
-#    _, best = torch.topk(sum_logP, k=1, dim=1) #both are [bs,1], best token (idx) for each b in bs
-#    best = best.view(bs) #[bs]
-#    logging.info('best={}'.format(best.tolist()))
+    _, best = torch.topk(sum_logP, k=1, dim=1) #both are [bs,1], best token (idx) for each b in bs
+    best = best.view(bs) #[bs]
+    logging.info('best={}'.format(best.tolist()))
 
     for b in range(pref.shape[0]):
       logging.info('b={} pref={} {}'.format(b,pref[b],self.tgt_voc[pref[b].item()]))
       if pref[b] == self.tgt_voc.idx_eos: ### do not force if pref_idx is idx_eos
+        logging.info('pref is <eos>')
         continue
       elif pref[b] == self.tgt_voc.idx_pad: ### do not force if pref_idx is idx_pad
+        logging.info('pref is <pad>')
         continue
-#      elif best[b] == self.tgt_voc.idx_msk: ### do not force if best is idx_msk
-#        continue
+      elif best[b] == self.tgt_voc.idx_msk: ### do not force if best is idx_msk
+        logging.info('best is <msk>')
+        continue
+      logging.info('force')
       all_Inf_but_pref = torch.cat( (torch.arange(0,pref[b]), torch.arange(pref[b]+1,self.Vt)) )
       logP[b,:,all_Inf_but_pref,-1] = float('-Inf') 
 
