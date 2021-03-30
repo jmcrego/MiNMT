@@ -174,6 +174,7 @@ class Inference():
     bs, n_times_Vt, lt = logP.shape
 
     best, _ = self.Kbest(hyps,logP)
+    best = best.view(bs,-1,lt)
     best = best[:,0,-1]
 
 #    logP = logP.contiguous().view(bs,-1,self.Vt,lt) #[bs,n,Vt,lt]
