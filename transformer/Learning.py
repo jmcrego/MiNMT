@@ -13,7 +13,7 @@ try:
 except ImportError:
   tensorboard = False
 
-def pad_prefix(ref, idx_sep, idx_pad):
+def pad_prefix(ref, idx_sep, idx_pad): ### not used anymore
   #ref is [bs, lt]
   inds_sep = (ref == idx_sep).nonzero(as_tuple=True)[1] #[bs] position of idx_sep tokens in ref (one per line)
   #logging.info('inds_sep = {}'.format(inds_sep))
@@ -44,7 +44,7 @@ class Score():
     self.start_report = time.time()
 
   def step(self, sum_loss_batch, ntok_batch, pred, gold, idx_msk):
-    self.sum_loss_report += sum_loss_batch
+    self.sum_loss_report += sum_loss_batch  
     self.sum_toks_report += ntok_batch
     self.nsteps_report += 1
     n_msk, n_ok_msk = self.eval_msk(pred, gold, idx_msk)
@@ -94,7 +94,6 @@ class Learning():
     self.keep_last_n = ol.keep_last_n
     self.clip = ol.clip
     self.mask_prefix = ol.mask_prefix
-    self.pad_prefix = ol.pad_prefix
     self.idx_pad = idx_pad    
     self.idx_sep = idx_sep
     self.idx_msk = idx_msk
@@ -122,8 +121,6 @@ class Learning():
         ###
         ### compute loss
         ###
-        if self.pad_prefix: #do not compute loss over prefix tokens
-          ref = pad_prefix(ref, self.idx_sep, self.idx_pad)
         loss_batch = self.criter(pred, ref) #sum of losses in batch
         loss_token = loss_batch / torch.sum(ref != self.idx_pad) #ntok_batch
         ### optimize
@@ -190,8 +187,6 @@ class Learning():
         src, msk_src = prepare_source(batch_src, self.idx_pad, device)
         tgt, ref, msk_tgt = prepare_target(batch_tgt, self.idx_pad, self.idx_sep, self.idx_msk, self.mask_prefix, device)
         pred = self.model.forward(src, tgt, msk_src, msk_tgt) #no log_softmax is applied
-        if self.pad_prefix:
-          ref = pad_prefix(ref, self.idx_sep, self.idx_pad)
         loss = self.criter(pred, ref) ### batch loss
         valid_loss += loss.item() / torch.sum(ref != self.idx_pad)
         if n_batch == 1:
