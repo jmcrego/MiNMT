@@ -191,7 +191,6 @@ class Inference():
       elif do_mask and best[b].item() == self.tgt_voc.idx_msk: ### do not force if best is idx_msk
 #        logging.info('best is <msk>')
         continue
-      logging.info('force')
       all_Inf_but_pref = torch.cat( (torch.arange(0,idx_pref), torch.arange(idx_pref+1,self.Vt)) )
       logP[b,:,all_Inf_but_pref,-1] = float('-Inf') 
 
