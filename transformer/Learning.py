@@ -13,74 +13,37 @@ try:
 except ImportError:
   tensorboard = False
 
-def pad_prefix(ref, idx_sep, idx_pad): ### not used anymore
-  #ref is [bs, lt]
-  inds_sep = (ref == idx_sep).nonzero(as_tuple=True)[1] #[bs] position of idx_sep tokens in ref (one per line)
-  #logging.info('inds_sep = {}'.format(inds_sep))
-  assert ref.shape[0] == inds_sep.shape[0], 'references must contain one and no more than one idx_sep tokens {}!={}'.format(ref.shape,inds_sep.shape)
-  seqs_sep = [torch.ones([l+1], dtype=torch.long) for l in inds_sep]
-  #logging.info('seqs_sep = {}'.format(seqs_sep))
-  padding = torch.nn.utils.rnn.pad_sequence(seqs_sep, batch_first=True, padding_value=0).to(ref.device)
-  #logging.info('padding = {}'.format(padding))
-  if padding.shape[1] < ref.shape[1]:
-    extend = torch.zeros([ref.shape[0], ref.shape[1]-padding.shape[1]], dtype=torch.long, device=ref.device)
-    padding = torch.cat((padding, extend), 1)
-  #logging.info('padding = {}'.format(padding))
-  ref = torch.where(padding==1,idx_pad,ref)
-  #logging.info('ref = {}'.format(ref))
-  return ref
-
 ##############################################################################################################
 ### Score ####################################################################################################
 ##############################################################################################################
 
 class Score():
   def __init__(self):
-    self.sum_loss_report = 0.
-    self.sum_toks_report = 0
-    self.nsteps_report = 0
-    self.n_msk = 0
-    self.n_ok_msk = 0
-    self.start_report = time.time()
+    self.loss = 0.0
+    self.ntok = 0
+    self.nstep = 0
+    self.start = time.time()
 
-  def step(self, sum_loss_batch, ntok_batch, pred, gold, idx_msk):
-    self.sum_loss_report += sum_loss_batch  
-    self.sum_toks_report += ntok_batch
-    self.nsteps_report += 1
-    n_msk, n_ok_msk = self.eval_msk(pred, gold, idx_msk)
-    self.n_msk += n_msk 
-    self.n_ok_msk += n_ok_msk 
+  def step(self, loss, ntok):
+    self.loss += loss
+    self.ntok += ntok
+    self.nstep += 1
 
   def report(self):
-    end_report= time.time()
-    if self.sum_toks_report and self.nsteps_report:
-      loss_per_tok = self.sum_loss_report / (1.0*self.sum_toks_report)
-      steps_per_sec = self.nsteps_report / (end_report - self.start_report)
-      if self.n_msk > 0:
-        logging.info('n_msk: {} acc_msk: {:.2f}'.format(self.n_msk, 100.0*self.n_ok_msk/self.n_msk))
+    end = time.time()
+    if self.ntok and self.nstep:
+      loss_per_tok = self.loss / (1.0*self.nstep)
+      steps_per_sec = self.nstep / (end - self.start)
       return loss_per_tok, steps_per_sec
-    logging.warning('Requested report after 0 tokens optimised')
-    return 0., 0
-
-  def eval_msk(self, pred, gold, idx_msk):
-    bs, lt, ed = pred.shape
-    gold = gold.contiguous().view([bs*lt])
-    pred = pred.contiguous().view([bs*lt,-1])
-    inds_gold_msk = (gold==idx_msk).nonzero(as_tuple=True)[0] #[n] indexs i of gold where gold[i]=idx_msk
-    n_ok_msk = 0
-    n_msk = torch.numel(inds_gold_msk)
-    if n_msk > 0:
-      _, inds_pred = torch.topk(pred, k=1, dim=1)
-      inds_pred_msk = inds_pred[inds_gold_msk].squeeze()
-      n_ok_msk = torch.sum(inds_pred_msk==idx_msk) #.nonzero(as_tuple=False)
-    return n_msk, n_ok_msk
+    logging.warning('Requested report after 0 steps optimised')
+    return 0.0, 0
 
 ##############################################################################################################
 ### Learning #################################################################################################
 ##############################################################################################################
 
 class Learning():
-  def __init__(self, model, optScheduler, criter, suffix, idx_pad, idx_sep, idx_msk, ol):
+  def __init__(self, model, optScheduler, criter, suffix, idx_pad, ol):
     super(Learning, self).__init__()
     self.model = model
     self.optScheduler = optScheduler
@@ -93,10 +56,8 @@ class Learning():
     self.report_every = ol.report_every
     self.keep_last_n = ol.keep_last_n
     self.clip = ol.clip
-    self.mask_prefix = ol.mask_prefix
-    self.idx_pad = idx_pad    
-    self.idx_sep = idx_sep
-    self.idx_msk = idx_msk
+    self.accum_n_batchs = ol.accum_n_batchs
+    self.idx_pad = idx_pad
 
     if tensorboard:
       self.writer = SummaryWriter(log_dir=ol.dnet, comment='', purge_step=None, max_queue=10, flush_secs=60, filename_suffix='')
@@ -104,10 +65,13 @@ class Learning():
   def learn(self, trainset, validset, device):
     logging.info('Running: learning')
     n_epoch = 0
+    self.optScheduler.optimizer.zero_grad() ### sets gradients to zero
     while True: #repeat epochs
       n_epoch += 1
       logging.info('Epoch {}'.format(n_epoch))
       n_batch = 0
+      ntok_in_step = 0
+      loss_accum = 0.0
       score = Score()
       for batch_pos, [batch_src, batch_tgt] in trainset:
         n_batch += 1
@@ -116,54 +80,61 @@ class Learning():
         ### forward
         ###
         src, msk_src = prepare_source(batch_src, self.idx_pad, device)
-        tgt, ref, msk_tgt = prepare_target(batch_tgt, self.idx_pad, self.idx_sep, self.idx_msk, self.mask_prefix, device)
+        tgt, ref, msk_tgt = prepare_target(batch_tgt, self.idx_pad, device)
         pred = self.model.forward(src, tgt, msk_src, msk_tgt) #no log_softmax is applied
+        ntok_in_batch = torch.sum(ref != self.idx_pad)
+        ntok_in_step += ntok_in_batch
         ###
         ### compute loss
         ###
-        loss_batch = self.criter(pred, ref) #sum of losses in batch
-        loss_token = loss_batch / torch.sum(ref != self.idx_pad) #ntok_batch
+        loss = self.criter(pred, ref) / ntok_in_batch / self.accum_n_batchs #sum of losses in batch (normalized by tokens in batch) (n batchs will be accumulated before model update, so i normalize by n batchs)
+        loss_accum += loss.item()
+        ###
+        ### compute/accumulate gradients (accumulate gradients until step() is called)
+        ###
+        loss.backward()
+        ###
         ### optimize
         ###
-        self.optScheduler.optimizer.zero_grad() ### sets gradients to zero
-        loss_token.backward() ### computes gradients
-        if self.clip > 0.0: ### clip gradients norm
-          torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.clip)
-        self.optScheduler.step() ### updates model parameters after incrementing step and updating lr
-        ###
-        ### accumulate score
-        ###
-        score.step(loss_batch.item(), torch.sum(ref!=self.idx_pad), pred, ref, self.idx_msk)
-        ###
-        ### report
-        ###
-        if self.report_every and self.optScheduler._step % self.report_every == 0: 
-          loss_per_tok, steps_per_sec = score.report()
-          logging.info('Learning step: {} epoch: {} batch: {} steps/sec: {:.2f} lr: {:.6f} Loss: {:.3f}'.format(self.optScheduler._step, n_epoch, n_batch, steps_per_sec, self.optScheduler._rate, loss_per_tok))
-          score = Score()
-          if tensorboard:
-            self.writer.add_scalar('Loss/train', loss_token.item(), self.optScheduler._step)
-            self.writer.add_scalar('LearningRate', self.optScheduler._rate, self.optScheduler._step)
-        ###
-        ### validate
-        ###
-        if self.validate_every and self.optScheduler._step % self.validate_every == 0: 
-          if validset is not None:
-            vloss = self.validate(validset, device)
-        ###
-        ### save
-        ###
-        if self.save_every and self.optScheduler._step % self.save_every == 0: 
-          save_checkpoint(self.suffix, self.model, self.optScheduler.optimizer, self.optScheduler._step, self.keep_last_n)
-        ###
-        ### stop by max_steps
-        ###
-        if self.max_steps and self.optScheduler._step >= self.max_steps: 
-          if validset is not None:
-            vloss = self.validate(validset, device)
-          save_checkpoint(self.suffix, self.model, self.optScheduler.optimizer, self.optScheduler._step, self.keep_last_n)
-          logging.info('Learning STOP by [steps={}]'.format(self.optScheduler._step))
-          return
+        if n_batch % self.accum_n_batchs == 0: #waits for n backward steps
+          if self.clip > 0.0: ### clip gradients norm
+            torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.clip)
+          self.optScheduler.step() ### updates model parameters after incrementing step and updating lr
+          self.optScheduler.optimizer.zero_grad() ### sets gradients to zero
+          ### score
+          score.step(loss_accum, ntok_in_step)
+          ntok_in_step = 0
+          loss_accum = 0.0
+          ###
+          ### report
+          ###
+          if self.report_every and self.optScheduler._step and self.optScheduler._step % self.report_every == 0:  ### first _step is 0
+            loss_per_tok, steps_per_sec = score.report()
+            logging.info('Learning step: {} epoch: {} batch: {} steps/sec: {:.2f} lr: {:.6f} Loss: {:.3f}'.format(self.optScheduler._step, n_epoch, n_batch, steps_per_sec, self.optScheduler._rate, loss_per_tok))
+            score = Score()
+            if tensorboard:
+              self.writer.add_scalar('Loss/train', loss_accum, self.optScheduler._step)
+              self.writer.add_scalar('LearningRate', self.optScheduler._rate, self.optScheduler._step)
+          ###
+          ### validate
+          ###
+          if self.validate_every and self.optScheduler._step and self.optScheduler._step % self.validate_every == 0: 
+            if validset is not None:
+              vloss = self.validate(validset, device)
+          ###
+          ### save
+          ###
+          if self.save_every and self.optScheduler._step and self.optScheduler._step % self.save_every == 0: 
+            save_checkpoint(self.suffix, self.model, self.optScheduler.optimizer, self.optScheduler._step, self.keep_last_n)
+          ###
+          ### stop by max_steps
+          ###
+          if self.max_steps and self.optScheduler._step and self.optScheduler._step >= self.max_steps: 
+            if validset is not None:
+              vloss = self.validate(validset, device)
+            save_checkpoint(self.suffix, self.model, self.optScheduler.optimizer, self.optScheduler._step, self.keep_last_n)
+            logging.info('Learning STOP by [steps={}]'.format(self.optScheduler._step))
+            return
       ###
       ### stop by max_epochs
       ###
@@ -176,7 +147,7 @@ class Learning():
 
   def validate(self, validset, device):
     tic = time.time()
-    valid_loss = 0.
+    valid_loss = 0.0
     n_batch = 0
     with torch.no_grad():
       self.model.eval()
@@ -185,7 +156,7 @@ class Learning():
         batch_tgt = batch_idxs[1]
         n_batch += 1
         src, msk_src = prepare_source(batch_src, self.idx_pad, device)
-        tgt, ref, msk_tgt = prepare_target(batch_tgt, self.idx_pad, self.idx_sep, self.idx_msk, self.mask_prefix, device)
+        tgt, ref, msk_tgt = prepare_target(batch_tgt, self.idx_pad, device)
         pred = self.model.forward(src, tgt, msk_src, msk_tgt) #no log_softmax is applied
         loss = self.criter(pred, ref) ### batch loss
         valid_loss += loss.item() / torch.sum(ref != self.idx_pad)

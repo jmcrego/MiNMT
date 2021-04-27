@@ -32,13 +32,13 @@ class Options():
     self.save_every =5000
     self.report_every = 100
     self.keep_last_n = 5
-    self.mask_prefix = False
     ### optim
     self.noam_scale = 2.0
     self.noam_warmup = 4000
     self.label_smoothing = 0.1
-    self.loss = 'NLL'
-    self.clip = 0.5
+    self.loss = 'KLDiv'
+    self.clip = 0.0
+    self.accum_n_batchs = 1
     ### data
     self.shard_size = 500000
     self.max_length = 100
@@ -70,8 +70,7 @@ class Options():
         self.report_every = int(argv.pop(0))
       elif tok=='-keep_last_n':
         self.keep_last_n = int(argv.pop(0))
-      elif tok=='-mask_prefix':
-        self.mask_prefix = True
+
       elif tok=='-noam_scale':
         self.noam_scale = float(argv.pop(0))
       elif tok=='-noam_warmup':
@@ -82,6 +81,8 @@ class Options():
         self.loss = argv.pop(0)
       elif tok=='-clip':
         self.clip = float(argv.pop(0))
+      elif tok=='-accum_n_batchs':
+        self.accum_n_batchs = int(argv.pop(0))
 
       elif tok=='-src_train':
         self.src_train = argv.pop(0)
@@ -115,8 +116,11 @@ class Options():
     if self.dnet is None:
       self.usage('missing -dnet option')
 
-    if self.src_train is None or self.tgt_train is None:
-      self.usage('missing -src_train/-tgt_train options')
+    if self.src_train is None:
+      self.usage('missing -src_train option')
+
+    if self.tgt_train is None:
+      self.usage('missing -tgt_train option')
 
     create_logger(log_file,log_level)
     random.seed(self.seed)
@@ -141,12 +145,12 @@ class Options():
    -save_every        INT : save model every INT model updates ({})
    -report_every      INT : report every INT model updates ({})
    -keep_last_n       INT : save last INT checkpoints ({})
-   -mask_prefix           : mask prefix tokens not appearing in target ({})
 
    [Optimization]
    -label_smoothing FLOAT : label smoothing probability ({})
    -loss           STRING : loss function: KLDiv, NLL ({})
    -clip            FLOAT : clips gradient norm of parameters ({})
+   -accum_n_batchs    INT : accumulate n batchs before model update ({})
    -noam_scale      FLOAT : scale of Noam decay for learning rate ({})
    -noam_warmup       INT : warmup steps of Noam decay for learning rate ({})
 
@@ -161,7 +165,7 @@ class Options():
    -log_file         FILE : log file  (stderr)
    -log_level      STRING : log level [debug, info, warning, critical, error] (info)
    -h                     : this help
-'''.format(self.prog, self.max_steps, self.max_epochs, self.validate_every, self.save_every, self.report_every, self.keep_last_n, self.mask_prefix, self.label_smoothing, self.loss, self.clip, self.noam_scale, self.noam_warmup, self.shard_size, self.max_length, self.batch_size, self.batch_type, self.cuda, self.seed))
+'''.format(self.prog, self.max_steps, self.max_epochs, self.validate_every, self.save_every, self.report_every, self.keep_last_n, self.label_smoothing, self.loss, self.clip, self.accum_n_batchs, self.noam_scale, self.noam_warmup, self.shard_size, self.max_length, self.batch_size, self.batch_type, self.cuda, self.seed))
     sys.exit()
 
 ######################################################################
@@ -208,7 +212,7 @@ if __name__ == '__main__':
   #############
   ### learn ###
   #############
-  learning = Learning(model, optScheduler, criter, o.dnet + '/network', src_voc.idx_pad, tgt_voc.idx_sep, tgt_voc.idx_msk, o)
+  learning = Learning(model, optScheduler, criter, o.dnet + '/network', src_voc.idx_pad, o)
   learning.learn(train, valid, device)
 
   toc = time.time()

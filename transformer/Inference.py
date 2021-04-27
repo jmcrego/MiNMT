@@ -31,7 +31,6 @@ class Inference():
     self.Vt = len(tgt_voc)
     self.N = oi.n_best
     self.K = oi.beam_size
-    self.mask_prefix = oi.mask_prefix
     self.device = device
     self.next_wrds = torch.tensor([i for i in range(self.Vt)], dtype=int, device=self.device).view(1,-1) #[1,Vt]
 
@@ -48,7 +47,7 @@ class Inference():
       self.model.eval()
       for pos, batch_idxs in testset:
         if len(batch_idxs) == 2:
-          self.batch_pre = prepare_prefix(batch_idxs[1], self.tgt_voc.idx_pad, self.device)  #pre is [bs, lp]
+          self.batch_pre, _ = prepare_prefix(batch_idxs[1], self.tgt_voc.idx_pad, self.device)  #pre is [bs, lp]
         else:
           self.batch_pre = None
 
@@ -95,10 +94,10 @@ class Inference():
       hyps, logP = self.expand(y_next, hyps, logP, bs) #both are [bs,1*Vt,lt] OR [bs,K*Vt,lt]
       
       if lt == self.max_size - 1: #last extension (force <eos> to appear in all hypotheses)
-        logP = self.force_eos(logP) #both are [bs,1*Vt,lt] OR [[bs,K*Vt,lt]
+        logP = self.force_eos(logP) #[bs,1*Vt,lt] OR [bs,K*Vt,lt]
 
       elif self.batch_pre is not None and lt < lp: #force decoding using prefix
-        logP = self.force_prefix(hyps, logP, self.batch_pre[:,lt], self.mask_prefix) #both are [bs,1*Vt,lt] OR [[bs,K*Vt,lt]
+        logP = self.force_prefix(hyps, logP, self.batch_pre[:,lt]) #[bs,1*Vt,lt] OR [bs,K*Vt,lt]
 
       hyps, logP = self.Kbest(hyps, logP) #both are [bs*K,lt]
 
@@ -168,28 +167,18 @@ class Inference():
     return logP
 
 
-  def force_prefix(self, hyps, logP, pref, do_mask):
+  def force_prefix(self, hyps, logP, pref):
     #hyps is [bs, 1*Vt, lt] or [bs, K*Vt, lt]
     #logP is [bs, 1*Vt, lt] or [bs, K*Vt, lt]
     #pref is [bs] (the prefix to be used for each bs)
     bs, n_times_Vt, lt = logP.shape
-    if do_mask:
-      best, _ = self.Kbest(hyps,logP) #[bs*K,lt] (K-best hypotheses)
-      best = best.view(bs,-1,lt) #[bs,K,lt] 
-      best = best[:,0,-1].view(bs) #(last added one-best hypothesis for each b in bs)
-      logging.info('pref={}:{}:{} ****** best={}:{}:{}'.format(pref.shape,pref.tolist(),self.tgt_voc[pref[0].item()],best.shape,best.tolist(),self.tgt_voc[best[0].item()]))
     logP = logP.contiguous().view(bs,-1,self.Vt,lt) #[bs,n,Vt,lt]
 
     for b in range(pref.shape[0]):
       idx_pref = pref[b].item()
       if idx_pref == self.tgt_voc.idx_eos: ### do not force if pref_idx is idx_eos
-#        logging.info('pref is <eos>')
         continue
       elif idx_pref == self.tgt_voc.idx_pad: ### do not force if pref_idx is idx_pad
-#        logging.info('pref is <pad>')
-        continue
-      elif do_mask and best[b].item() == self.tgt_voc.idx_msk: ### do not force if best is idx_msk
-#        logging.info('best is <msk>')
         continue
       all_Inf_but_pref = torch.cat( (torch.arange(0,idx_pref), torch.arange(idx_pref+1,self.Vt)) )
       logP[b,:,all_Inf_but_pref,-1] = float('-Inf') 
