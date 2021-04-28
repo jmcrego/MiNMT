@@ -95,7 +95,7 @@ class Options():
     sys.stderr.write('''usage: {} -dnet DIR -i FILE [Options]
    -dnet          DIR : network directory [must exist]
    -i            FILE : input file to translate
-   -p            FILE : file with prefixs for input file (force decoding)
+   -p            FILE : file with prefixes (force decoding)
    -o            FILE : output file ({})
    -m            FILE : use this model file (last checkpoint)
 
@@ -143,7 +143,7 @@ if __name__ == '__main__':
   ##################
   device = torch.device('cuda' if o.cuda and torch.cuda.is_available() else 'cpu')
   model = Encoder_Decoder(n['n_layers'], n['ff_dim'], n['n_heads'], n['emb_dim'], n['qk_dim'], n['v_dim'], n['dropout'], n['share_embeddings'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
-  logging.info('Built model (#params, size) = ({}) in device {}'.format(', '.join([str(f) for f in numparameters(model)]), next(model.parameters()).device ))
+  logging.info('Built model (#params, size) = ({}) in device {}'.format(', '.join([str(f) for f in numparameters(model)]), next(model.parameters()).device))
   step, model = load_model(o.dnet + '/network', model, device, o.model)
 
   ##################

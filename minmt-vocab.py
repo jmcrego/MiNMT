@@ -19,8 +19,6 @@ Tokens always used:
 <unk>
 <bos>
 <eos>
-⸨sep⸩
-⸨msk⸩
 '''.format(prog,min_freq,max_size)
 
   while len(sys.argv):
@@ -57,15 +55,15 @@ Tokens always used:
   print('<unk>')
   print('<bos>')
   print('<eos>')
-  print('⸨sep⸩')
-  print('⸨msk⸩')
+#  print('⸨sep⸩')
+#  print('⸨msk⸩')
   n = 6
   for tok, count in freq.most_common():
     if max_size and n >= max_size:
       break
     if count < min_freq:
       break
-    if tok=='<pad>' or tok=='<unk>' or tok=='<bos>' or tok=='<eos>' or tok=='⸨msk⸩' or tok=='⸨sep⸩':
+    if tok=='<pad>' or tok=='<unk>' or tok=='<bos>' or tok=='<eos>': # or tok=='⸨msk⸩' or tok=='⸨sep⸩':
       continue
     print(tok)
     f = count
