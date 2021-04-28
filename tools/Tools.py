@@ -66,9 +66,7 @@ def write_dnet(o):
 
 def flatten_count(ll, lc):
   lflat = []
-  for l in ll:
-    lflat.extend(l)
-#  list(map(lflat.extend, ll)) ### flattens ll into lflat
+  list(map(lflat.extend, ll[0])) ### flattens ll into lflat (same as: for l in ll[0]: lflat.extend(l))
   counts = [len(lflat)] #total number of tokens
   for c in lc:
     counts.append(lflat.count(c)) #frequency of token c
