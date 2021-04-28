@@ -23,14 +23,12 @@ class Inference():
     self.model = model
     self.src_voc = src_voc
     self.tgt_voc = tgt_voc
-    self.beam_size = oi.beam_size
+    self.Vt = len(tgt_voc)
     self.max_size = oi.max_size
-    self.n_best = oi.n_best
     self.alpha = oi.alpha
     self.format = oi.format
-    self.Vt = len(tgt_voc)
-    self.N = oi.n_best
     self.K = oi.beam_size
+    self.N = oi.n_best
     self.device = device
     self.next_wrds = torch.tensor([i for i in range(self.Vt)], dtype=int, device=self.device).view(1,-1) #[1,Vt]
 

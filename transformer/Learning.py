@@ -43,8 +43,9 @@ class Score():
 ##############################################################################################################
 
 class Learning():
-  def __init__(self, model, optScheduler, criter, suffix, idx_pad, ol):
+  def __init__(self, model, optScheduler, criter, suffix, idx_pad, inference_valid, ol):
     super(Learning, self).__init__()
+    self.dnet = ol.dnet
     self.model = model
     self.optScheduler = optScheduler
     self.criter = criter #LabelSmoothing+KLDivLoss or NLLLoss
@@ -58,6 +59,7 @@ class Learning():
     self.clip = ol.clip
     self.accum_n_batchs = ol.accum_n_batchs
     self.idx_pad = idx_pad
+    self.inference = inference_valid
 
     if tensorboard:
       self.writer = SummaryWriter(log_dir=ol.dnet, comment='', purge_step=None, max_queue=10, flush_secs=60, filename_suffix='')
@@ -123,6 +125,7 @@ class Learning():
           if self.validate_every and self.optScheduler._step and self.optScheduler._step % self.validate_every == 0: 
             if validset is not None:
               vloss = self.validate(validset, device)
+              self.inference.translate(validset, self.dnet+'/valid_{:08d}.out'.format(self.optScheduler._step))
           ###
           ### save
           ###

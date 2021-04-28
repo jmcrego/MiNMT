@@ -12,6 +12,7 @@ from transformer.Model import Encoder_Decoder, load_checkpoint, numparameters
 from transformer.Optimizer import OptScheduler, LabelSmoothing_NLL, LabelSmoothing_KLDiv
 from transformer.Learning import Learning
 from tools.Tools import create_logger, read_dnet
+from transformer.Inference import Inference
 
 ######################################################################
 ### Options ##########################################################
@@ -168,10 +169,18 @@ class Options():
 '''.format(self.prog, self.max_steps, self.max_epochs, self.validate_every, self.save_every, self.report_every, self.keep_last_n, self.label_smoothing, self.loss, self.clip, self.accum_n_batchs, self.noam_scale, self.noam_warmup, self.shard_size, self.max_length, self.batch_size, self.batch_type, self.cuda, self.seed))
     sys.exit()
 
+class DefaultOptsInfer():           
+  def __init__(self):
+    self.max_size = 100
+    self.alpha = 0.0
+    self.format = 'pt'
+    self.beam_size = 4
+    self.n_best = 1
+
 ######################################################################
 ### MAIN #############################################################
 ######################################################################
-            
+
 if __name__ == '__main__':
 
   tic = time.time()
@@ -212,7 +221,8 @@ if __name__ == '__main__':
   #############
   ### learn ###
   #############
-  learning = Learning(model, optScheduler, criter, o.dnet + '/network', src_voc.idx_pad, o)
+  inference_valid = Inference(model, src_voc, tgt_voc, DefaultOptsInfer(), device)
+  learning = Learning(model, optScheduler, criter, o.dnet + '/network', src_voc.idx_pad, inference_valid, o)
   learning.learn(train, valid, device)
 
   toc = time.time()
