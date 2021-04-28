@@ -175,7 +175,7 @@ def print_pos_src_tgt_hyp_ref(pred, pos, src, tgt, ref):
   _, ind = torch.topk(hyp, k=1, dim=-1) #[lt,1]
   logging.info('POS: {}'.format(pos))
   logging.info('SRC: ' + ' '.join(['{: ^5}'.format(t) for t in src.tolist()]))
-  logging.info('TGT: ' + ' '.join(['{: ^5}'.format(t) for t in tgt.tolist()]))
+  #logging.info('TGT: ' + ' '.join(['{: ^5}'.format(t) for t in tgt.tolist()]))
   logging.info('HYP: ' + ' '.join(['{: ^5}'.format(t) for t in ind.squeeze(-1).tolist()]))
   logging.info('REF: ' + ' '.join(['{: ^5}'.format(t) for t in ref.tolist()]))
 
