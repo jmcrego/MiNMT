@@ -64,11 +64,13 @@ def write_dnet(o):
   shutil.copy(o.tgt_voc, o.dnet+'/tgt_voc')
   logging.info('copied target vocabulary {} into {}/tgt_voc'.format(o.tgt_voc, o.dnet))
 
-def flatten_count(ll, count):
+def flatten_count(ll, lc):
   lflat = []
-  list(map(lflat.extend, ll)) ### flattens ll into lflat
+  for l in ll:
+    lflat.extend(l)
+#  list(map(lflat.extend, ll)) ### flattens ll into lflat
   counts = [len(lflat)] #total number of tokens
-  for c in count:
+  for c in lc:
     counts.append(lflat.count(c)) #frequency of token c
   return counts
 
