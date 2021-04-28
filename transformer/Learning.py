@@ -73,7 +73,9 @@ class Learning():
       ntok_in_step = 0
       loss_accum = 0.0
       score = Score()
-      for batch_pos, [batch_src, batch_tgt] in trainset:
+      for batch_pos, batch_idxs in trainset:
+        batch_src = batch_idxs[0]
+        batch_tgt = batch_idxs[1]
         n_batch += 1
         self.model.train()
         ###
@@ -93,15 +95,15 @@ class Learning():
         ### compute/accumulate gradients (accumulate gradients until step() is called)
         ###
         loss.backward()
-        ###
-        ### optimize
-        ###
         if n_batch % self.accum_n_batchs == 0: #waits for n backward steps
+          ###
+          ### optimize (update model)
+          ###
           if self.clip > 0.0: ### clip gradients norm
             torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.clip)
           self.optScheduler.step() ### updates model parameters after incrementing step and updating lr
-          self.optScheduler.optimizer.zero_grad() ### sets gradients to zero
-          ### score
+          self.optScheduler.optimizer.zero_grad() ### sets gradients to zero for next update
+          ### add score
           score.step(loss_accum, ntok_in_step)
           ntok_in_step = 0
           loss_accum = 0.0
