@@ -125,7 +125,6 @@ class Learning():
           if self.validate_every and self.optScheduler._step and self.optScheduler._step % self.validate_every == 0: 
             if validset is not None:
               vloss = self.validate(validset, device)
-              self.inference.translate(validset, self.dnet+'/valid_{:08d}.out'.format(self.optScheduler._step))
           ###
           ### save
           ###
@@ -170,10 +169,16 @@ class Learning():
 
     toc = time.time()
     loss = 1.0*valid_loss/n_batch if n_batch else 0.0
-    logging.info('Validation step: {} #batchs: {} sec: {:.2f} loss: {:.3f}'.format(self.optScheduler._step, n_batch, toc-tic, loss))
+    bleu = self.translate_valid(validset)
+    logging.info('Validation step: {} #batchs: {} sec: {:.2f} bleu: {:.2f} loss: {:.3f}'.format(self.optScheduler._step, n_batch, toc-tic, bleu, loss))
     if tensorboard:
       self.writer.add_scalar('Loss/valid', loss, self.optScheduler._step)
     return loss
+
+  def translate_valid(self, validset):
+    fhyp = '{}/valid_{:08d}.out'.format(self.dnet,self.optScheduler._step)
+    self.inference.translate(validset, fhyp)    
+    return 0.0
 
 def print_pos_src_tgt_hyp_ref(pred, pos, src, tgt, ref):
   hyp = torch.nn.functional.log_softmax(pred, dim=-1) #[lt,Vt]
