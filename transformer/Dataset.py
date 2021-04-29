@@ -164,6 +164,9 @@ class Dataset():
         return True
     return False
 
+  def __len__(self):
+    return len(self.Idxs)
+
   def __iter__(self):
     assert len(self.Idxs) > 0, 'Empty dataset'
     n_files = len(self.Idxs)

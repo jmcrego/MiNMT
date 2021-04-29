@@ -7,6 +7,7 @@ import numpy as np
 import torch
 import time
 from transformer.Model import save_checkpoint, prepare_source, prepare_target
+import sacrebleu
 try:
   from torch.utils.tensorboard import SummaryWriter
   tensorboard = True
@@ -175,10 +176,14 @@ class Learning():
       self.writer.add_scalar('Loss/valid', loss, self.optScheduler._step)
     return loss
 
-  def translate_valid(self, validset):
+  def translate_valid(self, validset, fref):
     fhyp = '{}/valid_{:08d}.out'.format(self.dnet,self.optScheduler._step)
-    self.inference.translate(validset, fhyp)    
-    return 0.0
+    hyps = self.inference.translate(validset, fhyp)
+    with codecs.open(fref, 'r', 'utf-8') as fd:
+      refs = [l for l in fd.read().splitlines()]
+    assert len(refs) == len(hyps)
+    return sacrebleu.corpus_bleu(sys, refs).score
+    #return raw_corpus_bleu(hyps, refs, smooth_value=0.1) #BLEU.SMOOTH_DEFAULTS['floor'])
 
 def print_pos_src_tgt_hyp_ref(pred, pos, src, tgt, ref):
   hyp = torch.nn.functional.log_softmax(pred, dim=-1) #[lt,Vt]

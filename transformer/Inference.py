@@ -36,6 +36,7 @@ class Inference():
 
   def translate(self, testset, output):
     logging.info('Running: inference')
+    hyps = [] * len(testset)
 
     if output != '-':
       fh = open(output, 'w')
@@ -60,13 +61,16 @@ class Inference():
         for b in range(len(finals)):
           for n, (hyp, logp) in enumerate(sorted(finals[b].items(), key=lambda kv: kv[1], reverse=True)):
             hyp = list(map(int,hyp.split(' ')))
-            fh.write(self.format_hyp(pos[b],n,logp,hyp,batch_src[b]) + '\n')
+            out = self.format_hyp(pos[b],n,logp,hyp,batch_src[b])
+            hyps[pos[b]] = out
+            fh.write(out + '\n')
             fh.flush()
             if n+1 >= self.N:
               break
 
     if output != '-':
       fh.close()
+    return hyps
 
 
   def traverse_beam(self):
