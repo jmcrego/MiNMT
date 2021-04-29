@@ -36,7 +36,7 @@ class Inference():
 
   def translate(self, testset, output):
     logging.info('Running: inference')
-    hyps = [''] * len(testset)
+    hyps = {}
 
     if output != '-':
       fh = open(output, 'w')
@@ -71,7 +71,7 @@ class Inference():
 
     if output != '-':
       fh.close()
-    return hyps
+    return [v for k,v in sorted(hyps.items(), reverse=False)]
 
 
   def traverse_beam(self):

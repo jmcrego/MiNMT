@@ -183,7 +183,7 @@ class Learning():
     with codecs.open(fref, 'r', 'utf-8') as fd:
       refs = [l for l in fd.read().splitlines()]
     assert len(refs) == len(hyps)
-    return sacrebleu.corpus_bleu(sys, refs).score
+    return sacrebleu.corpus_bleu(hyps, refs).score
     #return raw_corpus_bleu(hyps, refs, smooth_value=0.1) #BLEU.SMOOTH_DEFAULTS['floor'])
 
 def print_pos_src_tgt_hyp_ref(pred, pos, src, tgt, ref):
