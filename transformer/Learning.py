@@ -169,9 +169,9 @@ class Learning():
         if n_batch == 1:
           print_pos_src_tgt_hyp_ref(pred[0], batch_pos[0], src[0], tgt[0], ref[0])
 
-    toc = time.time()
     loss = 1.0*valid_loss/n_batch if n_batch else 0.0
     bleu = self.translate_valid(validset, validset.files[-1])
+    toc = time.time()
     logging.info('Validation step: {} #batchs: {} sec: {:.2f} bleu: {:.2f} loss: {:.3f}'.format(self.optScheduler._step, n_batch, toc-tic, bleu, loss))
     if tensorboard:
       self.writer.add_scalar('Loss/valid', loss, self.optScheduler._step)
@@ -183,7 +183,7 @@ class Learning():
     with codecs.open(fref, 'r', 'utf-8') as fd:
       refs = [l for l in fd.read().splitlines()]
     assert len(refs) == len(hyps)
-    return sacrebleu.corpus_bleu(hyps, [refs]).score
+    return sacrebleu.raw_corpus_bleu(hyps, [refs]).score
     #return raw_corpus_bleu(hyps, refs, smooth_value=0.1) #BLEU.SMOOTH_DEFAULTS['floor'])
 
 def print_pos_src_tgt_hyp_ref(pred, pos, src, tgt, ref):
