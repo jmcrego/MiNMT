@@ -166,7 +166,7 @@ class Dataset():
     return False
 
   def __len__(self):
-    return len(self.Idxs)
+    return len(self.Idxs[0])
 
   def __iter__(self):
     assert len(self.Idxs) > 0, 'Empty dataset'
