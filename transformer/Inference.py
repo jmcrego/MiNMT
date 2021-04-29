@@ -62,6 +62,7 @@ class Inference():
           for n, (hyp, logp) in enumerate(sorted(finals[b].items(), key=lambda kv: kv[1], reverse=True)):
             hyp = list(map(int,hyp.split(' ')))
             out = self.format_hyp(pos[b],n,logp,hyp,batch_src[b])
+            logging.info('pos[b]={} len={}'.format(pos[b]-1, len(hyps)))
             hyps[pos[b]-1] = out
             fh.write(out + '\n')
             fh.flush()
