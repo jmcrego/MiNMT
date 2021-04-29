@@ -6,6 +6,7 @@ import logging
 import numpy as np
 import torch
 import time
+import codecs
 from transformer.Model import save_checkpoint, prepare_source, prepare_target
 import sacrebleu
 try:
