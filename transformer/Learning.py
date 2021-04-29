@@ -170,7 +170,7 @@ class Learning():
 
     toc = time.time()
     loss = 1.0*valid_loss/n_batch if n_batch else 0.0
-    bleu = self.translate_valid(validset)
+    bleu = self.translate_valid(validset, validset.files[-1])
     logging.info('Validation step: {} #batchs: {} sec: {:.2f} bleu: {:.2f} loss: {:.3f}'.format(self.optScheduler._step, n_batch, toc-tic, bleu, loss))
     if tensorboard:
       self.writer.add_scalar('Loss/valid', loss, self.optScheduler._step)

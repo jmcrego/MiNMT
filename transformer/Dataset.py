@@ -106,6 +106,7 @@ class Dataset():
     self.idx_bos = vocs[0].idx_bos
     self.idx_eos = vocs[0].idx_eos
     self.Idxs = []
+    self.files = files
 
     for n in range(len(files)):
       if not os.path.isfile(files[n]):
