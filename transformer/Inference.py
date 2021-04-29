@@ -36,7 +36,7 @@ class Inference():
 
   def translate(self, testset, output):
     logging.info('Running: inference')
-    hyps = [] * len(testset)
+    hyps = [''] * len(testset)
 
     if output != '-':
       fh = open(output, 'w')
