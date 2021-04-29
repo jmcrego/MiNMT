@@ -173,7 +173,7 @@ class DefaultOptsInfer():
   def __init__(self):
     self.max_size = 100
     self.alpha = 0.0
-    self.format = 't'
+    self.format = 'pt'
     self.beam_size = 1
     self.n_best = 1
     self.prefix = None

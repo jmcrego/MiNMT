@@ -61,8 +61,8 @@ class Inference():
         for b in range(len(finals)):
           for n, (hyp, logp) in enumerate(sorted(finals[b].items(), key=lambda kv: kv[1], reverse=True)):
             hyp = list(map(int,hyp.split(' ')))
-            out = self.format_hyp(pos[b],n,logp,hyp,batch_src[b])
-            dhyps[pos[b]-1] = out
+            out, hyp = self.format_hyp(pos[b],n,logp,hyp,batch_src[b])
+            dhyps[pos[b]-1] = hyp
             fh.write(out + '\n')
             fh.flush()
             if n+1 >= self.N:
@@ -207,6 +207,9 @@ class Inference():
     while src_idx[-1] == self.src_voc.idx_pad: # eliminate <pad> tokens from src_idx
       src_idx = src_idx[:-1]
 
+    hyp = []
+    hyp.append(' '.join([self.tgt_voc[idx] for idx in tgt_idx[1:-1]])) ### output sentence (tokenized)
+
     out = []
     for ch in self.format:
       if ch=='p':
@@ -233,7 +236,8 @@ class Inference():
       else:
         logging.error('Invalid format option {} in {}'.format(ch,self.format))
         sys.exit()
-    return '\t'.join(out)
+
+    return '\t'.join(out), hyp
 
 
 
