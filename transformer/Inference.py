@@ -29,6 +29,7 @@ class Inference():
     self.format = oi.format
     self.K = oi.beam_size
     self.N = oi.n_best
+    self.prefix = oi.prefix is not None
     self.device = device
     self.next_wrds = torch.tensor([i for i in range(self.Vt)], dtype=int, device=self.device).view(1,-1) #[1,Vt]
 
@@ -44,7 +45,7 @@ class Inference():
     with torch.no_grad():
       self.model.eval()
       for pos, batch_idxs in testset:
-        if len(batch_idxs) == 2:
+        if len(batch_idxs) == 2 and self.prefix:
           self.batch_pre, _ = prepare_prefix(batch_idxs[1], self.tgt_voc.idx_pad, self.device)  #pre is [bs, lp]
         else:
           self.batch_pre = None

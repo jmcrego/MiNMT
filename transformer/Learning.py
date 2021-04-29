@@ -120,7 +120,7 @@ class Learning():
               self.writer.add_scalar('Loss/train', loss_accum, self.optScheduler._step)
               self.writer.add_scalar('LearningRate', self.optScheduler._rate, self.optScheduler._step)
           ###
-          ### validate
+          ### validate`
           ###
           if self.validate_every and self.optScheduler._step and self.optScheduler._step % self.validate_every == 0: 
             if validset is not None:
