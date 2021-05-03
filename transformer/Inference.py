@@ -46,12 +46,13 @@ class Inference():
     with torch.no_grad():
       self.model.eval()
       for pos, batch_idxs in testset:
-        if len(batch_idxs) == 2 and self.prefix:
-          self.batch_pre, _ = prepare_prefix(batch_idxs[1], self.tgt_voc.idx_pad, self.device)  #pre is [bs, lp]
+
+        batch_src = batch_idxs[0]
+        if self.prefix: ### if prefix the last is the prefix 
+          self.batch_pre, _ = prepare_prefix(batch_idxs[-1], self.tgt_voc.idx_pad, self.device)  #pre is [bs, lp]
         else:
           self.batch_pre = None
 
-        batch_src = batch_idxs[0]
         src, self.msk_src = prepare_source(batch_src, self.src_voc.idx_pad, self.device) #src is [bs, ls] msk_src is [bs,1,ls]
         ### encode
         self.z_src = self.model.encode(src, self.msk_src) #[bs,ls,ed]
