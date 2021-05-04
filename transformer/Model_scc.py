@@ -123,13 +123,11 @@ class Encoder_scc(torch.nn.Module):
     tmp2 = self.multihead_attn_self(q=tmp1, k=tmp1, v=tmp1, msk=msk_xtgt) #[bs, ls, ed] contains dropout
     #ADD
     tmp = tmp2 + xtgt
-    logging.info('tmp.shape = {}'.format(tmp.shape))
 
     #NORM
     tmp1 = self.norm_att_cross1(tmp)
     #Cross ATTN over src words : q are xtgt words, k, v are src words
     tmp2 = self.multihead_attn_cross1(q=tmp1, k=z_src, v=z_src, msk=msk_src) #[bs, lt, ed] contains dropout
-    logging.info('tmp2.shape = {}'.format(tmp2.shape))
     #ADD
     tmp = tmp2 + tmp
 
