@@ -171,17 +171,29 @@ class Learning():
       for batch_pos, batch_idxs in validset:
         batch_src = batch_idxs[0]
         batch_tgt = batch_idxs[1]
+        if len(batch_idxs) == 4:
+          batch_xsrc = batch_idxs[2]
+          batch_xtgt = batch_idxs[3]
+        else:
+          batch_xsrc = None
+          batch_xtgt = None
         n_batch += 1
+
         src, msk_src = prepare_source(batch_src, self.idx_pad, device)
         tgt, ref, msk_tgt = prepare_target(batch_tgt, self.idx_pad, device)
-        pred = self.model.forward(src, tgt, msk_src, msk_tgt) #no log_softmax is applied
+        if batch_xsrc is not None and batch_xtgt is not None:
+          xsrc, msk_xsrc = prepare_source(batch_xsrc, self.idx_pad, device)
+          xtgt, msk_xtgt = prepare_source(batch_xtgt, self.idx_pad, device)
+          pred_msk, pred = self.model.forward(src, xsrc, xtgt, tgt, msk_src, msk_xsrc, msk_xtgt, msk_tgt) #no log_softmax is applied
+        else:
+          pred = self.model.forward(src, tgt, msk_src, msk_tgt) #no log_softmax is applied
         loss = self.criter(pred, ref) ### batch loss
         valid_loss += loss.item() / torch.sum(ref != self.idx_pad)
         if n_batch == 1:
           print_pos_src_tgt_hyp_ref(pred[0], batch_pos[0], src[0], tgt[0], ref[0])
 
     loss = 1.0*valid_loss/n_batch if n_batch else 0.0
-    bleu = self.translate_valid(validset, validset.files[-1])
+    bleu = 0.0 #TODO: self.translate_valid(validset, validset.files[-1])
     toc = time.time()
     logging.info('Validation step: {} #batchs: {} sec: {:.2f} bleu: {:.2f} loss: {:.3f}'.format(self.optScheduler._step, n_batch, toc-tic, bleu, loss))
     if tensorboard:
