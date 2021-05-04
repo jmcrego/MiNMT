@@ -8,6 +8,7 @@ import torch
 from tools.Tools import create_logger, write_dnet
 from transformer.Dataset import Vocab
 from transformer.Model import Encoder_Decoder, save_checkpoint, numparameters
+from transformer.Model_scc import Encoder_Decoder_scc
 import numpy as np
 
 ######################################################################
@@ -33,6 +34,7 @@ class Options():
     self.net['beta1'] = 0.9
     self.net['beta2'] = 0.998
     self.net['eps'] = 1e-9
+    self.net['model_type'] = 'std'
     log_file = 'stderr'
     log_level = 'info'
 
@@ -64,6 +66,8 @@ class Options():
         self.net['dropout'] = float(argv.pop(0))
       elif tok=="-share_embeddings":
         self.net['share_embeddings'] = True
+      elif tok=="-model_type" and len(argv):
+        self.net['model_type'] = argv.pop(0)
       elif tok=='-weight_decay' and len(argv):
         self.net['weight_decay'] = float(argv.pop(0))
       elif tok=='-beta1' and len(argv):
@@ -107,6 +111,7 @@ class Options():
    -n_heads         INT : number of attention heads ({})
    -n_layers        INT : number of encoder layers ({})
    -dropout       FLOAT : dropout value ({})
+   -model_type   STRING : model type ({})
    -share_embeddings    : share source/target embeddings ({})
 
    -weight_decay  FLOAT : weight decay for Adam optimizer ({})
@@ -117,7 +122,7 @@ class Options():
    -log_file       FILE : log file  (stderr)
    -log_level       STR : log level [debug, info, warning, critical, error] (info)
    -h                   : this help
-'''.format(self.prog, self.net['emb_dim'], self.net['qk_dim'], self.net['v_dim'], self.net['ff_dim'], self.net['n_heads'], self.net['n_layers'], self.net['dropout'], self.net['share_embeddings'], self.net['weight_decay'], self.net['beta1'], self.net['beta2'], self.net['eps']))
+'''.format(self.prog, self.net['emb_dim'], self.net['qk_dim'], self.net['v_dim'], self.net['ff_dim'], self.net['n_heads'], self.net['n_layers'], self.net['dropout'], self.net['share_embeddings'], self.net['model_type'], self.net['weight_decay'], self.net['beta1'], self.net['beta2'], self.net['eps']))
     sys.exit()
 
 ######################################################################
@@ -132,7 +137,12 @@ if __name__ == '__main__':
   src_voc = Vocab(o.src_voc)
   tgt_voc = Vocab(o.tgt_voc)
   device = torch.device('cpu')
-  model = Encoder_Decoder(o.net['n_layers'], o.net['ff_dim'], o.net['n_heads'], o.net['emb_dim'], o.net['qk_dim'], o.net['v_dim'], o.net['dropout'], o.net['share_embeddings'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
+  if o.net['model_type'] == 'scc':
+    logging.info('built scc model')
+    model = Encoder_Decoder_scc(o.net['n_layers'], o.net['ff_dim'], o.net['n_heads'], o.net['emb_dim'], o.net['qk_dim'], o.net['v_dim'], o.net['dropout'], o.net['share_embeddings'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
+  else:
+    model = Encoder_Decoder(o.net['n_layers'], o.net['ff_dim'], o.net['n_heads'], o.net['emb_dim'], o.net['qk_dim'], o.net['v_dim'], o.net['dropout'], o.net['share_embeddings'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
+
   logging.info('Built model (#params, size) = ({}) in device {}'.format(', '.join([str(f) for f in numparameters(model)]), next(model.parameters()).device ))
   for p in model.parameters():
     if p.dim() > 1:

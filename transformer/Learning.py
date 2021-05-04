@@ -80,6 +80,12 @@ class Learning():
       for batch_pos, batch_idxs in trainset:
         batch_src = batch_idxs[0]
         batch_tgt = batch_idxs[1]
+        if len(batch_idxs) == 4:
+          batch_xsrc = batch_idxs[2]
+          batch_xtgt = batch_idxs[3]
+        else:
+          batch_xsrc = None
+          batch_xtgt = None
         n_batch += 1
         self.model.train()
         ###
@@ -87,12 +93,17 @@ class Learning():
         ###
         src, msk_src = prepare_source(batch_src, self.idx_pad, device)
         tgt, ref, msk_tgt = prepare_target(batch_tgt, self.idx_pad, device)
-        pred = self.model.forward(src, tgt, msk_src, msk_tgt) #no log_softmax is applied
-        ntok_in_batch = torch.sum(ref != self.idx_pad)
-        ntok_in_step += ntok_in_batch
+        if batch_xsrc is not None and batch_xtgt is not None:
+          xsrc, msk_xsrc = prepare_source(batch_xsrc, self.idx_pad, device)
+          xtgt, msk_xtgt = prepare_source(batch_xtgt, self.idx_pad, device)
+          pred_msk, pred = self.model.forward(src, xsrc, xtgt, tgt, msk_src, msk_xsrc, msk_xtgt, msk_tgt) #no log_softmax is applied
+        else:
+          pred = self.model.forward(src, tgt, msk_src, msk_tgt) #no log_softmax is applied
         ###
         ### compute loss
         ###
+        ntok_in_batch = torch.sum(ref != self.idx_pad)
+        ntok_in_step += ntok_in_batch
         loss = self.criter(pred, ref) / ntok_in_batch / self.accum_n_batchs #sum of losses in batch (normalized by tokens in batch) (n batchs will be accumulated before model update, so i normalize by n batchs)
         loss_accum += loss.item()
         ###
@@ -184,7 +195,6 @@ class Learning():
       refs = [l for l in fd.read().splitlines()]
     assert len(refs) == len(hyps)
     return sacrebleu.raw_corpus_bleu(hyps, [refs]).score
-    #return raw_corpus_bleu(hyps, refs, smooth_value=0.1) #BLEU.SMOOTH_DEFAULTS['floor'])
 
 def print_pos_src_tgt_hyp_ref(pred, pos, src, tgt, ref):
   hyp = torch.nn.functional.log_softmax(pred, dim=-1) #[lt,Vt]

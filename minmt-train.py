@@ -9,6 +9,7 @@ import torch
 import numpy as np
 from transformer.Dataset import Dataset, Vocab
 from transformer.Model import Encoder_Decoder, load_checkpoint, numparameters
+from transformer.Model_scc import Encoder_Decoder_scc
 from transformer.Optimizer import OptScheduler, LabelSmoothing_NLL, LabelSmoothing_KLDiv
 from transformer.Learning import Learning
 from tools.Tools import create_logger, read_dnet
@@ -93,6 +94,16 @@ class Options():
         self.src_valid = argv.pop(0)
       elif tok=='-tgt_valid':
         self.tgt_valid = argv.pop(0)
+
+      elif tok=='-xsrc_train':
+        self.xsrc_train = argv.pop(0)
+      elif tok=='-xtgt_train':
+        self.xtgt_train = argv.pop(0)
+      elif tok=='-xsrc_valid':
+        self.xsrc_valid = argv.pop(0)
+      elif tok=='-xtgt_valid':
+        self.xtgt_valid = argv.pop(0)
+
       elif tok=='-shard_size':
         self.shard_size = int(argv.pop(0))
       elif tok=='-max_length':
@@ -123,6 +134,12 @@ class Options():
     if self.tgt_train is None:
       self.usage('missing -tgt_train option')
 
+#    if self.dnet['model_type'] == 'scc' and self.xsrc_train is None:
+#      self.usage('missing -xsrc_train option')
+
+#    if self.dnet['model_type'] == 'scc' and self.xtgt_train is None:
+#      self.usage('missing -xtgt_train option')
+
     create_logger(log_file,log_level)
     random.seed(self.seed)
     np.random.seed(self.seed)
@@ -134,10 +151,16 @@ class Options():
       sys.stderr.write(messg + '\n')
     sys.stderr.write('''usage: {} -dnet DIR -src_train FILE -tgt_train FILE [-src_valid FILE] [-tgt_valid FILE] 
    -dnet              DIR : network directory [must exist]
+
    -src_train        FILE : source-side training file
    -tgt_train        FILE : target-side training file
    -src_valid        FILE : source-side validation file
    -tgt_valid        FILE : target-side validation file
+
+   -xsrc_train       FILE : source-side training extended file (needed when model_type is 'scc')
+   -xtgt_train       FILE : target-side training extended file (needed when model_type is 'scc')
+   -xsrc_valid       FILE : source-side validation extended file (used when model_type is 'scc')
+   -xtgt_valid       FILE : target-side validation extended file (used when model_type is 'scc')
 
    [Learning]
    -max_steps         INT : maximum number of training updates ({})
@@ -194,7 +217,10 @@ if __name__ == '__main__':
   ### load model/optim ###
   ########################
   device = torch.device('cuda' if o.cuda and torch.cuda.is_available() else 'cpu')
-  model = Encoder_Decoder(n['n_layers'], n['ff_dim'], n['n_heads'], n['emb_dim'], n['qk_dim'], n['v_dim'], n['dropout'], n['share_embeddings'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
+  if n['model_type'] == 'scc':
+    model = Encoder_Decoder_scc(n['n_layers'], n['ff_dim'], n['n_heads'], n['emb_dim'], n['qk_dim'], n['v_dim'], n['dropout'], n['share_embeddings'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
+  else:
+    model = Encoder_Decoder(n['n_layers'], n['ff_dim'], n['n_heads'], n['emb_dim'], n['qk_dim'], n['v_dim'], n['dropout'], n['share_embeddings'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
   logging.info('Built model (#params, size) = ({}) in device {}'.format(', '.join([str(f) for f in numparameters(model)]), next(model.parameters()).device ))
   optim = torch.optim.Adam(model.parameters(), weight_decay=n['weight_decay'], betas=(n['beta1'], n['beta2']), eps=n['eps']) 
   last_step, model, optim = load_checkpoint(o.dnet + '/network', model, optim, device)
@@ -214,10 +240,17 @@ if __name__ == '__main__':
   ##################
   ### load data ####
   ##################
-  valid =None
+  valid = None
   if o.src_valid is not None and o.tgt_valid is not None:
-    valid = Dataset([src_voc, tgt_voc], [o.src_valid, o.tgt_valid], o.shard_size, o.batch_size, o.batch_type, 0) #o.max_length)
-  train = Dataset([src_voc, tgt_voc], [o.src_train, o.tgt_train], o.shard_size, o.batch_size, o.batch_type, o.max_length)
+    if o.xsrc_valid is not None and o.xtgt_valid is not None:
+      valid = Dataset([src_voc, tgt_voc, src_voc, tgt_voc], [o.src_valid, o.tgt_valid, o.xsrc_valid, o.xtgt_valid], o.shard_size, o.batch_size, o.batch_type, 0) #o.max_length)
+    else:
+      valid = Dataset([src_voc, tgt_voc], [o.src_valid, o.tgt_valid], o.shard_size, o.batch_size, o.batch_type, 0) #o.max_length)
+
+  if o.xsrc_train is not None and o.xtgt_train is not None:
+    train = Dataset([src_voc, tgt_voc, src_voc, tgt_voc], [o.src_train, o.tgt_train, o.xsrc_train, o.xtgt_train], o.shard_size, o.batch_size, o.batch_type, o.max_length)
+  else:
+    train = Dataset([src_voc, tgt_voc], [o.src_train, o.tgt_train], o.shard_size, o.batch_size, o.batch_type, o.max_length)
 
   #############
   ### learn ###
