@@ -116,7 +116,7 @@ class Dataset():
         idxs = [[vocs[n][t] for t in l.split()] for l in fd.read().splitlines()]
       self.Idxs.append(idxs)
       ### compute tokens and OOVs
-      n_tok, n_unk = flatten_count(self.Idxs, [self.idx_unk])
+      n_tok, n_unk = flatten_count(self.Idxs[-1], [self.idx_unk])
       logging.info('Read Corpus ({} lines ~ {} tokens ~ {} OOVs [{:.2f}%]) from {}'.format(len(idxs),n_tok,n_unk,100.0*n_unk/n_tok,files[n]))
       assert len(self.Idxs[0]) == len(self.Idxs[-1]), 'Non-parallel corpus in dataset'
 
