@@ -44,7 +44,7 @@ class Options():
     self.noam_warmup = 4000
     self.label_smoothing = 0.1
     self.loss = 'KLDiv'
-    self.clip = 0.0
+    self.clip = 0.5
     self.accum_n_batchs = 1
     ### data
     self.shard_size = 500000
