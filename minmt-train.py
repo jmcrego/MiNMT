@@ -27,6 +27,11 @@ class Options():
     self.tgt_train = None 
     self.src_valid = None 
     self.tgt_valid = None 
+    ####
+    self.xsrc_train = None 
+    self.xtgt_train = None 
+    self.xsrc_valid = None 
+    self.xtgt_valid = None 
     ### learning 
     self.max_steps = 0
     self.max_epochs = 0
@@ -242,12 +247,12 @@ if __name__ == '__main__':
   ##################
   valid = None
   if o.src_valid is not None and o.tgt_valid is not None:
-    if o.xsrc_valid is not None and o.xtgt_valid is not None:
+    if n['model_type'] == 'scc' and o.xsrc_valid is not None and o.xtgt_valid is not None:
       valid = Dataset([src_voc, tgt_voc, src_voc, tgt_voc], [o.src_valid, o.tgt_valid, o.xsrc_valid, o.xtgt_valid], o.shard_size, o.batch_size, o.batch_type, 0) #o.max_length)
     else:
       valid = Dataset([src_voc, tgt_voc], [o.src_valid, o.tgt_valid], o.shard_size, o.batch_size, o.batch_type, 0) #o.max_length)
 
-  if o.xsrc_train is not None and o.xtgt_train is not None:
+  if n['model_type'] == 'scc' and o.xsrc_train is not None and o.xtgt_train is not None:
     train = Dataset([src_voc, tgt_voc, src_voc, tgt_voc], [o.src_train, o.tgt_train, o.xsrc_train, o.xtgt_train], o.shard_size, o.batch_size, o.batch_type, o.max_length)
   else:
     train = Dataset([src_voc, tgt_voc], [o.src_train, o.tgt_train], o.shard_size, o.batch_size, o.batch_type, o.max_length)
