@@ -92,11 +92,11 @@ class Options():
     if self.input is None:
       self.usage('missing -i option')
 
-    if self.dnet['model_type'] == 'scc':
-      if self.xsrc is None:
-        self.usage('missing -xs option')
-      if self.xtgt is None:
-        self.usage('missing -xt option')
+#    if self.dnet['model_type'] == 'scc':
+#      if self.xsrc is None:
+#        self.usage('missing -xs option')
+#      if self.xtgt is None:
+#        self.usage('missing -xt option')
 
     create_logger(log_file,log_level)
     logging.info("Options = {}".format(self.__dict__))
