@@ -48,7 +48,8 @@ class Inference():
       self.model.eval()
       for pos, batch_idxs in testset:
 
-        src, self.msk_src = prepare_source(batch_idxs[0], self.src_voc.idx_pad, self.device) #src is [bs, ls] msk_src is [bs,1,ls]
+        batch_src = batch_idxs[0]
+        src, self.msk_src = prepare_source(batch_src, self.src_voc.idx_pad, self.device) #src is [bs, ls] msk_src is [bs,1,ls]
 
         if self.model_type == 'scc':
           xsrc, msk_xsrc = prepare_source(batch_idxs[1], self.src_voc.idx_pad, self.device) #xsrc is [bs, lxs] msk_xsrc is [bs,1,lxs]
