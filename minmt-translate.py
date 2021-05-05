@@ -21,6 +21,8 @@ class Options():
     self.dnet = None
     self.input = None
     self.prefix = None
+    self.xsrc = None
+    self.xtgt = None
     self.output = '-'
     self.model = None
     self.beam_size = 4
@@ -58,6 +60,10 @@ class Options():
         self.input = argv.pop(0)
       elif tok=='-p' and len(argv):
         self.prefix = argv.pop(0)
+      elif tok=='-xs' and len(argv):
+        self.xsrc = argv.pop(0)
+      elif tok=='-xt' and len(argv):
+        self.xtgt = argv.pop(0)
       elif tok=='-o' and len(argv):
         self.output = argv.pop(0)
       elif tok=='-m' and len(argv):
@@ -85,6 +91,13 @@ class Options():
       self.usage('missing -dnet option')
     if self.input is None:
       self.usage('missing -i option')
+
+    if self.dnet['model_type'] == 'scc':
+      if self.xsrc is None:
+        self.usage('missing -xs option')
+      if self.xtgt is None:
+        self.usage('missing -xt option')
+
     create_logger(log_file,log_level)
     logging.info("Options = {}".format(self.__dict__))
 
@@ -95,6 +108,8 @@ class Options():
     sys.stderr.write('''usage: {} -dnet DIR -i FILE [Options]
    -dnet          DIR : network directory [must exist]
    -i            FILE : input file to translate
+   -xs           FILE : extended source file (needed when model_type is 'scc')
+   -xt           FILE : extended target file (needed when model_type is 'scc')
    -p            FILE : file with prefixes (force decoding)
    -o            FILE : output file ({})
    -m            FILE : use this model file (last checkpoint)
@@ -142,7 +157,10 @@ if __name__ == '__main__':
   ### load model ###
   ##################
   device = torch.device('cuda' if o.cuda and torch.cuda.is_available() else 'cpu')
-  model = Encoder_Decoder(n['n_layers'], n['ff_dim'], n['n_heads'], n['emb_dim'], n['qk_dim'], n['v_dim'], n['dropout'], n['share_embeddings'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
+  if n['model_type'] == 'scc':
+    model = Encoder_Decoder_scc(n['n_layers'], n['ff_dim'], n['n_heads'], n['emb_dim'], n['qk_dim'], n['v_dim'], n['dropout'], n['share_embeddings'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
+  else:
+    model = Encoder_Decoder(n['n_layers'], n['ff_dim'], n['n_heads'], n['emb_dim'], n['qk_dim'], n['v_dim'], n['dropout'], n['share_embeddings'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
   logging.info('Built model (#params, size) = ({}) in device {}'.format(', '.join([str(f) for f in numparameters(model)]), next(model.parameters()).device))
   step, model = load_model(o.dnet + '/network', model, device, o.model)
 
@@ -150,14 +168,20 @@ if __name__ == '__main__':
   ### load test ####
   ##################
   if o.prefix is not None:
-    test = Dataset([src_voc,tgt_voc], [o.input,o.prefix], shard_size=o.shard_size, batch_size=o.batch_size, batch_type=o.batch_type, max_length=o.max_length)
+    if n['model_type'] == 'scc':
+      test = Dataset([src_voc, src_voc, tgt_voc, tgt_voc], [o.input, o.xsrc, o.xtgt, o.prefix], o.shard_size, o.batch_size, o.batch_type, o.max_length)
+    else:
+      test = Dataset([src_voc,tgt_voc], [o.input,o.prefix], shard_size=o.shard_size, batch_size=o.batch_size, batch_type=o.batch_type, max_length=o.max_length)
   else:
-    test = Dataset([src_voc], [o.input], shard_size=o.shard_size, batch_size=o.batch_size, batch_type=o.batch_type, max_length=o.max_length)
+    if n['model_type'] == 'scc':
+      test = Dataset([src_voc, src_voc, tgt_voc], [o.input, o.xsrc, o.xtgt], o.shard_size, o.batch_size, o.batch_type, o.max_length)
+    else:
+      test = Dataset([src_voc], [o.input], shard_size=o.shard_size, batch_size=o.batch_size, batch_type=o.batch_type, max_length=o.max_length)
 
   ##################
   ### Inference ####
   ##################
-  inference = Inference(model, src_voc, tgt_voc, o, device)
+  inference = Inference(model, src_voc, tgt_voc, o, n['model_type'], device)
   inference.translate(test,o.output)
 
   toc = time.time()

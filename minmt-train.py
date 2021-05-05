@@ -135,15 +135,19 @@ class Options():
 
     if self.src_train is None:
       self.usage('missing -src_train option')
-
     if self.tgt_train is None:
       self.usage('missing -tgt_train option')
 
-#    if self.dnet['model_type'] == 'scc' and self.xsrc_train is None:
-#      self.usage('missing -xsrc_train option')
+    if self.dnet['model_type'] == 'scc':
+      if self.xsrc_train is None:
+        self.usage('missing -xsrc_train option')
+      if self.xtgt_train is None:
+        self.usage('missing -xtgt_train option')
+      if self.src_valid is not None and self.xsrc_valid is None:
+          self.usage('missing -xsrc_valid option')
+      if self.tgt_valid is not None and self.xtgt_valid is None:
+          self.usage('missing -xtgt_valid option')
 
-#    if self.dnet['model_type'] == 'scc' and self.xtgt_train is None:
-#      self.usage('missing -xtgt_train option')
 
     create_logger(log_file,log_level)
     random.seed(self.seed)
@@ -247,7 +251,7 @@ if __name__ == '__main__':
   ##################
   valid = None
   if o.src_valid is not None and o.tgt_valid is not None:
-    if n['model_type'] == 'scc' and o.xsrc_valid is not None and o.xtgt_valid is not None:
+    if n['model_type'] == 'scc':
       valid = Dataset([src_voc, tgt_voc, src_voc, tgt_voc], [o.src_valid, o.tgt_valid, o.xsrc_valid, o.xtgt_valid], o.shard_size, o.batch_size, o.batch_type, 0) #o.max_length)
     else:
       valid = Dataset([src_voc, tgt_voc], [o.src_valid, o.tgt_valid], o.shard_size, o.batch_size, o.batch_type, 0) #o.max_length)
@@ -260,7 +264,7 @@ if __name__ == '__main__':
   #############
   ### learn ###
   #############
-  inference_valid = Inference(model, src_voc, tgt_voc, DefaultOptsInfer(), device)
+  inference_valid = Inference(model, src_voc, tgt_voc, DefaultOptsInfer(), n['model_type'], device)
   learning = Learning(model, optScheduler, criter, o.dnet + '/network', src_voc.idx_pad, inference_valid, o)
   learning.learn(train, valid, device)
 

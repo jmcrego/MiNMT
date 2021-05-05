@@ -18,9 +18,10 @@ def norm_length(l, alpha):
 ### Inference ################################################################################################
 ##############################################################################################################
 class Inference():
-  def __init__(self, model, src_voc, tgt_voc, oi, device): 
+  def __init__(self, model, src_voc, tgt_voc, oi, model_type, device): 
     super(Inference, self).__init__()
     self.model = model
+    self.model_type = model_type
     self.src_voc = src_voc
     self.tgt_voc = tgt_voc
     self.Vt = len(tgt_voc)
@@ -47,15 +48,20 @@ class Inference():
       self.model.eval()
       for pos, batch_idxs in testset:
 
-        batch_src = batch_idxs[0]
+        src, self.msk_src = prepare_source(batch_idxs[0], self.src_voc.idx_pad, self.device) #src is [bs, ls] msk_src is [bs,1,ls]
+
+        if self.model_type == 'scc':
+          xsrc, msk_xsrc = prepare_source(batch_idxs[1], self.src_voc.idx_pad, self.device) #xsrc is [bs, lxs] msk_xsrc is [bs,1,lxs]
+          xtgt, self.msk_xtgt = prepare_source(batch_idxs[2], self.tgt_voc.idx_pad, self.device) #xtgt is [bs, lxt] msk_xtgt is [bs,1,lxt]
+          self.z_src, self.z_xtgt = self.model.encode(src, xsrc, xtgt, self.msk_src, msk_xsrc, self.msk_xtgt) #[bs,ls,ed] [bs,lxt,ed]
+        else:
+          self.z_src = self.model.encode(src, self.msk_src) #[bs,ls,ed]
+
         if self.prefix: ### if prefix the last is the prefix 
           self.batch_pre, _ = prepare_prefix(batch_idxs[-1], self.tgt_voc.idx_pad, self.device)  #pre is [bs, lp]
         else:
           self.batch_pre = None
 
-        src, self.msk_src = prepare_source(batch_src, self.src_voc.idx_pad, self.device) #src is [bs, ls] msk_src is [bs,1,ls]
-        ### encode
-        self.z_src = self.model.encode(src, self.msk_src) #[bs,ls,ed]
         ### decode step-by-step
         finals = self.traverse_beam()
         ### eoutput
@@ -88,12 +94,18 @@ class Inference():
       if lt == 2:
         self.z_src = self.z_src.repeat_interleave(repeats=self.K, dim=0) #[bs,ls,ed] => [bs*K,ls,ed]
         self.msk_src = self.msk_src.repeat_interleave(repeats=self.K, dim=0) #[bs,1,ls] => [bs*K,1,ls]
+        if self.model_type == 'scc':
+          self.z_xtgt = self.z_xtgt.repeat_interleave(repeats=self.K, dim=0) #[bs,lxt,ed] => [bs*K,lxt,ed]
+          self.msk_xtgt = self.msk_xtgt.repeat_interleave(repeats=self.K, dim=0) #[bs,1,lxt] => [bs*K,1,lxt]
 
       ##############
       ### DECODE ###
       ##############
       msk_tgt = (1 - torch.triu(torch.ones((1, lt, lt), device=self.device), diagonal=1)).bool()
-      y_next = self.model.decode(self.z_src, hyps, self.msk_src, msk_tgt=msk_tgt)[:,-1,:] #[I,lt,Vt] => [I,Vt]
+      if self.model_type == 'scc':
+        y_next = self.model.decode(self.z_src, self.z_xtgt, hyps, self.msk_src, self.msk_xtgt, msk_tgt=msk_tgt)[:,-1,:] #[I,lt,Vt] => [I,Vt]
+      else:
+        y_next = self.model.decode(self.z_src, hyps, self.msk_src, msk_tgt=msk_tgt)[:,-1,:] #[I,lt,Vt] => [I,Vt]
 
       hyps, logP = self.expand(y_next, hyps, logP, bs) #both are [bs,1*Vt,lt] OR [bs,K*Vt,lt]
       
