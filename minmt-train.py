@@ -138,15 +138,15 @@ class Options():
     if self.tgt_train is None:
       self.usage('missing -tgt_train option')
 
-    if self.dnet['model_type'] == 'scc':
-      if self.xsrc_train is None:
-        self.usage('missing -xsrc_train option')
-      if self.xtgt_train is None:
-        self.usage('missing -xtgt_train option')
-      if self.src_valid is not None and self.xsrc_valid is None:
-          self.usage('missing -xsrc_valid option')
-      if self.tgt_valid is not None and self.xtgt_valid is None:
-          self.usage('missing -xtgt_valid option')
+#    if self.dnet['model_type'] == 'scc':
+#      if self.xsrc_train is None:
+#        self.usage('missing -xsrc_train option')
+#      if self.xtgt_train is None:
+#        self.usage('missing -xtgt_train option')
+#      if self.src_valid is not None and self.xsrc_valid is None:
+#          self.usage('missing -xsrc_valid option')
+#      if self.tgt_valid is not None and self.xtgt_valid is None:
+#          self.usage('missing -xtgt_valid option')
 
 
     create_logger(log_file,log_level)
