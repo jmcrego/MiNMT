@@ -132,13 +132,13 @@ class Encoder_scc(torch.nn.Module):
     tmp1 = self.norm_att_cross1(tmp)
 #    tmp1 = self.norm_att_cross_xsrc(tmp)
     #Cross ATTN over xsrc words : q are xtgt words, k, v are xsrc words
-    tmp2 = self.multihead_attn_cross2(q=tmp1, k=z_xsrc, v=z_xsrc, msk=msk_xsrc) #[bs, ls, ed] contains dropout
+    tmp2 = self.multihead_attn_cross1(q=tmp1, k=z_xsrc, v=z_xsrc, msk=msk_xsrc) #[bs, ls, ed] contains dropout
 #    tmp2 = self.multihead_attn_cross_xsrc(q=tmp1, k=z_xsrc, v=z_xsrc, msk=msk_xsrc) #[bs, ls, ed] contains dropout
     #ADD
     tmp = tmp2 + tmp
 
     #NORM
-    tmp1 = self.norm_att_cross1(tmp)
+    tmp1 = self.norm_att_cross2(tmp)
 #    tmp1 = self.norm_att_cross_src(tmp)
     #Cross ATTN over src words : q are xtgt words, k, v are src words
     tmp2 = self.multihead_attn_cross2(q=tmp1, k=z_src, v=z_src, msk=msk_src) #[bs, ls, ed] contains dropout
@@ -185,13 +185,13 @@ class Decoder_scc(torch.nn.Module):
     tmp1 = self.norm_att_cross1(tmp)
 #    tmp1 = self.norm_att_cross_xtgt(tmp)
     #Cross ATTN over xtgt words : q are tgt words, k, v are xtgt words
-    tmp2 = self.multihead_attn_cross2(q=tmp1, k=z_xtgt, v=z_xtgt, msk=msk_xtgt) #[bs, lt, ed] contains dropout
+    tmp2 = self.multihead_attn_cross1(q=tmp1, k=z_xtgt, v=z_xtgt, msk=msk_xtgt) #[bs, lt, ed] contains dropout
 #    tmp2 = self.multihead_attn_cross_xtgt(q=tmp1, k=z_xtgt, v=z_xtgt, msk=msk_xtgt) #[bs, lt, ed] contains dropout
     #ADD
     tmp = tmp2 + tmp
 
     #NORM
-    tmp1 = self.norm_att_cross1(tmp)
+    tmp1 = self.norm_att_cross2(tmp)
 #    tmp1 = self.norm_att_cross_src(tmp)
     #Cross ATTN over src words : q are tgt words, k, v are src words
     tmp2 = self.multihead_attn_cross2(q=tmp1, k=z_src, v=z_src, msk=msk_src) #[bs, lt, ed] contains dropout
