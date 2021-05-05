@@ -8,6 +8,7 @@ import torch
 #import yaml
 from transformer.Dataset import Dataset, Vocab
 from transformer.Model import Encoder_Decoder, load_model, numparameters
+from transformer.Model_scc import Encoder_Decoder_scc
 from transformer.Inference import Inference
 from tools.Tools import create_logger, read_dnet
 
