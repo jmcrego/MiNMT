@@ -42,6 +42,8 @@ class Encoder_Decoder_sxs_sc(torch.nn.Module):
     z_src = self.stacked_encoder_s(src, msk_src) #[bs,ls,ed]
     xtgt = self.add_pos_enc(self.tgt_emb(xtgt)) #[bs,ls,ed]
     z_xtgt = self.stacked_encoder_t(xtgt, msk_xtgt) #[bs,ls,ed]
+    logging.info('z_src = {}'.format(z_src.shape))
+    logging.info('z_xtgt = {}'.format(z_xtgt.shape))
 
     z_srcxtgt = torch.cat(z_src, z_xtgt, dim=1) #[bs, ls+lxt, ed]
     msk_srcxtgt = torch.cat(msk_src, msk_xtgt, dim=2) #[bs, 1, ls+lxt]
