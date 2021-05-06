@@ -45,7 +45,7 @@ class Encoder_Decoder_s_s_scc(torch.nn.Module):
 
     ### decoder #####
     tgt = self.add_pos_enc(self.tgt_emb(tgt)) #[bs,lt,ed]
-    z_tgt = self.stacked_decoder_scc(z_src, z_xtgt, tgt, msk_src, msk_xtgt, msk_tgt) #[bs,lt,ed]
+    z_tgt = self.stacked_decoder(z_src, z_xtgt, tgt, msk_src, msk_xtgt, msk_tgt) #[bs,lt,ed]
     ### generator ###
     y = self.generator(z_tgt) #[bs, lt, Vt]
     return y ### returns logits (for learning)
@@ -63,12 +63,25 @@ class Encoder_Decoder_s_s_scc(torch.nn.Module):
     #tgt is the history (words already generated) for current step [bs, lt]
 
     tgt = self.add_pos_enc(self.tgt_emb(tgt)) #[bs,lt,ed]
-    z_tgt = self.stacked_decoder_scc(z_src, z_xtgt, tgt, msk_src, msk_xtgt, msk_tgt) #[bs,lt,ed]
+    z_tgt = self.stacked_decoder(z_src, z_xtgt, tgt, msk_src, msk_xtgt, msk_tgt) #[bs,lt,ed]
     ### generator ###
     y = self.generator_trn(z_tgt) #[bs, lt, Vt]
     y = torch.nn.functional.log_softmax(y, dim=-1) 
     return y ### returns log_probs (for inference)
 
+##############################################################################################################
+### Stacked_Decoder_scc ######################################################################################
+##############################################################################################################
+class Stacked_Decoder_scc(torch.nn.Module):
+  def __init__(self, n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout):
+    super(Stacked_Decoder_scc, self).__init__()
+    self.decoderlayers = torch.nn.ModuleList([Decoder_scc(ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout) for _ in range(n_layers)])
+    self.norm = torch.nn.LayerNorm(emb_dim, eps=1e-6) 
+
+  def forward(self, z_src, z_xtgt, tgt, msk_src, msk_xtgt, msk_tgt):
+    for i,decoderlayer in enumerate(self.decoderlayers):
+      tgt = decoderlayer(z_src, z_xtgt, tgt, msk_src, msk_xtgt, msk_tgt)
+    return self.norm(tgt)
 
 ##############################################################################################################
 ### Decoder_scc ##############################################################################################
