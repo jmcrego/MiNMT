@@ -9,7 +9,7 @@ import torch
 import numpy as np
 from transformer.Dataset import Dataset, Vocab
 from transformer.Model import Encoder_Decoder, load_checkpoint, numparameters
-from transformer.Model_scc import Encoder_Decoder_scc
+from transformer.Model_s_s_scc_scc import Encoder_Decoder_s_s_scc_scc
 from transformer.Model_sxs_sc import Encoder_Decoder_sxs_sc
 from transformer.Optimizer import OptScheduler, LabelSmoothing_NLL, LabelSmoothing_KLDiv
 from transformer.Learning import Learning
@@ -139,7 +139,7 @@ class Options():
     if self.tgt_train is None:
       self.usage('missing -tgt_train option')
 
-#    if self.dnet['model_type'] == 'scc':
+#    if self.dnet['model_type'] == 's_s_scc_scc':
 #      if self.xsrc_train is None:
 #        self.usage('missing -xsrc_train option')
 #      if self.xtgt_train is None:
@@ -167,10 +167,10 @@ class Options():
    -src_valid        FILE : source-side validation file
    -tgt_valid        FILE : target-side validation file
 
-   -xsrc_train       FILE : source-side training extended file (needed when model_type is 'scc')
-   -xtgt_train       FILE : target-side training extended file (needed when model_type is 'scc')
-   -xsrc_valid       FILE : source-side validation extended file (used when model_type is 'scc')
-   -xtgt_valid       FILE : target-side validation extended file (used when model_type is 'scc')
+   -xsrc_train       FILE : source-side training extended file
+   -xtgt_train       FILE : target-side training extended file
+   -xsrc_valid       FILE : source-side validation extended file
+   -xtgt_valid       FILE : target-side validation extended file
 
    [Learning]
    -max_steps         INT : maximum number of training updates ({})
@@ -227,8 +227,8 @@ if __name__ == '__main__':
   ### load model/optim ###
   ########################
   device = torch.device('cuda' if o.cuda and torch.cuda.is_available() else 'cpu')
-  if n['model_type'] == 'scc':
-    model = Encoder_Decoder_scc(n['n_layers'], n['ff_dim'], n['n_heads'], n['emb_dim'], n['qk_dim'], n['v_dim'], n['dropout'], n['share_embeddings'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
+  if n['model_type'] == 's_s_scc_scc':
+    model = Encoder_Decoder_s_s_scc_scc(n['n_layers'], n['ff_dim'], n['n_heads'], n['emb_dim'], n['qk_dim'], n['v_dim'], n['dropout'], n['share_embeddings'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
   elif n['model_type'] == 'sxs_sc':
     model = Encoder_Decoder_sxs_sc(n['n_layers'], n['ff_dim'], n['n_heads'], n['emb_dim'], n['qk_dim'], n['v_dim'], n['dropout'], n['share_embeddings'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
   else:
@@ -254,14 +254,14 @@ if __name__ == '__main__':
   ##################
   valid = None
   if o.src_valid is not None and o.tgt_valid is not None:
-    if n['model_type'] == 'scc':
+    if n['model_type'] == 's_s_scc_scc':
       valid = Dataset([src_voc, tgt_voc, src_voc, tgt_voc], [o.src_valid, o.tgt_valid, o.xsrc_valid, o.xtgt_valid], o.shard_size, o.batch_size, o.batch_type, 0) #o.max_length)
     if n['model_type'] == 'sxs_sc':
       valid = Dataset([src_voc, tgt_voc, tgt_voc], [o.src_valid, o.tgt_valid, o.xtgt_valid], o.shard_size, o.batch_size, o.batch_type, 0) #o.max_length)
     else: # 'std'
       valid = Dataset([src_voc, tgt_voc], [o.src_valid, o.tgt_valid], o.shard_size, o.batch_size, o.batch_type, 0) #o.max_length)
 
-  if n['model_type'] == 'scc':
+  if n['model_type'] == 's_s_scc_scc':
     train = Dataset([src_voc, tgt_voc, src_voc, tgt_voc], [o.src_train, o.tgt_train, o.xsrc_train, o.xtgt_train], o.shard_size, o.batch_size, o.batch_type, o.max_length)
   elif n['model_type'] == 'sxs_sc':
     train = Dataset([src_voc, tgt_voc, tgt_voc], [o.src_train, o.tgt_train, o.xtgt_train], o.shard_size, o.batch_size, o.batch_type, o.max_length)

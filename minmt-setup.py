@@ -8,7 +8,7 @@ import torch
 from tools.Tools import create_logger, write_dnet
 from transformer.Dataset import Vocab
 from transformer.Model import Encoder_Decoder, save_checkpoint, numparameters
-from transformer.Model_scc import Encoder_Decoder_scc
+from transformer.Model_s_s_scc_scc import Encoder_Decoder_s_s_scc_scc
 from transformer.Model_sxs_sc import Encoder_Decoder_sxs_sc
 import numpy as np
 
@@ -138,8 +138,8 @@ if __name__ == '__main__':
   src_voc = Vocab(o.src_voc)
   tgt_voc = Vocab(o.tgt_voc)
   device = torch.device('cpu')
-  if o.net['model_type'] == 'scc':
-    model = Encoder_Decoder_scc(o.net['n_layers'], o.net['ff_dim'], o.net['n_heads'], o.net['emb_dim'], o.net['qk_dim'], o.net['v_dim'], o.net['dropout'], o.net['share_embeddings'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
+  if o.net['model_type'] == 's_s_scc_scc':
+    model = Encoder_Decoder_s_s_scc_scc(o.net['n_layers'], o.net['ff_dim'], o.net['n_heads'], o.net['emb_dim'], o.net['qk_dim'], o.net['v_dim'], o.net['dropout'], o.net['share_embeddings'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
   elif o.net['model_type'] == 'sxs_sc':
     model = Encoder_Decoder_sxs_sc(o.net['n_layers'], o.net['ff_dim'], o.net['n_heads'], o.net['emb_dim'], o.net['qk_dim'], o.net['v_dim'], o.net['dropout'], o.net['share_embeddings'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
   else:
