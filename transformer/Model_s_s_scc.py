@@ -10,12 +10,12 @@ import glob
 from transformer.Model import Embedding, AddPositionalEncoding, Stacked_Encoder, Stacked_Decoder, Encoder, Decoder, MultiHead_Attn, FeedForward, Generator
 
 ##############################################################################################################
-### Encoder_Decoder_sxs_sc ######################################################################################
+### Encoder_Decoder_s_s_scc ##################################################################################
 ##############################################################################################################
 class Encoder_Decoder_s_s_scc(torch.nn.Module):
   #https://www.linzehui.me/images/16005200579239.jpg
   def __init__(self, n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout, share_embeddings, src_voc_size, tgt_voc_size, idx_pad):
-    super(Encoder_Decoder_sxs_sc, self).__init__()
+    super(Encoder_Decoder_s_s_scc, self).__init__()
     self.idx_pad = idx_pad
     self.src_emb = Embedding(src_voc_size, emb_dim, idx_pad) 
     self.tgt_emb = Embedding(tgt_voc_size, emb_dim, idx_pad) 
