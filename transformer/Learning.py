@@ -79,32 +79,31 @@ class Learning():
       score = Score()
       for batch_pos, batch_idxs in trainset:
 
-        batch_src = batch_idxs[0]
-        batch_tgt = batch_idxs[1]
-        batch_xsrc = None
-        batch_xtgt = None
-        if self.model.type() == 'scc':
-          batch_xsrc = batch_idxs[2]
-          batch_xtgt = batch_idxs[3]
-        elif self.model.type() == 'sxs_sc':
-          batch_xtgt = batch_idxs[2]
-
         n_batch += 1
         self.model.train()
         ###
         ### forward
         ###
-        src, msk_src = prepare_source(batch_src, self.idx_pad, device)
-        tgt, ref, msk_tgt = prepare_target(batch_tgt, self.idx_pad, device)
-        if self.model.type() == 'scc':
+        if self.model.type() == 'std':
+          batch_src, batch_tgt = batch_idxs[0], batchs_idxs[1]
+          src, msk_src = prepare_source(batch_src, self.idx_pad, device)
+          tgt, ref, msk_tgt = prepare_target(batch_tgt, self.idx_pad, device)
+          pred = self.model.forward(src, tgt, msk_src, msk_tgt) #no log_softmax is applied
+
+        elif self.model.type() == 'scc':
+          batch_src, batch_tgt, batch_xsrc, batch_xtgt = batch_idxs[0], batch_idxs[1], batch_idxs[2], batch_idxs[3]
+          src, msk_src = prepare_source(batch_src, self.idx_pad, device)
+          tgt, ref, msk_tgt = prepare_target(batch_tgt, self.idx_pad, device)
           xsrc, msk_xsrc = prepare_source(batch_xsrc, self.idx_pad, device)
           xtgt, msk_xtgt = prepare_source(batch_xtgt, self.idx_pad, device)
           pred_msk, pred = self.model.forward(src, xsrc, xtgt, tgt, msk_src, msk_xsrc, msk_xtgt, msk_tgt) #no log_softmax is applied
+
         elif self.model.type() == 'sxs_sc':
+          batch_src, batch_tgt, batch_xtgt = batch_idxs[0], batch_idxs[1], batch_idxs[2]
+          src, msk_src = prepare_source(batch_src, self.idx_pad, device)
+          tgt, ref, msk_tgt = prepare_target(batch_tgt, self.idx_pad, device)
           xtgt, msk_xtgt = prepare_source(batch_xtgt, self.idx_pad, device)
           pred = self.model.forward(src, xtgt, tgt, msk_src, msk_xtgt, msk_tgt) #no log_softmax is applied
-        else:
-          pred = self.model.forward(src, tgt, msk_src, msk_tgt) #no log_softmax is applied
         ###
         ### compute loss
         ###
@@ -176,28 +175,29 @@ class Learning():
 
       self.model.eval()
       for batch_pos, batch_idxs in validset:
-        batch_src = batch_idxs[0]
-        batch_tgt = batch_idxs[1]
-        batch_xsrc = None
-        batch_xtgt = None
-        if self.model.type() == 'scc':
-          batch_xsrc = batch_idxs[2]
-          batch_xtgt = batch_idxs[3]
-        elif self.model.type() == 'sxs_sc':
-          batch_xtgt = batch_idxs[2]
-        n_batch += 1
 
-        src, msk_src = prepare_source(batch_src, self.idx_pad, device)
-        tgt, ref, msk_tgt = prepare_target(batch_tgt, self.idx_pad, device)
-        if self.model.type() == 'scc':
+        if self.model.type() == 'std':
+          batch_src, batch_tgt = batch_idxs[0], batchs_idxs[1]
+          src, msk_src = prepare_source(batch_src, self.idx_pad, device)
+          tgt, ref, msk_tgt = prepare_target(batch_tgt, self.idx_pad, device)
+          pred = self.model.forward(src, tgt, msk_src, msk_tgt) #no log_softmax is applied
+
+        elif self.model.type() == 'scc':
+          batch_src, batch_tgt, batch_xsrc, batch_xtgt = batch_idxs[0], batch_idxs[1], batch_idxs[2], batch_idxs[3]
+          src, msk_src = prepare_source(batch_src, self.idx_pad, device)
+          tgt, ref, msk_tgt = prepare_target(batch_tgt, self.idx_pad, device)
           xsrc, msk_xsrc = prepare_source(batch_xsrc, self.idx_pad, device)
           xtgt, msk_xtgt = prepare_source(batch_xtgt, self.idx_pad, device)
           pred_msk, pred = self.model.forward(src, xsrc, xtgt, tgt, msk_src, msk_xsrc, msk_xtgt, msk_tgt) #no log_softmax is applied
+
         elif self.model.type() == 'sxs_sc':
+          batch_src, batch_tgt, batch_xtgt = batch_idxs[0], batch_idxs[1], batch_idxs[2]
+          src, msk_src = prepare_source(batch_src, self.idx_pad, device)
+          tgt, ref, msk_tgt = prepare_target(batch_tgt, self.idx_pad, device)
           xtgt, msk_xtgt = prepare_source(batch_xtgt, self.idx_pad, device)
           pred = self.model.forward(src, xtgt, tgt, msk_src, msk_xtgt, msk_tgt) #no log_softmax is applied
-        else:
-          pred = self.model.forward(src, tgt, msk_src, msk_tgt) #no log_softmax is applied
+
+        n_batch += 1
         loss = self.criter(pred, ref) ### batch loss
         valid_loss += loss.item() / torch.sum(ref != self.idx_pad)
         if n_batch == 1:
