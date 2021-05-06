@@ -109,6 +109,9 @@ class Encoder_Decoder(torch.nn.Module):
     self.stacked_decoder = Stacked_Decoder(n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout)
     self.generator = Generator(emb_dim, tgt_voc_size)
 
+  def type(self):
+    return 'std'
+
   def forward(self, src, tgt, msk_src, msk_tgt):
     #src is [bs,ls]
     #tgt is [bs,lt]
@@ -246,7 +249,7 @@ class Decoder(torch.nn.Module):
     #ATTN over tgt (previous) words : q, k, v are tgt words
     tmp2 = self.multihead_attn_self(q=tmp1, k=tmp1, v=tmp1, msk=msk_tgt) #[bs, lt, ed] contains dropout
     #ADD
-    tmp = tmp2 + tgt 
+    tmp = tmp2 + tgt
 
     #NORM
     tmp1 = self.norm_att_enc(tmp)
