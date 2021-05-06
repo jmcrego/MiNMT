@@ -25,7 +25,7 @@ class Encoder_Decoder_sxs_sc(torch.nn.Module):
     self.add_pos_enc = AddPositionalEncoding(emb_dim, dropout, max_len=5000) 
     self.stacked_encoder_s = Stacked_Encoder(n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout) ### encoder for src
     self.stacked_encoder_t = Stacked_Encoder(n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout) ### encoder for xtgt
-    self.stacked_decoder_sxs_sc = Stacked_Decoder(n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout) ### decoder for tgt
+    self.stacked_decoder = Stacked_Decoder(n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout) ### decoder for tgt
     self.generator = Generator(emb_dim, tgt_voc_size)
 
   def type(self):
@@ -42,16 +42,13 @@ class Encoder_Decoder_sxs_sc(torch.nn.Module):
     z_src = self.stacked_encoder_s(src, msk_src) #[bs,ls,ed]
     xtgt = self.add_pos_enc(self.tgt_emb(xtgt)) #[bs,ls,ed]
     z_xtgt = self.stacked_encoder_t(xtgt, msk_xtgt) #[bs,ls,ed]
-    logging.info('z_src = {}'.format(z_src.shape))
-    logging.info('z_xtgt = {}'.format(z_xtgt.shape))
 
     z_srcxtgt = torch.cat((z_src, z_xtgt), dim=1) #[bs, ls+lxt, ed]
     msk_srcxtgt = torch.cat((msk_src, msk_xtgt), dim=2) #[bs, 1, ls+lxt]
-    logging.info('z_srcxtgt = {}'.format(z_srcxtgt.shape))
 
     ### decoder #####
     tgt = self.add_pos_enc(self.tgt_emb(tgt)) #[bs,lt,ed]
-    z_tgt = self.stacked_decoder_sxs_sc(z_srcxtgt, tgt, msk_srcxtgt, msk_tgt) #[bs,lt,ed]
+    z_tgt = self.stacked_decoder(z_srcxtgt, tgt, msk_srcxtgt, msk_tgt) #[bs,lt,ed]
     ### generator ###
     y = self.generator(z_tgt) #[bs, lt, Vt]
 
@@ -73,7 +70,7 @@ class Encoder_Decoder_sxs_sc(torch.nn.Module):
     msk_srcxtgt = torch.cat((msk_src, msk_xtgt), dim=2) #[bs, 1, ls+lxt]
 
     tgt = self.add_pos_enc(self.tgt_emb(tgt)) #[bs,lt,ed]
-    z_tgt = self.stacked_decoder_sxs_sc(z_srcxtgt, tgt, msk_srcxtgt, msk_tgt) #[bs,lt,ed]
+    z_tgt = self.stacked_decoder(z_srcxtgt, tgt, msk_srcxtgt, msk_tgt) #[bs,lt,ed]
     ### generator ###
     y = self.generator_trn(z_tgt) #[bs, lt, Vt]
     y = torch.nn.functional.log_softmax(y, dim=-1) 
