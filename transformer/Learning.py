@@ -173,6 +173,7 @@ class Learning():
     valid_loss = 0.0
     n_batch = 0
     with torch.no_grad():
+
       self.model.eval()
       for batch_pos, batch_idxs in validset:
         batch_src = batch_idxs[0]
@@ -185,12 +186,16 @@ class Learning():
         elif self.model.type() == 'sxs_sc':
           batch_xtgt = batch_idxs[2]
         n_batch += 1
+
         src, msk_src = prepare_source(batch_src, self.idx_pad, device)
         tgt, ref, msk_tgt = prepare_target(batch_tgt, self.idx_pad, device)
-        if batch_xsrc is not None and batch_xtgt is not None:
+        if self.model.type() == 'scc':
           xsrc, msk_xsrc = prepare_source(batch_xsrc, self.idx_pad, device)
           xtgt, msk_xtgt = prepare_source(batch_xtgt, self.idx_pad, device)
           pred_msk, pred = self.model.forward(src, xsrc, xtgt, tgt, msk_src, msk_xsrc, msk_xtgt, msk_tgt) #no log_softmax is applied
+        elif self.model.type() == 'sxs_sc':
+          xtgt, msk_xtgt = prepare_source(batch_xtgt, self.idx_pad, device)
+          pred = self.model.forward(src, xtgt, tgt, msk_src, msk_xtgt, msk_tgt) #no log_softmax is applied
         else:
           pred = self.model.forward(src, tgt, msk_src, msk_tgt) #no log_softmax is applied
         loss = self.criter(pred, ref) ### batch loss
