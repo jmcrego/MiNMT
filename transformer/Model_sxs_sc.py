@@ -47,6 +47,7 @@ class Encoder_Decoder_sxs_sc(torch.nn.Module):
 
     z_srcxtgt = torch.cat((z_src, z_xtgt), dim=1) #[bs, ls+lxt, ed]
     msk_srcxtgt = torch.cat((msk_src, msk_xtgt), dim=2) #[bs, 1, ls+lxt]
+    logging.info('z_srcxtgt = {}'.format(z_srcxtgt.shape))
 
     ### decoder #####
     tgt = self.add_pos_enc(self.tgt_emb(tgt)) #[bs,lt,ed]
