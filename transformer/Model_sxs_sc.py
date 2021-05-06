@@ -45,8 +45,8 @@ class Encoder_Decoder_sxs_sc(torch.nn.Module):
     logging.info('z_src = {}'.format(z_src.shape))
     logging.info('z_xtgt = {}'.format(z_xtgt.shape))
 
-    z_srcxtgt = torch.cat(z_src, z_xtgt, dim=1) #[bs, ls+lxt, ed]
-    msk_srcxtgt = torch.cat(msk_src, msk_xtgt, dim=2) #[bs, 1, ls+lxt]
+    z_srcxtgt = torch.cat((z_src, z_xtgt), dim=1) #[bs, ls+lxt, ed]
+    msk_srcxtgt = torch.cat((msk_src, msk_xtgt), dim=2) #[bs, 1, ls+lxt]
 
     ### decoder #####
     tgt = self.add_pos_enc(self.tgt_emb(tgt)) #[bs,lt,ed]
@@ -68,8 +68,8 @@ class Encoder_Decoder_sxs_sc(torch.nn.Module):
     #z_src are the embeddings of the source words (encoder) [bs, sl, ed]
     #tgt is the history (words already generated) for current step [bs, lt]
 
-    z_srcxtgt = torch.cat(z_src, z_xtgt, dim=1) #[bs, ls+lxt, ed]
-    msk_srcxtgt = torch.cat(msk_src, msk_xtgt, dim=2) #[bs, 1, ls+lxt]
+    z_srcxtgt = torch.cat((z_src, z_xtgt), dim=1) #[bs, ls+lxt, ed]
+    msk_srcxtgt = torch.cat((msk_src, msk_xtgt), dim=2) #[bs, 1, ls+lxt]
 
     tgt = self.add_pos_enc(self.tgt_emb(tgt)) #[bs,lt,ed]
     z_tgt = self.stacked_decoder_sxs_sc(z_srcxtgt, tgt, msk_srcxtgt, msk_tgt) #[bs,lt,ed]
