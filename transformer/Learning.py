@@ -78,14 +78,17 @@ class Learning():
       loss_accum = 0.0
       score = Score()
       for batch_pos, batch_idxs in trainset:
+
         batch_src = batch_idxs[0]
         batch_tgt = batch_idxs[1]
-        if len(batch_idxs) == 4:
+        batch_xsrc = None
+        batch_xtgt = None
+        if self.model.type() == 'scc':
           batch_xsrc = batch_idxs[2]
           batch_xtgt = batch_idxs[3]
-        else:
-          batch_xsrc = None
-          batch_xtgt = None
+        elif self.model.type() == 'sxs_sc':
+          batch_xtgt = batch_idxs[2]
+
         n_batch += 1
         self.model.train()
         ###
@@ -93,10 +96,13 @@ class Learning():
         ###
         src, msk_src = prepare_source(batch_src, self.idx_pad, device)
         tgt, ref, msk_tgt = prepare_target(batch_tgt, self.idx_pad, device)
-        if batch_xsrc is not None and batch_xtgt is not None:
+        if self.model.type() == 'scc':
           xsrc, msk_xsrc = prepare_source(batch_xsrc, self.idx_pad, device)
           xtgt, msk_xtgt = prepare_source(batch_xtgt, self.idx_pad, device)
           pred_msk, pred = self.model.forward(src, xsrc, xtgt, tgt, msk_src, msk_xsrc, msk_xtgt, msk_tgt) #no log_softmax is applied
+        elif self.model.type() == 'sxs_sc':
+          xtgt, msk_xtgt = prepare_source(batch_xtgt, self.idx_pad, device)
+          pred = self.model.forward(src, xtgt, tgt, msk_src, msk_xtgt, msk_tgt) #no log_softmax is applied
         else:
           pred = self.model.forward(src, tgt, msk_src, msk_tgt) #no log_softmax is applied
         ###

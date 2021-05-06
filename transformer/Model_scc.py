@@ -29,6 +29,9 @@ class Encoder_Decoder_scc(torch.nn.Module):
     self.generator_msk = Generator(emb_dim, tgt_voc_size)
     self.generator_trn = Generator(emb_dim, tgt_voc_size)
 
+  def type(self):
+    return 'scc'
+
   def forward(self, src, xsrc, xtgt, tgt, msk_src, msk_xsrc, msk_xtgt, msk_tgt): 
     #src is [bs,ls]
     #tgt is [bs,lt]
@@ -110,46 +113,38 @@ class Encoder_scc(torch.nn.Module):
     self.multihead_attn_self = MultiHead_Attn(n_heads, emb_dim, qk_dim, v_dim, dropout)
     self.multihead_attn_cross1 = MultiHead_Attn(n_heads, emb_dim, qk_dim, v_dim, dropout)
     self.multihead_attn_cross2 = MultiHead_Attn(n_heads, emb_dim, qk_dim, v_dim, dropout)
-#    self.multihead_attn_cross_xsrc = MultiHead_Attn(n_heads, emb_dim, qk_dim, v_dim, dropout)
-#    self.multihead_attn_cross_src = MultiHead_Attn(n_heads, emb_dim, qk_dim, v_dim, dropout)
     self.feedforward = FeedForward(emb_dim, ff_dim, dropout)
     self.norm_att_self = torch.nn.LayerNorm(emb_dim, eps=1e-6) 
     self.norm_att_cross1 = torch.nn.LayerNorm(emb_dim, eps=1e-6) 
     self.norm_att_cross2 = torch.nn.LayerNorm(emb_dim, eps=1e-6) 
-#    self.norm_att_cross_xsrc = torch.nn.LayerNorm(emb_dim, eps=1e-6) 
-#    self.norm_att_cross_src = torch.nn.LayerNorm(emb_dim, eps=1e-6) 
     self.norm_ff = torch.nn.LayerNorm(emb_dim, eps=1e-6) 
 
   def forward(self, z_src, z_xsrc, xtgt, msk_src, msk_xsrc, msk_xtgt):
     #NORM
-    tmp1 = self.norm_att_self(xtgt)
-    #Self ATTN over xtarget words 
-    tmp2 = self.multihead_attn_self(q=tmp1, k=tmp1, v=tmp1, msk=msk_xtgt) #[bs, ls, ed] contains dropout
+    tmp_norm = self.norm_att_self(xtgt)
+    #Self ATTN over xtgt words 
+    tmp2 = self.multihead_attn_self(q=tmp_norm, k=tmp_norm, v=tmp_norm, msk=msk_xtgt) #[bs, ls, ed] contains dropout
     #ADD
     tmp = tmp2 + xtgt
 
     #NORM
-    tmp1 = self.norm_att_cross1(tmp)
-#    tmp1 = self.norm_att_cross_xsrc(tmp)
+    tmp_norm = self.norm_att_cross1(tmp)
     #Cross ATTN over xsrc words : q are xtgt words, k, v are xsrc words
-    tmp2 = self.multihead_attn_cross1(q=tmp1, k=z_xsrc, v=z_xsrc, msk=msk_xsrc) #[bs, ls, ed] contains dropout
-#    tmp2 = self.multihead_attn_cross_xsrc(q=tmp1, k=z_xsrc, v=z_xsrc, msk=msk_xsrc) #[bs, ls, ed] contains dropout
+    tmp2 = self.multihead_attn_cross1(q=tmp_norm, k=z_xsrc, v=z_xsrc, msk=msk_xsrc) #[bs, ls, ed] contains dropout
     #ADD
     tmp = tmp2 + tmp
 
     #NORM
-    tmp1 = self.norm_att_cross2(tmp)
-#    tmp1 = self.norm_att_cross_src(tmp)
+    tmp_norm = self.norm_att_cross2(tmp)
     #Cross ATTN over src words : q are xtgt words, k, v are src words
-    tmp2 = self.multihead_attn_cross2(q=tmp1, k=z_src, v=z_src, msk=msk_src) #[bs, ls, ed] contains dropout
-#    tmp2 = self.multihead_attn_cross_src(q=tmp1, k=z_src, v=z_src, msk=msk_src) #[bs, ls, ed] contains dropout
+    tmp2 = self.multihead_attn_cross2(q=tmp_norm, k=z_src, v=z_src, msk=msk_src) #[bs, ls, ed] contains dropout
     #ADD
     tmp = tmp2 + tmp
 
     #NORM
-    tmp1 = self.norm_ff(tmp)
+    tmp_norm = self.norm_ff(tmp)
     #FF
-    tmp2 = self.feedforward(tmp1) #[bs, ls, ed] contains dropout
+    tmp2 = self.feedforward(tmp_norm) #[bs, ls, ed] contains dropout
     #ADD
     z = tmp2 + tmp
     return z
@@ -163,46 +158,38 @@ class Decoder_scc(torch.nn.Module):
     self.multihead_attn_self = MultiHead_Attn(n_heads, emb_dim, qk_dim, v_dim, dropout)
     self.multihead_attn_cross1 = MultiHead_Attn(n_heads, emb_dim, qk_dim, v_dim, dropout)
     self.multihead_attn_cross2 = MultiHead_Attn(n_heads, emb_dim, qk_dim, v_dim, dropout)
-#    self.multihead_attn_cross_xtgt = MultiHead_Attn(n_heads, emb_dim, qk_dim, v_dim, dropout)
-#    self.multihead_attn_cross_src = MultiHead_Attn(n_heads, emb_dim, qk_dim, v_dim, dropout)
     self.feedforward = FeedForward(emb_dim, ff_dim, dropout)
     self.norm_att_self = torch.nn.LayerNorm(emb_dim, eps=1e-6) 
     self.norm_att_cross1 = torch.nn.LayerNorm(emb_dim, eps=1e-6) 
     self.norm_att_cross2 = torch.nn.LayerNorm(emb_dim, eps=1e-6) 
-#    self.norm_att_cross_xtgt = torch.nn.LayerNorm(emb_dim, eps=1e-6) 
-#    self.norm_att_cross_src = torch.nn.LayerNorm(emb_dim, eps=1e-6) 
     self.norm_ff = torch.nn.LayerNorm(emb_dim, eps=1e-6) 
 
   def forward(self, z_src, z_xtgt, tgt, msk_src, msk_xtgt, msk_tgt):
     #NORM
-    tmp1 = self.norm_att_self(tgt)
+    tmp_norm = self.norm_att_self(tgt)
     #Self ATTN over tgt (previous) words : q, k, v are tgt words
-    tmp2 = self.multihead_attn_self(q=tmp1, k=tmp1, v=tmp1, msk=msk_tgt) #[bs, lt, ed] contains dropout
+    tmp2 = self.multihead_attn_self(q=tmp_norm, k=tmp_norm, v=tmp_norm, msk=msk_tgt) #[bs, lt, ed] contains dropout
     #ADD
     tmp = tmp2 + tgt 
 
     #NORM
-    tmp1 = self.norm_att_cross1(tmp)
-#    tmp1 = self.norm_att_cross_xtgt(tmp)
+    tmp_norm = self.norm_att_cross1(tmp)
     #Cross ATTN over xtgt words : q are tgt words, k, v are xtgt words
-    tmp2 = self.multihead_attn_cross1(q=tmp1, k=z_xtgt, v=z_xtgt, msk=msk_xtgt) #[bs, lt, ed] contains dropout
-#    tmp2 = self.multihead_attn_cross_xtgt(q=tmp1, k=z_xtgt, v=z_xtgt, msk=msk_xtgt) #[bs, lt, ed] contains dropout
+    tmp2 = self.multihead_attn_cross1(q=tmp_norm, k=z_xtgt, v=z_xtgt, msk=msk_xtgt) #[bs, lt, ed] contains dropout
     #ADD
     tmp = tmp2 + tmp
 
     #NORM
-    tmp1 = self.norm_att_cross2(tmp)
-#    tmp1 = self.norm_att_cross_src(tmp)
+    tmp_norm = self.norm_att_cross2(tmp)
     #Cross ATTN over src words : q are tgt words, k, v are src words
-    tmp2 = self.multihead_attn_cross2(q=tmp1, k=z_src, v=z_src, msk=msk_src) #[bs, lt, ed] contains dropout
-#    tmp2 = self.multihead_attn_cross_src(q=tmp1, k=z_src, v=z_src, msk=msk_src) #[bs, lt, ed] contains dropout
+    tmp2 = self.multihead_attn_cross2(q=tmp_norm, k=z_src, v=z_src, msk=msk_src) #[bs, lt, ed] contains dropout
     #ADD
     tmp = tmp2 + tmp
 
     #NORM
-    tmp1 = self.norm_ff(tmp)
+    tmp_norm = self.norm_ff(tmp)
     #FF
-    tmp2 = self.feedforward(tmp1) #[bs, lt, ed] contains dropout
+    tmp2 = self.feedforward(tmp_norm) #[bs, lt, ed] contains dropout
     #ADD
     z = tmp2 + tmp
     return z

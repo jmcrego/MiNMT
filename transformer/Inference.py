@@ -48,9 +48,11 @@ class Inference():
       self.model.eval()
       for pos, batch_idxs in testset:
 
-        batch_src = batch_idxs[0]
-        src, self.msk_src = prepare_source(batch_src, self.src_voc.idx_pad, self.device) #src is [bs, ls] msk_src is [bs,1,ls]
+        src, self.msk_src = prepare_source(batch_idxs[0], self.src_voc.idx_pad, self.device) #src is [bs, ls] msk_src is [bs,1,ls]
 
+        ##############
+        ### ENCODE ###
+        ##############
         if self.model_type == 'scc':
           xsrc, msk_xsrc = prepare_source(batch_idxs[1], self.src_voc.idx_pad, self.device) #xsrc is [bs, lxs] msk_xsrc is [bs,1,lxs]
           xtgt, self.msk_xtgt = prepare_source(batch_idxs[2], self.tgt_voc.idx_pad, self.device) #xtgt is [bs, lxt] msk_xtgt is [bs,1,lxt]
@@ -63,13 +65,13 @@ class Inference():
         else:
           self.batch_pre = None
 
-        ### decode step-by-step
+        ### decode (step-by-step) ###
         finals = self.traverse_beam()
         ### eoutput
         for b in range(len(finals)):
           for n, (hyp, logp) in enumerate(sorted(finals[b].items(), key=lambda kv: kv[1], reverse=True)):
             hyp = list(map(int,hyp.split(' ')))
-            out, hyp = self.format_hyp(pos[b],n,logp,hyp,batch_src[b])
+            out, hyp = self.format_hyp(pos[b],n,logp,hyp,batch_idxs[0][b])
             dhyps[pos[b]-1] = hyp
             fh.write(out + '\n')
             fh.flush()
@@ -86,7 +88,7 @@ class Inference():
     finals = [defaultdict() for i in range(bs)] #list with hyps reaching <eos> and overall score
     hyps = torch.ones([bs,1], dtype=int).to(self.device) * self.tgt_voc.idx_bos #[bs,lt=1]
     logP = torch.zeros([bs,1], dtype=torch.float32).to(self.device)     #[bs,lt=1]
-    lp = self.batch_pre.shape[1] if self.batch_pre is not None else 0 #max length of prefixes
+    lp = self.batch_pre.shape[1] if self.prefix else 0 #max length of prefixes
 
     while True:
       #hyps is [I,lt] ; K is 1*K OR bs*K ; lt is the hyp length [1, 2, ..., max_size)
@@ -113,7 +115,7 @@ class Inference():
       if lt == self.max_size - 1: #last extension (force <eos> to appear in all hypotheses)
         logP = self.force_eos(logP) #[bs,1*Vt,lt] OR [bs,K*Vt,lt]
 
-      elif self.batch_pre is not None and lt < lp: #force decoding using prefix
+      elif self.prefix and lt < lp: #force decoding using prefix
         logP = self.force_prefix(hyps, logP, self.batch_pre[:,lt]) #[bs,1*Vt,lt] OR [bs,K*Vt,lt]
 
       hyps, logP = self.Kbest(hyps, logP) #both are [bs*K,lt]
