@@ -110,7 +110,7 @@ class Encoder_Decoder(torch.nn.Module):
     self.generator = Generator(emb_dim, tgt_voc_size)
 
   def type(self):
-    return 'std'
+    return 's_sc'
 
   def forward(self, src, tgt, msk_src, msk_tgt):
     #src is [bs,ls]
@@ -141,18 +141,6 @@ class Encoder_Decoder(torch.nn.Module):
     y = self.generator(z_tgt) #[bs, lt, Vt]
     y = torch.nn.functional.log_softmax(y, dim=-1) 
     return y ### returns log_probs (for inference)
-
-##############################################################################################################
-### Embedding ################################################################################################
-##############################################################################################################
-class Embedding(torch.nn.Module):
-  def __init__(self, vocab_size, emb_dim, idx_pad):
-    super(Embedding, self).__init__()
-    self.emb = torch.nn.Embedding(vocab_size, emb_dim, padding_idx=idx_pad)
-    self.sqrt_emb_dim = math.sqrt(emb_dim)
-
-  def forward(self, x):
-    return self.emb(x) * self.sqrt_emb_dim
 
 ##############################################################################################################
 ### PositionalEncoding #######################################################################################
@@ -190,20 +178,6 @@ class Stacked_Encoder(torch.nn.Module):
     return self.norm(src)
 
 ##############################################################################################################
-### Stacked_Decoder ##########################################################################################
-##############################################################################################################
-class Stacked_Decoder(torch.nn.Module):
-  def __init__(self, n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout):
-    super(Stacked_Decoder, self).__init__()
-    self.decoderlayers = torch.nn.ModuleList([Decoder(ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout) for _ in range(n_layers)])
-    self.norm = torch.nn.LayerNorm(emb_dim, eps=1e-6) 
-
-  def forward(self, z_src, tgt, msk_src, msk_tgt):
-    for i,decoderlayer in enumerate(self.decoderlayers):
-      tgt = decoderlayer(z_src, tgt, msk_src, msk_tgt)
-    return self.norm(tgt)
-
-##############################################################################################################
 ### Encoder ##################################################################################################
 ##############################################################################################################
 class Encoder(torch.nn.Module):
@@ -229,6 +203,20 @@ class Encoder(torch.nn.Module):
     #ADD
     z = tmp2 + tmp
     return z
+
+##############################################################################################################
+### Stacked_Decoder ##########################################################################################
+##############################################################################################################
+class Stacked_Decoder(torch.nn.Module):
+  def __init__(self, n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout):
+    super(Stacked_Decoder, self).__init__()
+    self.decoderlayers = torch.nn.ModuleList([Decoder(ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout) for _ in range(n_layers)])
+    self.norm = torch.nn.LayerNorm(emb_dim, eps=1e-6) 
+
+  def forward(self, z_src, tgt, msk_src, msk_tgt):
+    for i,decoderlayer in enumerate(self.decoderlayers):
+      tgt = decoderlayer(z_src, tgt, msk_src, msk_tgt)
+    return self.norm(tgt)
 
 ##############################################################################################################
 ### Decoder ##################################################################################################
@@ -262,6 +250,124 @@ class Decoder(torch.nn.Module):
     tmp1 = self.norm_ff(tmp)
     #FF
     tmp2 = self.feedforward(tmp1) #[bs, lt, ed] contains dropout
+    #ADD
+    z = tmp2 + tmp
+    return z
+
+##############################################################################################################
+### Stacked_Encoder_scc ######################################################################################
+##############################################################################################################
+class Stacked_Encoder_scc(torch.nn.Module):
+  def __init__(self, n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout): 
+    super(Stacked_Encoder_scc, self).__init__()
+    self.encoderlayers = torch.nn.ModuleList([Encoder_scc(ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout) for _ in range(n_layers)])
+    self.norm = torch.nn.LayerNorm(emb_dim, eps=1e-6) 
+
+  def forward(self, z_src, z_xsrc, xtgt, msk_src, msk_xsrc, msk_xtgt):
+    for i,encoderlayer in enumerate(self.encoderlayers):
+      xtgt = encoderlayer(z_src, z_xsrc, xtgt, msk_src, msk_xsrc, msk_xtgt) #[bs, ls, ed]
+    return self.norm(xtgt)
+
+##############################################################################################################
+### Encoder_scc ##############################################################################################
+##############################################################################################################
+class Encoder_scc(torch.nn.Module):
+  def __init__(self, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout):
+    super(Encoder_scc, self).__init__()
+    self.multihead_attn_self = MultiHead_Attn(n_heads, emb_dim, qk_dim, v_dim, dropout)
+    self.multihead_attn_cross1 = MultiHead_Attn(n_heads, emb_dim, qk_dim, v_dim, dropout)
+    self.multihead_attn_cross2 = MultiHead_Attn(n_heads, emb_dim, qk_dim, v_dim, dropout)
+    self.feedforward = FeedForward(emb_dim, ff_dim, dropout)
+    self.norm_att_self = torch.nn.LayerNorm(emb_dim, eps=1e-6) 
+    self.norm_att_cross1 = torch.nn.LayerNorm(emb_dim, eps=1e-6) 
+    self.norm_att_cross2 = torch.nn.LayerNorm(emb_dim, eps=1e-6) 
+    self.norm_ff = torch.nn.LayerNorm(emb_dim, eps=1e-6) 
+
+  def forward(self, z_src, z_xsrc, xtgt, msk_src, msk_xsrc, msk_xtgt):
+    #NORM
+    tmp_norm = self.norm_att_self(xtgt)
+    #Self ATTN over xtgt words 
+    tmp2 = self.multihead_attn_self(q=tmp_norm, k=tmp_norm, v=tmp_norm, msk=msk_xtgt) #[bs, ls, ed] contains dropout
+    #ADD
+    tmp = tmp2 + xtgt
+
+    #NORM
+    tmp_norm = self.norm_att_cross1(tmp)
+    #Cross ATTN over xsrc words : q are xtgt words, k, v are xsrc words
+    tmp2 = self.multihead_attn_cross1(q=tmp_norm, k=z_xsrc, v=z_xsrc, msk=msk_xsrc) #[bs, ls, ed] contains dropout
+    #ADD
+    tmp = tmp2 + tmp
+
+    #NORM
+    tmp_norm = self.norm_att_cross2(tmp)
+    #Cross ATTN over src words : q are xtgt words, k, v are src words
+    tmp2 = self.multihead_attn_cross2(q=tmp_norm, k=z_src, v=z_src, msk=msk_src) #[bs, ls, ed] contains dropout
+    #ADD
+    tmp = tmp2 + tmp
+
+    #NORM
+    tmp_norm = self.norm_ff(tmp)
+    #FF
+    tmp2 = self.feedforward(tmp_norm) #[bs, ls, ed] contains dropout
+    #ADD
+    z = tmp2 + tmp
+    return z
+
+##############################################################################################################
+### Stacked_Decoder_scc ######################################################################################
+##############################################################################################################
+class Stacked_Decoder_scc(torch.nn.Module):
+  def __init__(self, n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout):
+    super(Stacked_Decoder_scc, self).__init__()
+    self.decoderlayers = torch.nn.ModuleList([Decoder_scc(ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout) for _ in range(n_layers)])
+    self.norm = torch.nn.LayerNorm(emb_dim, eps=1e-6) 
+
+  def forward(self, z_src, z_xtgt, tgt, msk_src, msk_xtgt, msk_tgt):
+    for i,decoderlayer in enumerate(self.decoderlayers):
+      tgt = decoderlayer(z_src, z_xtgt, tgt, msk_src, msk_xtgt, msk_tgt)
+    return self.norm(tgt)
+
+##############################################################################################################
+### Decoder_scc ##############################################################################################
+##############################################################################################################
+class Decoder_scc(torch.nn.Module):
+  def __init__(self, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout):
+    super(Decoder_scc, self).__init__()
+    self.multihead_attn_self = MultiHead_Attn(n_heads, emb_dim, qk_dim, v_dim, dropout)
+    self.multihead_attn_cross1 = MultiHead_Attn(n_heads, emb_dim, qk_dim, v_dim, dropout)
+    self.multihead_attn_cross2 = MultiHead_Attn(n_heads, emb_dim, qk_dim, v_dim, dropout)
+    self.feedforward = FeedForward(emb_dim, ff_dim, dropout)
+    self.norm_att_self = torch.nn.LayerNorm(emb_dim, eps=1e-6) 
+    self.norm_att_cross1 = torch.nn.LayerNorm(emb_dim, eps=1e-6) 
+    self.norm_att_cross2 = torch.nn.LayerNorm(emb_dim, eps=1e-6) 
+    self.norm_ff = torch.nn.LayerNorm(emb_dim, eps=1e-6) 
+
+  def forward(self, z_src, z_xtgt, tgt, msk_src, msk_xtgt, msk_tgt):
+    #NORM
+    tmp_norm = self.norm_att_self(tgt)
+    #Self ATTN over tgt (previous) words : q, k, v are tgt words
+    tmp2 = self.multihead_attn_self(q=tmp_norm, k=tmp_norm, v=tmp_norm, msk=msk_tgt) #[bs, lt, ed] contains dropout
+    #ADD
+    tmp = tmp2 + tgt 
+
+    #NORM
+    tmp_norm = self.norm_att_cross1(tmp)
+    #Cross ATTN over xtgt words : q are tgt words, k, v are xtgt words
+    tmp2 = self.multihead_attn_cross1(q=tmp_norm, k=z_xtgt, v=z_xtgt, msk=msk_xtgt) #[bs, lt, ed] contains dropout
+    #ADD
+    tmp = tmp2 + tmp
+
+    #NORM
+    tmp_norm = self.norm_att_cross2(tmp)
+    #Cross ATTN over src words : q are tgt words, k, v are src words
+    tmp2 = self.multihead_attn_cross2(q=tmp_norm, k=z_src, v=z_src, msk=msk_src) #[bs, lt, ed] contains dropout
+    #ADD
+    tmp = tmp2 + tmp
+
+    #NORM
+    tmp_norm = self.norm_ff(tmp)
+    #FF
+    tmp2 = self.feedforward(tmp_norm) #[bs, lt, ed] contains dropout
     #ADD
     z = tmp2 + tmp
     return z
@@ -312,6 +418,18 @@ class MultiHead_Attn(torch.nn.Module):
     z = z.transpose(1,2).contiguous().view([bs,lq,self.nh*self.vd]) #=> [bs,lq,nh,vd] => [bs,lq,nh*vd]
     z = self.WO(z) #[bs,lq,ed]
     return self.dropout(z)
+
+##############################################################################################################
+### Embedding ################################################################################################
+##############################################################################################################
+class Embedding(torch.nn.Module):
+  def __init__(self, vocab_size, emb_dim, idx_pad):
+    super(Embedding, self).__init__()
+    self.emb = torch.nn.Embedding(vocab_size, emb_dim, padding_idx=idx_pad)
+    self.sqrt_emb_dim = math.sqrt(emb_dim)
+
+  def forward(self, x):
+    return self.emb(x) * self.sqrt_emb_dim
 
 ##############################################################################################################
 ### FeedForward ##############################################################################################
