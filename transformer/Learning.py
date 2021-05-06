@@ -177,14 +177,14 @@ class Learning():
       for batch_pos, batch_idxs in validset:
         batch_src = batch_idxs[0]
         batch_tgt = batch_idxs[1]
-        if len(batch_idxs) == 4:
+        batch_xsrc = None
+        batch_xtgt = None
+        if self.model.type() == 'scc':
           batch_xsrc = batch_idxs[2]
           batch_xtgt = batch_idxs[3]
-        else:
-          batch_xsrc = None
-          batch_xtgt = None
+        elif self.model.type() == 'sxs_sc':
+          batch_xtgt = batch_idxs[2]
         n_batch += 1
-
         src, msk_src = prepare_source(batch_src, self.idx_pad, device)
         tgt, ref, msk_tgt = prepare_target(batch_tgt, self.idx_pad, device)
         if batch_xsrc is not None and batch_xtgt is not None:

@@ -51,7 +51,6 @@ class Encoder_Decoder_sxs_sc(torch.nn.Module):
     z_tgt = self.stacked_decoder(z_srcxtgt, tgt, msk_srcxtgt, msk_tgt) #[bs,lt,ed]
     ### generator ###
     y = self.generator(z_tgt) #[bs, lt, Vt]
-
     return y ### returns logits (for learning)
 
   def encode(self, src, xtgt, msk_src, msk_xtgt):
