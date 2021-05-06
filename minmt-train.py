@@ -234,7 +234,7 @@ if __name__ == '__main__':
     model = Encoder_Decoder_sxs_sc(n['n_layers'], n['ff_dim'], n['n_heads'], n['emb_dim'], n['qk_dim'], n['v_dim'], n['dropout'], n['share_embeddings'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
   elif n['model_type'] == 's_s_scc':
     model = Encoder_Decoder_s_s_scc(n['n_layers'], n['ff_dim'], n['n_heads'], n['emb_dim'], n['qk_dim'], n['v_dim'], n['dropout'], n['share_embeddings'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
-  else:
+  elif n['model_type'] == 's_sc':
     model = Encoder_Decoder(n['n_layers'], n['ff_dim'], n['n_heads'], n['emb_dim'], n['qk_dim'], n['v_dim'], n['dropout'], n['share_embeddings'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
   logging.info('Built model (#params, size) = ({}) in device {}'.format(', '.join([str(f) for f in numparameters(model)]), next(model.parameters()).device ))
   optim = torch.optim.Adam(model.parameters(), weight_decay=n['weight_decay'], betas=(n['beta1'], n['beta2']), eps=n['eps']) 
@@ -263,7 +263,7 @@ if __name__ == '__main__':
       valid = Dataset([src_voc, tgt_voc, tgt_voc], [o.src_valid, o.tgt_valid, o.xtgt_valid], o.shard_size, o.batch_size, o.batch_type, 0) #o.max_length)
     if n['model_type'] == 's_s_scc':
       valid = Dataset([src_voc, tgt_voc, tgt_voc], [o.src_valid, o.tgt_valid, o.xtgt_valid], o.shard_size, o.batch_size, o.batch_type, 0) #o.max_length)
-    else: # 'std'
+    elif n['model_type'] == 's_sc':
       valid = Dataset([src_voc, tgt_voc], [o.src_valid, o.tgt_valid], o.shard_size, o.batch_size, o.batch_type, 0) #o.max_length)
 
   if n['model_type'] == 's_s_scc_scc':
@@ -272,7 +272,7 @@ if __name__ == '__main__':
     train = Dataset([src_voc, tgt_voc, tgt_voc], [o.src_train, o.tgt_train, o.xtgt_train], o.shard_size, o.batch_size, o.batch_type, o.max_length)
   elif n['model_type'] == 's_s_scc':
     train = Dataset([src_voc, tgt_voc, tgt_voc], [o.src_train, o.tgt_train, o.xtgt_train], o.shard_size, o.batch_size, o.batch_type, o.max_length)
-  else: # 'std'
+  elif n['model_type'] == 's_sc':
     train = Dataset([src_voc, tgt_voc], [o.src_train, o.tgt_train], o.shard_size, o.batch_size, o.batch_type, o.max_length)
 
   #############

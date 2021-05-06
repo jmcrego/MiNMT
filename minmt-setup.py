@@ -36,7 +36,7 @@ class Options():
     self.net['beta1'] = 0.9
     self.net['beta2'] = 0.998
     self.net['eps'] = 1e-9
-    self.net['model_type'] = 'std'
+    self.net['model_type'] = 's_sc'
     log_file = 'stderr'
     log_level = 'info'
 
@@ -145,8 +145,11 @@ if __name__ == '__main__':
     model = Encoder_Decoder_sxs_sc(o.net['n_layers'], o.net['ff_dim'], o.net['n_heads'], o.net['emb_dim'], o.net['qk_dim'], o.net['v_dim'], o.net['dropout'], o.net['share_embeddings'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
   elif o.net['model_type'] == 's_s_scc':
     model = Encoder_Decoder_s_s_scc(o.net['n_layers'], o.net['ff_dim'], o.net['n_heads'], o.net['emb_dim'], o.net['qk_dim'], o.net['v_dim'], o.net['dropout'], o.net['share_embeddings'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
-  else:
+  elif o.net['model_type'] == 's_sc':
     model = Encoder_Decoder(o.net['n_layers'], o.net['ff_dim'], o.net['n_heads'], o.net['emb_dim'], o.net['qk_dim'], o.net['v_dim'], o.net['dropout'], o.net['share_embeddings'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
+  else:
+    logging.error('bad model_type: {}'.format(o.net['model_type']))
+    sys.exit()
 
   logging.info('Built model (#params, size) = ({}) in device {}'.format(', '.join([str(f) for f in numparameters(model)]), next(model.parameters()).device ))
   for p in model.parameters():

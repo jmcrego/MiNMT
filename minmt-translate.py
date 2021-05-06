@@ -161,8 +161,9 @@ if __name__ == '__main__':
     model = Encoder_Decoder_sxs_scc(n['n_layers'], n['ff_dim'], n['n_heads'], n['emb_dim'], n['qk_dim'], n['v_dim'], n['dropout'], n['share_embeddings'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
   elif n['model_type'] == 's_s_scc':
     model = Encoder_Decoder_sxs_scc(n['n_layers'], n['ff_dim'], n['n_heads'], n['emb_dim'], n['qk_dim'], n['v_dim'], n['dropout'], n['share_embeddings'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
-  else:
+  elif n['model_type'] == 's_sc':
     model = Encoder_Decoder(n['n_layers'], n['ff_dim'], n['n_heads'], n['emb_dim'], n['qk_dim'], n['v_dim'], n['dropout'], n['share_embeddings'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
+
   logging.info('Built model (#params, size) = ({}) in device {}'.format(', '.join([str(f) for f in numparameters(model)]), next(model.parameters()).device))
   step, model = load_model(o.dnet + '/network', model, device, o.model)
 
@@ -176,7 +177,7 @@ if __name__ == '__main__':
       test = Dataset([src_voc, tgt_voc, tgt_voc], [o.input, o.xtgt, o.prefix], o.shard_size, o.batch_size, o.batch_type, o.max_length)
     elif n['model_type'] == 's_s_scc':
       test = Dataset([src_voc, tgt_voc, tgt_voc], [o.input, o.xtgt, o.prefix], o.shard_size, o.batch_size, o.batch_type, o.max_length)
-    else:
+    elif n['model_type'] == 's_sc':
       test = Dataset([src_voc,tgt_voc], [o.input,o.prefix], o.shard_size, o.batch_size, o.batch_type, o.max_length)
 
   else: ### without prefix
@@ -186,7 +187,7 @@ if __name__ == '__main__':
       test = Dataset([src_voc, tgt_voc], [o.input, o.xtgt], o.shard_size, o.batch_size, o.batch_type, o.max_length)
     elif n['model_type'] == 's_s_scc':
       test = Dataset([src_voc, tgt_voc], [o.input, o.xtgt], o.shard_size, o.batch_size, o.batch_type, o.max_length)
-    else:
+    elif n['model_type'] == 's_sc':
       test = Dataset([src_voc], [o.input], o.shard_size, o.batch_size, o.batch_type, o.max_length)
 
   ##################
