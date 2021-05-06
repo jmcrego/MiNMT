@@ -80,7 +80,6 @@ class Learning():
       for batch_pos, batch_idxs in trainset:
 
         n_batch += 1
-        logging.info('n_batch={}'.format(n_batch))
         self.model.train()
         ###
         ### forward
@@ -112,7 +111,6 @@ class Learning():
           tgt, ref, msk_tgt = prepare_target(batch_tgt, self.idx_pad, device)
           xtgt, msk_xtgt = prepare_source(batch_xtgt, self.idx_pad, device)
           pred = self.model.forward(src, xtgt, tgt, msk_src, msk_xtgt, msk_tgt) #no log_softmax is applied
-          logging.info('forward s_s_scc')
 
         ###
         ### compute loss
