@@ -220,7 +220,7 @@ class Learning():
 
     loss = 1.0*valid_loss/n_batch if n_batch else 0.0
     fref = validset.files[1]
-    bleu = self.translate_valid(validset, fref)
+    bleu = 0.0 #self.translate_valid(validset, fref)
     toc = time.time()
     logging.info('Validation step: {} #batchs: {} sec: {:.2f} bleu: {:.2f} loss: {:.3f}'.format(self.optScheduler._step, n_batch, toc-tic, bleu, loss))
     if tensorboard:
