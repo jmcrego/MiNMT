@@ -219,7 +219,7 @@ class Learning():
           print_pos_src_tgt_hyp_ref(pred[0], batch_pos[0], src[0], tgt[0], ref[0])
 
     loss = 1.0*valid_loss/n_batch if n_batch else 0.0
-    bleu = self.translate_valid(validset, validset.files[-1])
+    bleu = self.translate_valid(validset, validset.files[1])
     toc = time.time()
     logging.info('Validation step: {} #batchs: {} sec: {:.2f} bleu: {:.2f} loss: {:.3f}'.format(self.optScheduler._step, n_batch, toc-tic, bleu, loss))
     if tensorboard:
