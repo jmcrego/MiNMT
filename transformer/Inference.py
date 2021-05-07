@@ -67,7 +67,7 @@ class Inference():
           xtgt, self.msk_xtgt = prepare_source(batch_idxs[1], self.tgt_voc.idx_pad, self.device) #xtgt is [bs, lxt] msk_xtgt is [bs,1,lxt]
           self.z_src, self.z_xtgt = self.model.encode(src, xtgt, self.msk_src, self.msk_xtgt) #[bs,ls,ed] [bs,lxt,ed]
 
-        elif n['model_type'] == 's_sc':
+        elif self.model_type == 's_sc':
           src, self.msk_src = prepare_source(batch_idxs[0], self.src_voc.idx_pad, self.device) #src is [bs, ls] msk_src is [bs,1,ls]
           self.z_src = self.model.encode(src, self.msk_src) #[bs,ls,ed]
 
@@ -136,7 +136,7 @@ class Inference():
         y_next = self.model.decode(self.z_src, self.z_xtgt, hyps, self.msk_src, self.msk_xtgt, msk_tgt=msk_tgt)[:,-1,:] #[I,lt,Vt] => [I,Vt]
       elif self.model_type == 's_s_scc':
         y_next = self.model.decode(self.z_src, self.z_xtgt, hyps, self.msk_src, self.msk_xtgt, msk_tgt=msk_tgt)[:,-1,:] #[I,lt,Vt] => [I,Vt]
-      elif n['model_type'] == 's_sc':
+      elif self.model_type == 's_sc':
         y_next = self.model.decode(self.z_src, hyps, self.msk_src, msk_tgt=msk_tgt)[:,-1,:] #[I,lt,Vt] => [I,Vt]
 
       hyps, logP = self.expand(y_next, hyps, logP, bs) #both are [bs,1*Vt,lt] OR [bs,K*Vt,lt]
