@@ -107,17 +107,24 @@ class Inference():
       I, lt = hyps.shape 
 
       if lt == 2:
-        self.z_src = self.z_src.repeat_interleave(repeats=self.K, dim=0) #[bs,ls,ed] => [bs*K,ls,ed]
-        self.msk_src = self.msk_src.repeat_interleave(repeats=self.K, dim=0) #[bs,1,ls] => [bs*K,1,ls]
         if self.model_type == 's_s_scc_scc':
+          self.z_src = self.z_src.repeat_interleave(repeats=self.K, dim=0) #[bs,ls,ed] => [bs*K,ls,ed]
+          self.msk_src = self.msk_src.repeat_interleave(repeats=self.K, dim=0) #[bs,1,ls] => [bs*K,1,ls]
           self.z_xtgt = self.z_xtgt.repeat_interleave(repeats=self.K, dim=0) #[bs,lxt,ed] => [bs*K,lxt,ed]
           self.msk_xtgt = self.msk_xtgt.repeat_interleave(repeats=self.K, dim=0) #[bs,1,lxt] => [bs*K,1,lxt]
-        if self.model_type == 'sxs_sc':
+        elif self.model_type == 'sxs_sc':
+          self.z_src = self.z_src.repeat_interleave(repeats=self.K, dim=0) #[bs,ls,ed] => [bs*K,ls,ed]
+          self.msk_src = self.msk_src.repeat_interleave(repeats=self.K, dim=0) #[bs,1,ls] => [bs*K,1,ls]
           self.z_xtgt = self.z_xtgt.repeat_interleave(repeats=self.K, dim=0) #[bs,lxt,ed] => [bs*K,lxt,ed]
           self.msk_xtgt = self.msk_xtgt.repeat_interleave(repeats=self.K, dim=0) #[bs,1,lxt] => [bs*K,1,lxt]
-        if self.model_type == 's_s_scc':
+        elif self.model_type == 's_s_scc':
+          self.z_src = self.z_src.repeat_interleave(repeats=self.K, dim=0) #[bs,ls,ed] => [bs*K,ls,ed]
+          self.msk_src = self.msk_src.repeat_interleave(repeats=self.K, dim=0) #[bs,1,ls] => [bs*K,1,ls]
           self.z_xtgt = self.z_xtgt.repeat_interleave(repeats=self.K, dim=0) #[bs,lxt,ed] => [bs*K,lxt,ed]
           self.msk_xtgt = self.msk_xtgt.repeat_interleave(repeats=self.K, dim=0) #[bs,1,lxt] => [bs*K,1,lxt]
+        elif self.model_type == 's_sc':
+          self.z_src = self.z_src.repeat_interleave(repeats=self.K, dim=0) #[bs,ls,ed] => [bs*K,ls,ed]
+          self.msk_src = self.msk_src.repeat_interleave(repeats=self.K, dim=0) #[bs,1,ls] => [bs*K,1,ls]
 
       ##############
       ### DECODE ###
