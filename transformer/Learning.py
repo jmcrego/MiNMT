@@ -190,7 +190,7 @@ class Learning():
           tgt, ref, msk_tgt = prepare_target(batch_tgt, self.idx_pad, device)
           pred = self.model.forward(src, tgt, msk_src, msk_tgt) #no log_softmax is applied
 
-        elif self.model.type() == 'scc':
+        elif self.model.type() == 's_s_scc_scc':
           batch_src, batch_tgt, batch_xsrc, batch_xtgt = batch_idxs[0], batch_idxs[1], batch_idxs[2], batch_idxs[3]
           src, msk_src = prepare_source(batch_src, self.idx_pad, device)
           tgt, ref, msk_tgt = prepare_target(batch_tgt, self.idx_pad, device)
