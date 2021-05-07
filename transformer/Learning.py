@@ -232,7 +232,7 @@ class Learning():
     with codecs.open(fref, 'r', 'utf-8') as fd:
       refs = [l for l in fd.read().splitlines()]
     assert len(refs) == len(hyps)
-    return sacrebleu.raw_corpus_bleu(hyps, [refs]).score
+    return sacrebleu.corpus_bleu(hyps, [refs]).score
 
 def print_pos_src_tgt_hyp_ref(pred, pos, src, tgt, ref):
   hyp = torch.nn.functional.log_softmax(pred, dim=-1) #[lt,Vt]
