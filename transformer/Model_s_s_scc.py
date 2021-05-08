@@ -65,7 +65,7 @@ class Encoder_Decoder_s_s_scc(torch.nn.Module):
     tgt = self.add_pos_enc(self.tgt_emb(tgt)) #[bs,lt,ed]
     z_tgt = self.stacked_decoder(z_src, z_xtgt, tgt, msk_src, msk_xtgt, msk_tgt) #[bs,lt,ed]
     ### generator ###
-    y = self.generator_trn(z_tgt) #[bs, lt, Vt]
+    y = self.generator(z_tgt) #[bs, lt, Vt]
     y = torch.nn.functional.log_softmax(y, dim=-1) 
     return y ### returns log_probs (for inference)
 
