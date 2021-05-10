@@ -14,17 +14,20 @@ from transformer.Model import Embedding, AddPositionalEncoding, Stacked_Encoder,
 ##############################################################################################################
 class Encoder_Decoder_s_s_scc(torch.nn.Module):
   #https://www.linzehui.me/images/16005200579239.jpg
-  def __init__(self, n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout, share_embeddings, src_voc_size, tgt_voc_size, idx_pad):
+  def __init__(self, n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout, share_embeddings, share_encoders, src_voc_size, tgt_voc_size, idx_pad):
     super(Encoder_Decoder_s_s_scc, self).__init__()
     self.idx_pad = idx_pad
     self.src_emb = Embedding(src_voc_size, emb_dim, idx_pad) 
     self.tgt_emb = Embedding(tgt_voc_size, emb_dim, idx_pad) 
     if share_embeddings:
-      self.tgt_emb.emb.weight = self.src_emb.emb.weight
+        self.tgt_emb.emb.weight = self.src_emb.emb.weight
 
     self.add_pos_enc = AddPositionalEncoding(emb_dim, dropout, max_len=5000) 
     self.stacked_encoder_s = Stacked_Encoder(n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout) ### encoder for src
-    self.stacked_encoder_t = Stacked_Encoder(n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout) ### encoder for xtgt
+    if share_encoders:
+        self.stacked_encoder_t = self.stacked_encoder_s
+    else:
+        self.stacked_encoder_t = Stacked_Encoder(n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout) ### encoder for xtgt
     self.stacked_decoder = Stacked_Decoder_scc(n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout) ### decoder for tgt
     self.generator = Generator(emb_dim, tgt_voc_size)
 

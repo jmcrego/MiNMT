@@ -64,7 +64,7 @@ class Batch():
     self.batch_size = batch_size
     self.batch_type = batch_type
     self.n_files = n_files
-    self.idxs_pos = []
+    self.idxs_pos = [] ### list of pos (referred to positions of the original dataset) contained in this batch
     self.max_lens = [0] * n_files
 
   def fits(self, lens):
@@ -135,7 +135,7 @@ class Dataset():
       if not b.fits(lens): ### cannot add in current batch b
         if len(b):
           batchs.append(b.idxs_pos) ### save batch
-          b = Batch(self.batch_size, self.batch_type, n_files) #empty batch
+          b = Batch(self.batch_size, self.batch_type, n_files) #new empty batch
 
       if b.fits(lens):
         ### add current example

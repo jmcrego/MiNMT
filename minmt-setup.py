@@ -32,6 +32,7 @@ class Options():
     self.net['n_layers'] = 6
     self.net['dropout'] = 0.1
     self.net['share_embeddings'] = False
+    self.net['share_encoders'] = False
     self.net['weight_decay'] = 0.0
     self.net['beta1'] = 0.9
     self.net['beta2'] = 0.998
@@ -68,6 +69,8 @@ class Options():
         self.net['dropout'] = float(argv.pop(0))
       elif tok=="-share_embeddings":
         self.net['share_embeddings'] = True
+      elif tok=="-share_encoders":
+        self.net['share_encoders'] = True
       elif tok=="-model_type" and len(argv):
         self.net['model_type'] = argv.pop(0)
       elif tok=='-weight_decay' and len(argv):
@@ -115,6 +118,7 @@ class Options():
    -dropout       FLOAT : dropout value ({})
    -model_type   STRING : model type ({})
    -share_embeddings    : share source/target embeddings ({})
+   -share_encoders      : share encoders when multiple ({})
 
    -weight_decay  FLOAT : weight decay for Adam optimizer ({})
    -beta1         FLOAT : beta1 for Adam optimizer ({})
@@ -124,7 +128,7 @@ class Options():
    -log_file       FILE : log file  (stderr)
    -log_level       STR : log level [debug, info, warning, critical, error] (info)
    -h                   : this help
-'''.format(self.prog, self.net['emb_dim'], self.net['qk_dim'], self.net['v_dim'], self.net['ff_dim'], self.net['n_heads'], self.net['n_layers'], self.net['dropout'], self.net['share_embeddings'], self.net['model_type'], self.net['weight_decay'], self.net['beta1'], self.net['beta2'], self.net['eps']))
+'''.format(self.prog, self.net['emb_dim'], self.net['qk_dim'], self.net['v_dim'], self.net['ff_dim'], self.net['n_heads'], self.net['n_layers'], self.net['dropout'], self.net['share_embeddings'], self.net['share_encoders'], self.net['model_type'], self.net['weight_decay'], self.net['beta1'], self.net['beta2'], self.net['eps']))
     sys.exit()
 
 ######################################################################
@@ -142,9 +146,9 @@ if __name__ == '__main__':
   if o.net['model_type'] == 's_s_scc_scc':
     model = Encoder_Decoder_s_s_scc_scc(o.net['n_layers'], o.net['ff_dim'], o.net['n_heads'], o.net['emb_dim'], o.net['qk_dim'], o.net['v_dim'], o.net['dropout'], o.net['share_embeddings'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
   elif o.net['model_type'] == 'sxs_sc':
-    model = Encoder_Decoder_sxs_sc(o.net['n_layers'], o.net['ff_dim'], o.net['n_heads'], o.net['emb_dim'], o.net['qk_dim'], o.net['v_dim'], o.net['dropout'], o.net['share_embeddings'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
+    model = Encoder_Decoder_sxs_sc(o.net['n_layers'], o.net['ff_dim'], o.net['n_heads'], o.net['emb_dim'], o.net['qk_dim'], o.net['v_dim'], o.net['dropout'], o.net['share_embeddings'], o.net['share_encoders'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
   elif o.net['model_type'] == 's_s_scc':
-    model = Encoder_Decoder_s_s_scc(o.net['n_layers'], o.net['ff_dim'], o.net['n_heads'], o.net['emb_dim'], o.net['qk_dim'], o.net['v_dim'], o.net['dropout'], o.net['share_embeddings'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
+    model = Encoder_Decoder_s_s_scc(o.net['n_layers'], o.net['ff_dim'], o.net['n_heads'], o.net['emb_dim'], o.net['qk_dim'], o.net['v_dim'], o.net['dropout'], o.net['share_embeddings'], o.net['share_encoders'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
   elif o.net['model_type'] == 's_sc':
     model = Encoder_Decoder(o.net['n_layers'], o.net['ff_dim'], o.net['n_heads'], o.net['emb_dim'], o.net['qk_dim'], o.net['v_dim'], o.net['dropout'], o.net['share_embeddings'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
   else:
