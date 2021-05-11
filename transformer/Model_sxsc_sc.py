@@ -41,7 +41,7 @@ class Encoder_Decoder_sxsc_sc(torch.nn.Module):
     src = self.add_pos_enc(self.src_emb(src)) #[bs,ls,ed]
     z_src = self.stacked_encoder_s(src, msk_src) #[bs,ls,ed]
     xtgt = self.add_pos_enc(self.tgt_emb(xtgt)) #[bs,ls,ed]
-    z_xtgt = self.stacked_encoder_sc(xtgt, msk_xtgt) #[bs,ls,ed]
+    z_xtgt = self.stacked_encoder_sc(z_src, xtgt, msk_src, msk_xtgt) #[bs,ls,ed]
 
     z_srcxtgt = torch.cat((z_src, z_xtgt), dim=1) #[bs, ls+lxt, ed]
     msk_srcxtgt = torch.cat((msk_src, msk_xtgt), dim=2) #[bs, 1, ls+lxt]
@@ -57,7 +57,7 @@ class Encoder_Decoder_sxsc_sc(torch.nn.Module):
     src = self.add_pos_enc(self.src_emb(src)) #[bs,ls,ed]
     z_src = self.stacked_encoder_s(src, msk_src) #[bs,ls,ed]
     xtgt = self.add_pos_enc(self.tgt_emb(xtgt)) #[bs,lxt,ed]
-    z_xtgt = self.stacked_encoder_sc(xtgt, msk_xtgt) #[bs,lxt,ed]
+    z_xtgt = self.stacked_encoder_sc(z_src, xtgt, msk_src, msk_xtgt) #[bs,lxt,ed]
     return z_src, z_xtgt
 
   def decode(self, z_src, z_xtgt, tgt, msk_src, msk_xtgt, msk_tgt=None):
