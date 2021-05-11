@@ -24,7 +24,7 @@ class Encoder_Decoder_sxsc_sc(torch.nn.Module):
 
     self.add_pos_enc = AddPositionalEncoding(emb_dim, dropout, max_len=5000) 
     self.stacked_encoder_s = Stacked_Encoder(n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout) ### encoder for src
-    self.stacked_encoder_t = Stacked_Encoder_sc(n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout) ### encoder for xtgt
+    self.stacked_encoder_sc = Stacked_Encoder_sc(n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout) ### encoder for xtgt
     self.stacked_decoder = Stacked_Decoder(n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout) ### decoder for tgt
     self.generator = Generator(emb_dim, tgt_voc_size)
 
