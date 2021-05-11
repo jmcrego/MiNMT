@@ -10,6 +10,7 @@ from transformer.Dataset import Dataset, Vocab
 from transformer.Model import Encoder_Decoder, load_model, numparameters
 from transformer.Model_s_s_scc_scc import Encoder_Decoder_s_s_scc_scc
 from transformer.Model_sxs_sc import Encoder_Decoder_sxs_sc
+from transformer.Model_sxsc_sc import Encoder_Decoder_sxsc_sc
 from transformer.Model_s_s_scc import Encoder_Decoder_s_s_scc
 from transformer.Inference import Inference
 from tools.Tools import create_logger, read_dnet
@@ -159,6 +160,8 @@ if __name__ == '__main__':
     model = Encoder_Decoder_s_s_scc_scc(n['n_layers'], n['ff_dim'], n['n_heads'], n['emb_dim'], n['qk_dim'], n['v_dim'], n['dropout'], n['share_embeddings'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
   elif n['model_type'] == 'sxs_sc':
     model = Encoder_Decoder_sxs_sc(n['n_layers'], n['ff_dim'], n['n_heads'], n['emb_dim'], n['qk_dim'], n['v_dim'], n['dropout'], n['share_embeddings'], n['share_encoders'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
+  elif n['model_type'] == 'sxsc_sc':
+    model = Encoder_Decoder_sxs_sc(n['n_layers'], n['ff_dim'], n['n_heads'], n['emb_dim'], n['qk_dim'], n['v_dim'], n['dropout'], n['share_embeddings'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
   elif n['model_type'] == 's_s_scc':
     model = Encoder_Decoder_s_s_scc(n['n_layers'], n['ff_dim'], n['n_heads'], n['emb_dim'], n['qk_dim'], n['v_dim'], n['dropout'], n['share_embeddings'], n['share_encoders'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
   elif n['model_type'] == 's_sc':
@@ -175,6 +178,8 @@ if __name__ == '__main__':
       test = Dataset([src_voc, src_voc, tgt_voc, tgt_voc], [o.input, o.xsrc, o.xtgt, o.prefix], o.shard_size, o.batch_size, o.batch_type, o.max_length)
     elif n['model_type'] == 'sxs_sc':
       test = Dataset([src_voc, tgt_voc, tgt_voc], [o.input, o.xtgt, o.prefix], o.shard_size, o.batch_size, o.batch_type, o.max_length)
+    elif n['model_type'] == 'sxsc_sc':
+      test = Dataset([src_voc, tgt_voc, tgt_voc], [o.input, o.xtgt, o.prefix], o.shard_size, o.batch_size, o.batch_type, o.max_length)
     elif n['model_type'] == 's_s_scc':
       test = Dataset([src_voc, tgt_voc, tgt_voc], [o.input, o.xtgt, o.prefix], o.shard_size, o.batch_size, o.batch_type, o.max_length)
     elif n['model_type'] == 's_sc':
@@ -184,6 +189,8 @@ if __name__ == '__main__':
     if n['model_type'] == 's_s_scc_scc':
       test = Dataset([src_voc, src_voc, tgt_voc], [o.input, o.xsrc, o.xtgt], o.shard_size, o.batch_size, o.batch_type, o.max_length)
     elif n['model_type'] == 'sxs_sc':
+      test = Dataset([src_voc, tgt_voc], [o.input, o.xtgt], o.shard_size, o.batch_size, o.batch_type, o.max_length)
+    elif n['model_type'] == 'sxsc_sc':
       test = Dataset([src_voc, tgt_voc], [o.input, o.xtgt], o.shard_size, o.batch_size, o.batch_type, o.max_length)
     elif n['model_type'] == 's_s_scc':
       test = Dataset([src_voc, tgt_voc], [o.input, o.xtgt], o.shard_size, o.batch_size, o.batch_type, o.max_length)

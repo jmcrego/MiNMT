@@ -314,6 +314,56 @@ class Encoder_scc(torch.nn.Module):
     return z
 
 ##############################################################################################################
+### Stacked_Encoder_sc ######################################################################################
+##############################################################################################################
+class Stacked_Encoder_sc(torch.nn.Module):
+  def __init__(self, n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout): 
+    super(Stacked_Encoder_sc, self).__init__()
+    self.encoderlayers = torch.nn.ModuleList([Encoder_sc(ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout) for _ in range(n_layers)])
+    self.norm = torch.nn.LayerNorm(emb_dim, eps=1e-6) 
+
+  def forward(self, z_src, xtgt, msk_src, msk_xtgt):
+    for i,encoderlayer in enumerate(self.encoderlayers):
+      xtgt = encoderlayer(z_src, xtgt, msk_src, msk_xtgt) #[bs, ls, ed]
+    return self.norm(xtgt)
+
+##############################################################################################################
+### Encoder_sc ###############################################################################################
+##############################################################################################################
+class Encoder_sc(torch.nn.Module):
+  def __init__(self, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout):
+    super(Encoder_sc, self).__init__()
+    self.multihead_attn_self = MultiHead_Attn(n_heads, emb_dim, qk_dim, v_dim, dropout)
+    self.multihead_attn_cross = MultiHead_Attn(n_heads, emb_dim, qk_dim, v_dim, dropout)
+    self.feedforward = FeedForward(emb_dim, ff_dim, dropout)
+    self.norm_att_self = torch.nn.LayerNorm(emb_dim, eps=1e-6) 
+    self.norm_att_cross = torch.nn.LayerNorm(emb_dim, eps=1e-6) 
+    self.norm_ff = torch.nn.LayerNorm(emb_dim, eps=1e-6) 
+
+  def forward(self, z_src, xtgt, msk_src, msk_xtgt):
+    #NORM
+    tmp_norm = self.norm_att_self(xtgt)
+    #Self ATTN over xtgt words 
+    tmp2 = self.multihead_attn_self(q=tmp_norm, k=tmp_norm, v=tmp_norm, msk=msk_xtgt) #[bs, ls, ed] contains dropout
+    #ADD
+    tmp = tmp2 + xtgt
+
+    #NORM
+    tmp_norm = self.norm_att_cross(tmp)
+    #Cross ATTN over xsrc words : q are xtgt words, k, v are xsrc words
+    tmp2 = self.multihead_attn_cross(q=tmp_norm, k=z_src, v=z_src, msk=msk_src) #[bs, ls, ed] contains dropout
+    #ADD
+    tmp = tmp2 + tmp
+
+    #NORM
+    tmp_norm = self.norm_ff(tmp)
+    #FF
+    tmp2 = self.feedforward(tmp_norm) #[bs, ls, ed] contains dropout
+    #ADD
+    z = tmp2 + tmp
+    return z
+
+##############################################################################################################
 ### Stacked_Decoder_scc ######################################################################################
 ##############################################################################################################
 class Stacked_Decoder_scc(torch.nn.Module):

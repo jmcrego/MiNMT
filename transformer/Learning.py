@@ -105,6 +105,13 @@ class Learning():
           xtgt, msk_xtgt = prepare_source(batch_xtgt, self.idx_pad, device)
           pred = self.model.forward(src, xtgt, tgt, msk_src, msk_xtgt, msk_tgt) #no log_softmax is applied
 
+        elif self.model.type() == 'sxsc_sc':
+          batch_src, batch_tgt, batch_xtgt = batch_idxs[0], batch_idxs[1], batch_idxs[2]
+          src, msk_src = prepare_source(batch_src, self.idx_pad, device)
+          tgt, ref, msk_tgt = prepare_target(batch_tgt, self.idx_pad, device)
+          xtgt, msk_xtgt = prepare_source(batch_xtgt, self.idx_pad, device)
+          pred = self.model.forward(src, xtgt, tgt, msk_src, msk_xtgt, msk_tgt) #no log_softmax is applied
+
         elif self.model.type() == 's_s_scc':
           batch_src, batch_tgt, batch_xtgt = batch_idxs[0], batch_idxs[1], batch_idxs[2]
           src, msk_src = prepare_source(batch_src, self.idx_pad, device)
@@ -199,6 +206,13 @@ class Learning():
           pred_msk, pred = self.model.forward(src, xsrc, xtgt, tgt, msk_src, msk_xsrc, msk_xtgt, msk_tgt) #no log_softmax is applied
 
         elif self.model.type() == 'sxs_sc':
+          batch_src, batch_tgt, batch_xtgt = batch_idxs[0], batch_idxs[1], batch_idxs[2]
+          src, msk_src = prepare_source(batch_src, self.idx_pad, device)
+          tgt, ref, msk_tgt = prepare_target(batch_tgt, self.idx_pad, device)
+          xtgt, msk_xtgt = prepare_source(batch_xtgt, self.idx_pad, device)
+          pred = self.model.forward(src, xtgt, tgt, msk_src, msk_xtgt, msk_tgt) #no log_softmax is applied
+
+        elif self.model.type() == 'sxsc_sc':
           batch_src, batch_tgt, batch_xtgt = batch_idxs[0], batch_idxs[1], batch_idxs[2]
           src, msk_src = prepare_source(batch_src, self.idx_pad, device)
           tgt, ref, msk_tgt = prepare_target(batch_tgt, self.idx_pad, device)
