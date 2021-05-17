@@ -14,16 +14,19 @@ from transformer.Model import Embedding, AddPositionalEncoding, Stacked_Encoder,
 ##############################################################################################################
 class Encoder_Decoder_s_s_scc_scc(torch.nn.Module):
   #https://www.linzehui.me/images/16005200579239.jpg
-  def __init__(self, n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout, share_embeddings, src_voc_size, tgt_voc_size, idx_pad):
+  def __init__(self, n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout, share_embeddings, share_encoders, src_voc_size, tgt_voc_size, idx_pad):
     super(Encoder_Decoder_s_s_scc_scc, self).__init__()
     self.idx_pad = idx_pad
     self.src_emb = Embedding(src_voc_size, emb_dim, idx_pad) 
     self.tgt_emb = Embedding(tgt_voc_size, emb_dim, idx_pad) 
     if share_embeddings:
-      self.tgt_emb.emb.weight = self.src_emb.emb.weight
+        self.tgt_emb.emb.weight = self.src_emb.emb.weight
 
     self.add_pos_enc = AddPositionalEncoding(emb_dim, dropout, max_len=5000) 
-    self.stacked_encoder = Stacked_Encoder(n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout)         ### encoder for src and xsrc
+    self.stacked_encoder_s1 = Stacked_Encoder(n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout)         ### encoder for src and xsrc
+    self.stacked_encoder_s2 = Stacked_Encoder(n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout)         ### encoder for src and xsrc
+    if share_encoders:
+        self.stacked_encoder_s2 = self.stacked_encoder_s1
     self.stacked_encoder_scc = Stacked_Encoder_scc(n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout) ### encoder for xtgt
     self.stacked_decoder_scc = Stacked_Decoder_scc(n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout) ### decoder for tgt
     self.generator_msk = Generator(emb_dim, tgt_voc_size)
@@ -40,9 +43,9 @@ class Encoder_Decoder_s_s_scc_scc(torch.nn.Module):
 
     ### encoder #####
     src = self.add_pos_enc(self.src_emb(src)) #[bs,ls,ed]
-    z_src = self.stacked_encoder(src, msk_src) #[bs,ls,ed]
+    z_src = self.stacked_encoder_s1(src, msk_src) #[bs,ls,ed]
     xsrc = self.add_pos_enc(self.src_emb(xsrc)) #[bs,ls,ed]
-    z_xsrc = self.stacked_encoder(xsrc, msk_xsrc) #[bs,ls,ed]
+    z_xsrc = self.stacked_encoder_s2(xsrc, msk_xsrc) #[bs,ls,ed]
     xtgt = self.add_pos_enc(self.tgt_emb(xtgt)) #[bs,ls,ed]
     z_xtgt = self.stacked_encoder_scc(z_src, z_xsrc, xtgt, msk_src, msk_xsrc, msk_xtgt) #[bs,ls,ed]
     ### generator ###
@@ -58,9 +61,9 @@ class Encoder_Decoder_s_s_scc_scc(torch.nn.Module):
 
   def encode(self, src, xsrc, xtgt, msk_src, msk_xsrc, msk_xtgt):
     src = self.add_pos_enc(self.src_emb(src)) #[bs,ls,ed]
-    z_src = self.stacked_encoder(src, msk_src) #[bs,ls,ed]
+    z_src = self.stacked_encoder_s1(src, msk_src) #[bs,ls,ed]
     xsrc = self.add_pos_enc(self.src_emb(xsrc)) #[bs,ls,ed]
-    z_xsrc = self.stacked_encoder(xsrc, msk_xsrc) #[bs,ls,ed]
+    z_xsrc = self.stacked_encoder_s2(xsrc, msk_xsrc) #[bs,ls,ed]
     xtgt = self.add_pos_enc(self.tgt_emb(xtgt)) #[bs,ls,ed]
     z_xtgt = self.stacked_encoder_scc(z_src, z_xsrc, xtgt, msk_src, msk_xsrc, msk_xtgt) #[bs,ls,ed]
     return z_src, z_xtgt
