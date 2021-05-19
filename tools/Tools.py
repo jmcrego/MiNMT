@@ -4,6 +4,7 @@ import os
 import sys
 import shutil
 import logging
+import edit_distance
 
 def create_logger(logfile, loglevel):
   numeric_level = getattr(logging, loglevel.upper(), None)
@@ -73,6 +74,26 @@ def flatten_count(ll, lc):
   return counts
 
 
+def hide_unrelated(self, l1, l2, u='✖', lc=False):
+  if len(l1) == 0 or (len(l1) == 1 and len(l1[0]) == 0):
+    return 0.0, [], [u]*len(l2)
+
+  if len(l2) == 0 or (len(l2) == 1 and len(l2[0]) == 0):
+    return 0.0, [u]*len(l1), []
+
+  ### use .lower() or .casefold()
+  sm = edit_distance.SequenceMatcher(a=[t.casefold() if lc else t for t in l1], b=[t.casefold() if lc else t for t in l2], action_function=edit_distance.highest_match_action)
+
+  ### initially all discarded
+  L1 = [u] * len(l1)
+  L2 = [u] * len(l2)
+
+  ### replace those tokens aligned by their original value
+  for (code, b1, e1, b2, e2) in sm.get_opcodes():
+    if code == 'equal': ### keep words
+      L1[b1] = l1[b1]
+      L2[b2] = l2[b2]
+  return sm.ratio(), L1, L2
 
 
 
