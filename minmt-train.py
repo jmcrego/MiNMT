@@ -10,6 +10,7 @@ import numpy as np
 from transformer.Dataset import Dataset, Vocab
 from transformer.Model import Encoder_Decoder, load_checkpoint, numparameters
 from transformer.Model_s_s_scc_scc import Encoder_Decoder_s_s_scc_scc
+from transformer.Model_2nmt_2c import Encoder_Decoder_2nmt_2c
 from transformer.Model_sxs_sc import Encoder_Decoder_sxs_sc
 from transformer.Model_sxsc_sc import Encoder_Decoder_sxsc_sc
 from transformer.Model_s_s_scc import Encoder_Decoder_s_s_scc
@@ -231,6 +232,8 @@ if __name__ == '__main__':
   device = torch.device('cuda' if o.cuda and torch.cuda.is_available() else 'cpu')
   if n['model_type'] == 's_s_scc_scc':
     model = Encoder_Decoder_s_s_scc_scc(n['n_layers'], n['ff_dim'], n['n_heads'], n['emb_dim'], n['qk_dim'], n['v_dim'], n['dropout'], n['share_embeddings'], o.net['share_encoders'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
+  elif n['model_type'] == '2nmt_2c':
+    model = Encoder_Decoder_2nmt_2c(n['n_layers'], n['ff_dim'], n['n_heads'], n['emb_dim'], n['qk_dim'], n['v_dim'], n['dropout'], n['share_embeddings'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
   elif n['model_type'] == 'sxs_sc':
     model = Encoder_Decoder_sxs_sc(n['n_layers'], n['ff_dim'], n['n_heads'], n['emb_dim'], n['qk_dim'], n['v_dim'], n['dropout'], n['share_embeddings'], n['share_encoders'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
   elif n['model_type'] == 'sxsc_sc':
@@ -262,16 +265,20 @@ if __name__ == '__main__':
   if o.src_valid is not None and o.tgt_valid is not None:
     if n['model_type'] == 's_s_scc_scc':
       valid = Dataset([src_voc, tgt_voc, src_voc, tgt_voc], [o.src_valid, o.tgt_valid, o.xsrc_valid, o.xtgt_valid], o.shard_size, o.batch_size, o.batch_type, 0) #o.max_length)
-    if n['model_type'] == 'sxs_sc':
+    elif n['model_type'] == '2nmt_2c':
+      valid = Dataset([src_voc, tgt_voc, src_voc, tgt_voc], [o.src_valid, o.tgt_valid, o.xsrc_valid, o.xtgt_valid], o.shard_size, o.batch_size, o.batch_type, 0) #o.max_length)
+    elif n['model_type'] == 'sxs_sc':
       valid = Dataset([src_voc, tgt_voc, tgt_voc], [o.src_valid, o.tgt_valid, o.xtgt_valid], o.shard_size, o.batch_size, o.batch_type, 0) #o.max_length)
-    if n['model_type'] == 'sxsc_sc':
+    elif n['model_type'] == 'sxsc_sc':
       valid = Dataset([src_voc, tgt_voc, tgt_voc], [o.src_valid, o.tgt_valid, o.xtgt_valid], o.shard_size, o.batch_size, o.batch_type, 0) #o.max_length)
-    if n['model_type'] == 's_s_scc':
+    elif n['model_type'] == 's_s_scc':
       valid = Dataset([src_voc, tgt_voc, tgt_voc], [o.src_valid, o.tgt_valid, o.xtgt_valid], o.shard_size, o.batch_size, o.batch_type, 0) #o.max_length)
     elif n['model_type'] == 's_sc':
       valid = Dataset([src_voc, tgt_voc], [o.src_valid, o.tgt_valid], o.shard_size, o.batch_size, o.batch_type, 0) #o.max_length)
 
   if n['model_type'] == 's_s_scc_scc':
+    train = Dataset([src_voc, tgt_voc, src_voc, tgt_voc], [o.src_train, o.tgt_train, o.xsrc_train, o.xtgt_train], o.shard_size, o.batch_size, o.batch_type, o.max_length)
+  elif n['model_type'] == '2nmt_2c':
     train = Dataset([src_voc, tgt_voc, src_voc, tgt_voc], [o.src_train, o.tgt_train, o.xsrc_train, o.xtgt_train], o.shard_size, o.batch_size, o.batch_type, o.max_length)
   elif n['model_type'] == 'sxs_sc':
     train = Dataset([src_voc, tgt_voc, tgt_voc], [o.src_train, o.tgt_train, o.xtgt_train], o.shard_size, o.batch_size, o.batch_type, o.max_length)

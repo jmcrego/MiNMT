@@ -12,6 +12,7 @@ from transformer.Model_s_s_scc_scc import Encoder_Decoder_s_s_scc_scc
 from transformer.Model_sxs_sc import Encoder_Decoder_sxs_sc
 from transformer.Model_sxsc_sc import Encoder_Decoder_sxsc_sc
 from transformer.Model_s_s_scc import Encoder_Decoder_s_s_scc
+from transformer.Model_2nmt_2c import Encoder_Decoder_2nmt_2c
 import numpy as np
 
 ######################################################################
@@ -129,7 +130,7 @@ class Options():
    -log_file       FILE : log file  (stderr)
    -log_level       STR : log level [debug, info, warning, critical, error] (info)
    -h                   : this help
-'''.format(self.prog, self.net['emb_dim'], self.net['qk_dim'], self.net['v_dim'], self.net['ff_dim'], self.net['n_heads'], self.net['n_layers'], self.net['dropout'], self.net['share_embeddings'], self.net['share_encoders'], self.net['model_type'], self.net['weight_decay'], self.net['beta1'], self.net['beta2'], self.net['eps']))
+'''.format(self.prog, self.net['emb_dim'], self.net['qk_dim'], self.net['v_dim'], self.net['ff_dim'], self.net['n_heads'], self.net['n_layers'], self.net['dropout'], self.net['model_type'], self.net['share_embeddings'], self.net['share_encoders'], self.net['weight_decay'], self.net['beta1'], self.net['beta2'], self.net['eps']))
     sys.exit()
 
 ######################################################################
@@ -146,6 +147,8 @@ if __name__ == '__main__':
   device = torch.device('cpu')
   if o.net['model_type'] == 's_s_scc_scc':
     model = Encoder_Decoder_s_s_scc_scc(o.net['n_layers'], o.net['ff_dim'], o.net['n_heads'], o.net['emb_dim'], o.net['qk_dim'], o.net['v_dim'], o.net['dropout'], o.net['share_embeddings'], o.net['share_encoders'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
+  elif o.net['model_type'] == '2nmt_2c':
+    model = Encoder_Decoder_2nmt_2c(o.net['n_layers'], o.net['ff_dim'], o.net['n_heads'], o.net['emb_dim'], o.net['qk_dim'], o.net['v_dim'], o.net['dropout'], o.net['share_embeddings'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
   elif o.net['model_type'] == 'sxs_sc':
     model = Encoder_Decoder_sxs_sc(o.net['n_layers'], o.net['ff_dim'], o.net['n_heads'], o.net['emb_dim'], o.net['qk_dim'], o.net['v_dim'], o.net['dropout'], o.net['share_embeddings'], o.net['share_encoders'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
   elif o.net['model_type'] == 'sxsc_sc':
