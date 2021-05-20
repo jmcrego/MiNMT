@@ -17,14 +17,14 @@ class Encoder_Decoder_2nmt_2c(torch.nn.Module):
   def __init__(self, n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout, share_embeddings, src_voc_size, tgt_voc_size, idx_pad):
     super(Encoder_Decoder_2nmt_2c, self).__init__()
     self.idx_pad = idx_pad
-    self.src_emb = Embedding(src_voc_size, emb_dim, idx_pad) 
-    self.tgt_emb = Embedding(tgt_voc_size, emb_dim, idx_pad) 
+    self.src_emb = Embedding(src_voc_size, emb_dim, idx_pad)
+    self.tgt_emb = Embedding(tgt_voc_size, emb_dim, idx_pad)
     if share_embeddings:
         self.tgt_emb.emb.weight = self.src_emb.emb.weight
 
-    self.add_pos_enc = AddPositionalEncoding(emb_dim, dropout, max_len=5000) 
-    self.stacked_encoder = Stacked_Encoder(n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout) 
-    self.stacked_decoder = Stacked_Decoder(n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout) 
+    self.add_pos_enc = AddPositionalEncoding(emb_dim, dropout, max_len=5000)
+    self.stacked_encoder = Stacked_Encoder(n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout)
+    self.stacked_decoder = Stacked_Decoder(n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout)
     self.cross_xtgt = Single_Cross(ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout)
     self.cross_tgt = Single_Cross(ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout)
 
@@ -34,7 +34,7 @@ class Encoder_Decoder_2nmt_2c(torch.nn.Module):
   def type(self):
     return '2nmt_2c'
 
-  def forward(self, src, xsrc, xtgt, tgt, msk_src, msk_xsrc, msk_xtgt, msk_tgt): 
+  def forward(self, src, xsrc, xtgt, tgt, msk_src, msk_xsrc, msk_xtgt, msk_tgt, msk_tgt_cross): 
     #src is [bs,ls]
     #tgt is [bs,lt]
     #msk_src is [bs,1,ls] (False where <pad> True otherwise)
@@ -55,9 +55,9 @@ class Encoder_Decoder_2nmt_2c(torch.nn.Module):
     z_tgt = self.stacked_decoder(z_src, tgt, msk_src, msk_tgt) #[bs,lt,ed]
 
     ### cross_xtgt ###
-    z_xtgt = self.cross_xtgt(z_xtgt, z_src, msk_xtgt, msk_xsrc)
+    z_xtgt = self.cross_xtgt(z_src, z_xtgt, msk_src, msk_xtgt)
     ### cross_tgt ###
-    z_tgt = self.cross_tgt(z_tgt, z_xtgt, msk_tgt, msk_xtgt)
+    z_tgt = self.cross_tgt(z_xtgt, z_tgt, msk_xtgt, msk_tgt_cross)
 
     ### generator_hide ###
     y_hide = self.generator_hide(z_xtgt) #[bs, lt, Vt]

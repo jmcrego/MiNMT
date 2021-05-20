@@ -7,7 +7,7 @@ import numpy as np
 from collections import defaultdict
 import torch
 import math
-from transformer.Model import prepare_source, prepare_prefix
+from transformer.Model import prepare_source, prepare_source_cross
 
 def norm_length(l, alpha):
   if alpha == 0.0:
@@ -78,7 +78,7 @@ class Inference():
 
 
         if self.prefix: ### if prefix the last is the prefix 
-          self.batch_pre, _ = prepare_prefix(batch_idxs[-1], self.tgt_voc.idx_pad, self.device)  #pre is [bs, lp]
+          self.batch_pre, _ = prepare_source(batch_idxs[-1], self.tgt_voc.idx_pad, self.device)  #pre is [bs, lp]
         else:
           self.batch_pre = None
 

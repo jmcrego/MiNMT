@@ -7,7 +7,7 @@ import numpy as np
 import torch
 import time
 import codecs
-from transformer.Model import save_checkpoint, prepare_source, prepare_target
+from transformer.Model import save_checkpoint, prepare_source, prepare_target, prepare_source_cross
 import sacrebleu
 try:
   from torch.utils.tensorboard import SummaryWriter
@@ -102,9 +102,10 @@ class Learning():
           batch_src, batch_tgt, batch_xsrc, batch_xtgt = batch_idxs[0], batch_idxs[1], batch_idxs[2], batch_idxs[3]
           src, msk_src = prepare_source(batch_src, self.idx_pad, device)
           tgt, ref, msk_tgt = prepare_target(batch_tgt, self.idx_pad, device)
+          _, msk_tgt_cross = prepare_source_cross(batch_tgt, self.idx_pad, device)
           xsrc, msk_xsrc = prepare_source(batch_xsrc, self.idx_pad, device)
           xtgt, msk_xtgt = prepare_source(batch_xtgt, self.idx_pad, device)
-          pred_hide, pred = self.model.forward(src, xsrc, xtgt, tgt, msk_src, msk_xsrc, msk_xtgt, msk_tgt) #no log_softmax is applied
+          pred_hide, pred = self.model.forward(src, xsrc, xtgt, tgt, msk_src, msk_xsrc, msk_xtgt, msk_tgt, msk_tgt_cross) #no log_softmax is applied
 
         elif self.model.type() == 'sxs_sc':
           batch_src, batch_tgt, batch_xtgt = batch_idxs[0], batch_idxs[1], batch_idxs[2]

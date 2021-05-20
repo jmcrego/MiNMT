@@ -76,6 +76,12 @@ def prepare_source(batch_src, idx_pad, device):
   msk_src = (src != idx_pad).unsqueeze(-2) #[bs,1,ls] (False where <pad> True otherwise)
   return src, msk_src
 
+def prepare_source_cross(batch_src, idx_pad, device):
+  src = [torch.tensor(seq[1:]) for seq in batch_src] #[bs, ls]
+  src = torch.nn.utils.rnn.pad_sequence(src, batch_first=True, padding_value=idx_pad).to(device) #[bs,ls]
+  msk_src = (src != idx_pad).unsqueeze(-2) #[bs,1,ls] (False where <pad> True otherwise)
+  return src, msk_src
+
 def prepare_prefix(batch_pre, idx_pad, device):
   pre = [torch.tensor(seq) for seq in batch_pre] #[bs, lp]
   pre = torch.nn.utils.rnn.pad_sequence(pre, batch_first=True, padding_value=idx_pad).to(device) #[bs,lp]
@@ -85,11 +91,12 @@ def prepare_prefix(batch_pre, idx_pad, device):
 def prepare_target(batch_tgt, idx_pad, device):
   tgt = [torch.tensor(seq[:-1]) for seq in batch_tgt] #delete <eos>
   tgt = torch.nn.utils.rnn.pad_sequence(tgt, batch_first=True, padding_value=idx_pad).to(device) 
+  #
   ref = [torch.tensor(seq[1:])  for seq in batch_tgt] #delete <bos> 
   ref = torch.nn.utils.rnn.pad_sequence(ref, batch_first=True, padding_value=idx_pad).to(device)
+  #
   msk_tgt = (tgt != idx_pad).unsqueeze(-2) & (1 - torch.triu(torch.ones((1, tgt.size(1), tgt.size(1)), device=tgt.device), diagonal=1)).bool() #[bs,lt,lt]
   return tgt, ref, msk_tgt
-
 
 ##############################################################################################################
 ### Endcoder_Decoder #########################################################################################
@@ -461,8 +468,15 @@ class MultiHead_Attn(torch.nn.Module):
     #k is [bs, lk, ed]
     #v is [bs, lv, ed]
     #msk is [bs, 1, ls] or [bs, lt, lt]
+    #logging.info('q = {}'.format(q.shape))
+    #logging.info('k = {}'.format(k.shape))
+    #logging.info('v = {}'.format(v.shape))
+
     if msk is not None:
       msk = msk.unsqueeze(1) #[bs, 1, 1, ls] or [bs, 1, lt, lt]
+
+    #logging.info('msk = {}'.format(msk.shape))
+
     bs = q.shape[0]
     lq = q.shape[1] ### sequence length of q vectors (length of target sentences)
     lk = k.shape[1] ### sequence length of k vectors (may be length of source/target sentences)
@@ -476,9 +490,13 @@ class MultiHead_Attn(torch.nn.Module):
     #Scaled dot-product Attn from multiple Q, K, V vectors (bs*nh*l vectors)
     Q = Q / math.sqrt(self.kd)
     s = torch.matmul(Q, K.transpose(2, 3)) #[bs,nh,lq,qd] x [bs,nh,kd,lk] = [bs,nh,lq,lk] # thanks to qd==kd #in decoder lq are target words and lk are source words
+
+    #logging.info('s = {}'.format(s.shape))
+
     if msk is not None:
       s = s.masked_fill(msk == 0, float('-inf')) #score=-Inf to masked tokens
     w = torch.nn.functional.softmax(s, dim=-1) #[bs,nh,lq,lk] (these are the attention weights)
+    #### Minh uses relu instead of softmax: w = torch.nn.functional.relu(s)
     w = self.dropout(w) #[bs,nh,lq,lk] 
 
     z = torch.matmul(w,V) #[bs,nh,lq,lk] x [bs,nh,lv,vd] = [bs,nh,lq,vd] #thanks to lk==lv
