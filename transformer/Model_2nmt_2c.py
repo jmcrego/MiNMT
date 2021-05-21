@@ -7,7 +7,7 @@ import torch
 import math
 import numpy as np
 import glob
-from transformer.Model import Embedding, AddPositionalEncoding, Stacked_Encoder, Stacked_Decoder, Encoder, Decoder, Stacked_Encoder_scc, Stacked_Decoder_scc, Encoder_scc, Decoder_scc, Single_Cross, MultiHead_Attn, FeedForward, Generator
+from transformer.Model import Embedding, AddPositionalEncoding, Stacked_Encoder, Stacked_Decoder, Encoder, Decoder, Stacked_Encoder_scc, Stacked_Decoder_scc, Encoder_scc, Decoder_scc, Stacked_CrossAdapter, MultiHead_Attn, FeedForward, Generator
 
 ##############################################################################################################
 ### Encoder_Decoder_s_s_scc_scc ######################################################################################
@@ -25,8 +25,8 @@ class Encoder_Decoder_2nmt_2c(torch.nn.Module):
     self.add_pos_enc = AddPositionalEncoding(emb_dim, dropout, max_len=5000)
     self.stacked_encoder = Stacked_Encoder(n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout)
     self.stacked_decoder = Stacked_Decoder(n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout)
-    self.cross_xtgt = Single_Cross(ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout)
-    self.cross_tgt = Single_Cross(ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout)
+    self.cross_xtgt = Stacked_CrossAdapter(1, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout)
+    self.cross_tgt = Stacked_CrossAdapter(1, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout)
 
     self.generator_hide = Generator(emb_dim, tgt_voc_size)
     self.generator_trns = Generator(emb_dim, tgt_voc_size)

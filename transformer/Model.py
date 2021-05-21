@@ -211,7 +211,6 @@ class Encoder(torch.nn.Module):
     z = tmp2 + tmp
     return z
 
-
 ##############################################################################################################
 ### Stacked_Decoder ##########################################################################################
 ##############################################################################################################
@@ -263,20 +262,36 @@ class Decoder(torch.nn.Module):
     return z
 
 ##############################################################################################################
-### Single_Cross #############################################################################################
+### Stacked_CrossAdapter #####################################################################################
 ##############################################################################################################
-class Single_Cross(torch.nn.Module):
-  def __init__(self, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout):
-    super(Single_Cross, self).__init__()
-    self.multihead_attn = MultiHead_Attn(n_heads, emb_dim, qk_dim, v_dim, dropout)
-    self.norm = torch.nn.LayerNorm(emb_dim, eps=1e-6) 
+class Stacked_CrossAdapter(torch.nn.Module):
+  def __init__(self, n_layers, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout):
+    super(Stacked_CrossAdapter, self).__init__()
+    self.adapterlayers = torch.nn.ModuleList([CrossAdapter(ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout) for _ in range(n_layers)])
+    self.norm = torch.nn.LayerNorm(emb_dim, eps=1e-6)
 
   def forward(self, z_src, tgt, msk_src, msk_tgt):
+    for i,adapterlayer in enumerate(self.adapterlayers):
+      tgt = adapterlayer(z_src, tgt, msk_src, msk_tgt)
+    return self.norm(tgt)
+
+##############################################################################################################
+### CrossAdapter #############################################################################################
+##############################################################################################################
+class CrossAdapter(torch.nn.Module):
+  def __init__(self, ff_dim, n_heads, emb_dim, qk_dim, v_dim, dropout):
+    super(CrossAdapter, self).__init__()
+    self.multihead_attn = MultiHead_Attn(n_heads, emb_dim, qk_dim, v_dim, dropout)
+    self.norm_att_cross = torch.nn.LayerNorm(emb_dim, eps=1e-6) 
+
+  def forward(self, z_src, tgt, msk_src, msk_tgt):
+    #NORM
+    tmp_norm = self.norm_att_cross(tgt)
     #ATTN over src words : q are tgt words, k, v are src words
-    tmp = self.multihead_attn(q=tgt, k=z_src, v=z_src, msk=msk_src) #[bs, lt, ed] contains dropout
+    tmp = self.multihead_attn(q=tmp_norm, k=z_src, v=z_src, msk=msk_src) #[bs, lt, ed] contains dropout
     #ADD
     tmp = tmp + tgt
-    return self.norm(tmp)
+    return tmp
 
 ##############################################################################################################
 ### Stacked_Encoder_scc ######################################################################################
