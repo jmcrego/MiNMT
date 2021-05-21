@@ -5,9 +5,10 @@ import edit_distance
 
 class mask_unrelated():
 
-    def __init__(self, u='✖', lc=False, o='dab'):
+    def __init__(self, d=0.0, u='✖', lc=False, o='dab'):
         self.u = u
         self.lc = lc
+        self.d = d
 
     def __call__(self, a, b):
         l1 = a.strip().split(' ')
@@ -24,11 +25,15 @@ class mask_unrelated():
             ### use .lower() or .casefold()
             sm = edit_distance.SequenceMatcher(a=[s.casefold() if self.lc else s for s in l1], b=[s.casefold() if self.lc else s for s in l2], action_function=edit_distance.highest_match_action)
             ratio = sm.ratio()
-            ### initially all discarded
-            for (code, b1, e1, b2, e2) in sm.get_opcodes():
-                if code == 'equal': ### keep words
-                    L1[b1] = l1[b1]
-                    L2[b2] = l2[b2]
+            if ratio < d:
+                L1 = []
+                L2 = []
+            else:    
+                ### initially all discarded
+                for (code, b1, e1, b2, e2) in sm.get_opcodes():
+                    if code == 'equal': ### keep words
+                        L1[b1] = l1[b1]
+                        L2[b2] = l2[b2]
 
         out = []
         for c in o:
@@ -49,18 +54,20 @@ if __name__ == '__main__':
     u = '✖'
     lc = False
     o = 'b'
+    d = 0.6
     prog = sys.argv.pop(0)
     usage = '''usage: {} [-fa FILE -fb FILE] [-a STRING -b STRING] [-o STRING] [-u STRING] [-lc]
     -fa  FILE : a parallel file to compute unrelated words sentence-by-sentence
     -fb  FILE : b parallel file to compute unrelated words sentence-by-sentence
     -a STRING : a sentences to compute unrelated words
     -b STRING : b sentences to compute unrelated words
+    -d  FLOAT : minimum distance to output unrelated wrods (default {})
     -o STRING : output d:distance, a:first sentence b:second sentence (default {})
     -u STRING : token to mark unrelated words (default {})
     -lc       : lowercase string before computing edit distance (default {})
     -h        : this help
 Needs edit_distance module: pip install edit_distance
-'''.format(prog,o,u,lc)
+'''.format(prog,d,o,u,lc)
     
     while len(sys.argv):
         tok = sys.argv.pop(0)
@@ -75,6 +82,8 @@ Needs edit_distance module: pip install edit_distance
             a = sys.argv.pop(0)
         elif tok=="-b":
             b = sys.argv.pop(0)
+        elif tok=="-d":
+            d = float(sys.argv.pop(0))
         elif tok=="-lc":
             lc = True
         elif tok=="-u":
@@ -86,7 +95,7 @@ Needs edit_distance module: pip install edit_distance
             sys.stderr.write(usage)
             sys.exit()
 
-    m = mask_unrelated(u=u, lc=lc, o=o)
+    m = mask_unrelated(d=d, u=u, lc=lc, o=o)
 
     if a is not None and b is not None:
         m(a,b)
