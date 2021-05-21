@@ -120,7 +120,7 @@ Needs edit_distance module: pip install edit_distance
                 m(a,b)
 
     n_sents, n_tok_a, n_tok_b, n_unr_a, n_unr_b = m.stats()
-    sys.stderr.write('{} sents, n_tokens (a={},b={}), n_unrelated (a={},b={})\n'.format(n_sents, n_tok_a, n_tok_b, n_unr_a, n_unr_b))
+    sys.stderr.write('{} sents found, n_tokens (a={},b={}), n_unrelated (a={},b={})\n'.format(n_sents, n_tok_a, n_tok_b, n_unr_a, n_unr_b))
 
 
 
