@@ -9,8 +9,14 @@ class mask_unrelated():
         self.u = u
         self.lc = lc
         self.d = d
+        self.n_sents = 0
+        self.n_unr_a = 0
+        self.n_unr_b = 0
+        self.n_tok_a = 0
+        self.n_tok_b = 0
 
     def __call__(self, a, b):
+        self.n_sents += 1
         l1 = a.strip().split(' ')
         l2 = b.strip().split(' ')
         if len(l1) == 0 or l1[0] == '':
@@ -43,7 +49,15 @@ class mask_unrelated():
                 out.append(' '.join(L1))
             if c == 'b':
                 out.append(' '.join(L2))
+
+        self.n_tok_a += len(L1)
+        self.n_tok_b += len(L2)
+        self.n_unr_a += L1.count(self.u)
+        self.n_unr_b += L2.count(self.u)
         print('\t'.join(out))
+
+    def stats(self):
+        return self.n_sents, self.n_tok_a, self.n_tok_b, self.n_unr_a, self.n_unr_b
 
 
 if __name__ == '__main__':
@@ -104,3 +118,11 @@ Needs edit_distance module: pip install edit_distance
         with open(fa) as f1, open(fb) as f2:
             for a, b in zip(f1, f2):
                 m(a,b)
+
+    n_sents, n_tok_a, n_tok_b, n_unr_a, n_unr_b = m.stats()
+    sys.stderr.write('{} sents, n_tokens ({},{}), n_unrelated ({},{})\n'.format(n_sents, n_tok_a, n_tok_b, n_unr_a, n_unr_b))
+
+
+
+
+
