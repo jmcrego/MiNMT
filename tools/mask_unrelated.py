@@ -16,7 +16,6 @@ class mask_unrelated():
         self.n_tok_b = 0
 
     def __call__(self, a, b):
-        self.n_sents += 1
         l1 = a.strip().split(' ')
         l2 = b.strip().split(' ')
         if len(l1) == 0 or l1[0] == '':
@@ -40,6 +39,7 @@ class mask_unrelated():
                     if code == 'equal': ### keep words
                         L1[b1] = l1[b1]
                         L2[b2] = l2[b2]
+                self.n_sents += 1
                 self.n_tok_a += len(L1)
                 self.n_tok_b += len(L2)
                 self.n_unr_a += L1.count(self.u)
