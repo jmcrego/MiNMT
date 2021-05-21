@@ -59,11 +59,11 @@ if __name__ == '__main__':
     usage = '''usage: {} [-fa FILE -fb FILE] [-a STRING -b STRING] [-o STRING] [-u STRING] [-lc]
     -fa  FILE : a parallel file to compute unrelated words sentence-by-sentence
     -fb  FILE : b parallel file to compute unrelated words sentence-by-sentence
-    -a STRING : a sentences to compute unrelated words
-    -b STRING : b sentences to compute unrelated words
-    -d  FLOAT : minimum distance to output unrelated wrods (default {})
+    -a STRING : a sentence to compute unrelated words
+    -b STRING : b sentence to compute unrelated words
+    -d  FLOAT : minimum distance to output unrelated words (default {})
     -o STRING : output d:distance, a:first sentence b:second sentence (default {})
-    -u STRING : token to mark unrelated words (default {})
+    -u STRING : token used to mark unrelated word (default {})
     -lc       : lowercase string before computing edit distance (default {})
     -h        : this help
 Needs edit_distance module: pip install edit_distance
