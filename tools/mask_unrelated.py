@@ -87,7 +87,7 @@ Needs edit_distance module: pip install edit_distance
         elif tok=="-lc":
             lc = True
         elif tok=="-u":
-            lc = sys.argv.pop(0)
+            u = sys.argv.pop(0)
         elif tok=="-o":
             o = sys.argv.pop(0)
         else:
