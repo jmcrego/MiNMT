@@ -40,6 +40,10 @@ class mask_unrelated():
                     if code == 'equal': ### keep words
                         L1[b1] = l1[b1]
                         L2[b2] = l2[b2]
+                self.n_tok_a += len(L1)
+                self.n_tok_b += len(L2)
+                self.n_unr_a += L1.count(self.u)
+                self.n_unr_b += L2.count(self.u)
 
         out = []
         for c in o:
@@ -50,10 +54,6 @@ class mask_unrelated():
             if c == 'b':
                 out.append(' '.join(L2))
 
-        self.n_tok_a += len(L1)
-        self.n_tok_b += len(L2)
-        self.n_unr_a += L1.count(self.u)
-        self.n_unr_b += L2.count(self.u)
         print('\t'.join(out))
 
     def stats(self):
