@@ -5,45 +5,37 @@ import edit_distance
 
 class mask_unrelated():
 
-    def __init__(self, d=0.0, u='✖', lc=False, o='dab'):
+    def __init__(self, u='✖', d=0.6, lc=False, o='dab'):
         self.u = u
         self.lc = lc
-        self.d = d
         self.n_sents = 0
         self.n_unr_a = 0
         self.n_unr_b = 0
         self.n_tok_a = 0
         self.n_tok_b = 0
 
-    def __call__(self, a, b):
-        l1 = a.strip().split(' ')
-        l2 = b.strip().split(' ')
-        if len(l1) == 0 or l1[0] == '':
-            l1 = []
-        if len(l2) == 0 or l2[0] == '':
-            l2 = []
-
+    def __call__(self, l1, l2):
         ratio = 0.0
+        ### initially all unrelated
         L1 = [self.u] * len(l1)
         L2 = [self.u] * len(l2)
+        self.n_sents += 1
+        self.n_tok_a += len(L1)
+        self.n_tok_b += len(L2)
+        self.n_unr_a += len(L1)
+        self.n_unr_b += len(L2)
+
         if len(l1) and len(l2):
             ### use .lower() or .casefold()
             sm = edit_distance.SequenceMatcher(a=[s.casefold() if self.lc else s for s in l1], b=[s.casefold() if self.lc else s for s in l2], action_function=edit_distance.highest_match_action)
             ratio = sm.ratio()
-            if ratio < d:
-                L1 = []
-                L2 = []
-            else:    
-                ### initially all discarded
+            if ratio >= d:
                 for (code, b1, e1, b2, e2) in sm.get_opcodes():
-                    if code == 'equal': ### keep words
+                    if code == 'equal': ### related words
                         L1[b1] = l1[b1]
                         L2[b2] = l2[b2]
-                self.n_sents += 1
-                self.n_tok_a += len(L1)
-                self.n_tok_b += len(L2)
-                self.n_unr_a += L1.count(self.u)
-                self.n_unr_b += L2.count(self.u)
+                        self.n_unr_a -= 1
+                        self.n_unr_b -= 1
 
         out = []
         for c in o:
@@ -65,17 +57,17 @@ if __name__ == '__main__':
     fb = None
     a = None
     b = None
+    d = 0.6
     u = '✖'
     lc = False
     o = 'b'
-    d = 0.6
     prog = sys.argv.pop(0)
-    usage = '''usage: {} [-fa FILE -fb FILE] [-a STRING -b STRING] [-o STRING] [-u STRING] [-lc]
+    usage = '''usage: {} [-fa FILE -fb FILE] [-a STRING -b STRING] [-d FLOAT] [-o STRING] [-u STRING] [-lc]
     -fa  FILE : a parallel file to compute unrelated words sentence-by-sentence
     -fb  FILE : b parallel file to compute unrelated words sentence-by-sentence
     -a STRING : a sentence to compute unrelated words
     -b STRING : b sentence to compute unrelated words
-    -d  FLOAT : minimum distance to output unrelated words (default {})
+    -d  FLOAT : minimum distance (default {})
     -o STRING : output d:distance, a:first sentence b:second sentence (default {})
     -u STRING : token used to mark unrelated word (default {})
     -lc       : lowercase string before computing edit distance (default {})
@@ -109,20 +101,19 @@ Needs edit_distance module: pip install edit_distance
             sys.stderr.write(usage)
             sys.exit()
 
-    m = mask_unrelated(d=d, u=u, lc=lc, o=o)
+    m = mask_unrelated(u=u, d=d, lc=lc, o=o)
 
     if a is not None and b is not None:
-        m(a,b)
+        m(a.split(), b.split())
 
     if fa is not None and fb is not None:
         with open(fa) as f1, open(fb) as f2:
             for a, b in zip(f1, f2):
-                m(a,b)
+                m(a.split(), b.split())
 
     n_sents, n_tok_a, n_tok_b, n_unr_a, n_unr_b = m.stats()
-    sys.stderr.write('{} sents found, n_tokens (a={},b={}), n_unrelated (a={:.1f}%,b={:.1f}%)\n'.format(n_sents, n_tok_a, n_tok_b, 100.0*n_unr_a/n_tok_a, 100.0*n_unr_b/n_tok_b))
-
-
-
+    perc_a = 0.0 if n_tok_a==0 else 100.0*n_unr_a/n_tok_a
+    perc_b = 0.0 if n_tok_b==0 else 100.0*n_unr_b/n_tok_b
+    sys.stderr.write('{} sents found, n_tokens (a={},b={}), n_unrelated (a={:.1f}%,b={:.1f}%)\n'.format(n_sents, n_tok_a, n_tok_b, perc_a, perc_b))
 
 
