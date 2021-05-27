@@ -34,7 +34,7 @@ class Options():
     self.tgt_valid = None
     self.xsrc_train = None
     self.xtgt_train = None
-    self.msk_xtgt_train = None
+    self.hide_xtgt_train = None
     self.xsrc_valid = None
     self.xtgt_valid = None
     ### learning 
@@ -109,8 +109,8 @@ class Options():
         self.xsrc_train = argv.pop(0)
       elif tok=='-xtgt_train':
         self.xtgt_train = argv.pop(0)
-      elif tok=='-msk_xtgt_train':
-        self.msk_xtgt_train = argv.pop(0)
+      elif tok=='-hide_xtgt_train':
+        self.hide_xtgt_train = argv.pop(0)
       elif tok=='-xsrc_valid':
         self.xsrc_valid = argv.pop(0)
       elif tok=='-xtgt_valid':
@@ -175,7 +175,7 @@ class Options():
 
    -xsrc_train       FILE : source-side training extended file
    -xtgt_train       FILE : target-side training extended file
-   -msk_xtgt_train   FILE : masked target-side training extended file
+   -hide_xtgt_train  FILE : masked target-side training extended file
    -xsrc_valid       FILE : source-side validation extended file
    -xtgt_valid       FILE : target-side validation extended file
 
@@ -283,7 +283,7 @@ if __name__ == '__main__':
   if n['model_type'] == 's_s_scc_scc':
     train = Dataset([src_voc, tgt_voc, src_voc, tgt_voc], [o.src_train, o.tgt_train, o.xsrc_train, o.xtgt_train], o.shard_size, o.batch_size, o.batch_type, o.max_length)
   elif n['model_type'] == '2nmt_2c':
-    train = Dataset([src_voc, tgt_voc, src_voc, tgt_voc, tgt_voc], [o.src_train, o.tgt_train, o.xsrc_train, o.xtgt_train, o.msk_xtgt_train], o.shard_size, o.batch_size, o.batch_type, o.max_length)
+    train = Dataset([src_voc, tgt_voc, src_voc, tgt_voc, tgt_voc], [o.src_train, o.tgt_train, o.xsrc_train, o.xtgt_train, o.hide_xtgt_train], o.shard_size, o.batch_size, o.batch_type, o.max_length)
   elif n['model_type'] == 'sxs_sc':
     train = Dataset([src_voc, tgt_voc, tgt_voc], [o.src_train, o.tgt_train, o.xtgt_train], o.shard_size, o.batch_size, o.batch_type, o.max_length)
   elif n['model_type'] == 'sxsc_sc':
