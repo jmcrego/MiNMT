@@ -44,35 +44,35 @@ class Encoder_Decoder_2nmt_2c(torch.nn.Module):
     ### encoder_xsrc #####
     xsrc = self.add_pos_enc(self.src_emb(xsrc)) #[bs,ls,ed]
     z_xsrc = self.stacked_encoder(xsrc, msk_xsrc) #[bs,ls,ed]
-    logging.info('z_xsrc = {}'.format(z_xsrc.shape))
+#    logging.info('z_xsrc = {}'.format(z_xsrc.shape))
     ### decoder_xtgt #####
     xtgt = self.add_pos_enc(self.tgt_emb(xtgt)) #[bs,lxt,ed]
     z_xtgt = self.stacked_decoder(z_xsrc, xtgt, msk_xsrc, msk_xtgt) #[bs,lxt,ed]
-    logging.info('z_xtgt = {}'.format(z_xtgt.shape))
+#    logging.info('z_xtgt = {}'.format(z_xtgt.shape))
 
     ### NMT src/tgt #########################################
     ### encoder_src #####
     src = self.add_pos_enc(self.src_emb(src)) #[bs,ls,ed]
     z_src = self.stacked_encoder(src, msk_src) #[bs,ls,ed]
-    logging.info('z_src = {}'.format(z_src.shape))
+#    logging.info('z_src = {}'.format(z_src.shape))
     ### decoder_tgt #####
     tgt = self.add_pos_enc(self.tgt_emb(tgt)) #[bs,lt,ed]
     z_tgt = self.stacked_decoder(z_src, tgt, msk_src, msk_tgt) #[bs,lt,ed]
-    logging.info('z_tgt = {}'.format(z_tgt.shape))
+#    logging.info('z_tgt = {}'.format(z_tgt.shape))
 
     ### cross_xtgt: xtgt attends src ########################
     z_xtgt = self.cross_xtgt(z_src, z_xtgt, msk_src, msk_xtgt)
-    logging.info('z_xtgt_cross = {}'.format(z_xtgt.shape))
+#    logging.info('z_xtgt_cross = {}'.format(z_xtgt.shape))
     ### cross_tgt: tgt attends xtgt #########################
     z_tgt = self.cross_tgt(z_xtgt, z_tgt, msk_xtgt, msk_tgt_cross)
-    logging.info('z_tgt_cross = {}'.format(z_tgt.shape))
+#    logging.info('z_tgt_cross = {}'.format(z_tgt.shape))
 
     ### generator_hide ######################################
     y_hide = self.generator_hide(z_xtgt) #[bs, lxt, Vt]
-    logging.info('y_hide = {}'.format(y_hide.shape))
+#    logging.info('y_hide = {}'.format(y_hide.shape))
     ### generator_trns ######################################
     y_trns = self.generator_trns(z_tgt) #[bs, lt, Vt]
-    logging.info('y_trns = {}'.format(y_trns.shape))
+#    logging.info('y_trns = {}'.format(y_trns.shape))
 
     return y_hide, y_trns ### returns logits (for learning)
 
