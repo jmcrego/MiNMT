@@ -239,11 +239,10 @@ class Learning():
           pred_msk, pred = self.model.forward(src, xsrc, xtgt, tgt, msk_src, msk_xsrc, msk_xtgt, msk_tgt) #no log_softmax is applied
 
         elif self.model.type() == '2nmt_2c': 
-          batch_src, batch_tgt, batch_xsrc, batch_xtgt, batch_hide_xtgt = batch_idxs[0], batch_idxs[1], batch_idxs[2], batch_idxs[3], batch_idxs[4]
+          batch_src, batch_tgt, batch_xsrc, batch_xtgt = batch_idxs[0], batch_idxs[1], batch_idxs[2], batch_idxs[3]
           src, msk_src = prepare_source(batch_src, self.idx_pad, device)
           tgt, ref, msk_tgt = prepare_target(batch_tgt, self.idx_pad, device)
           _, msk_tgt_cross = prepare_source_cross(batch_tgt, self.idx_pad, device)
-          hide_xtgt, msk_hide_xtgt = prepare_source_cross(batch_hide_xtgt, self.idx_pad, device)
           xsrc, msk_xsrc = prepare_source(batch_xsrc, self.idx_pad, device)
           xtgt, msk_xtgt = prepare_source(batch_xtgt, self.idx_pad, device)
           pred_hide, pred = self.model.forward(src, xsrc, xtgt, tgt, msk_src, msk_xsrc, msk_xtgt, msk_tgt, msk_tgt_cross) #no log_softmax is applied
