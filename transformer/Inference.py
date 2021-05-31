@@ -130,7 +130,6 @@ class Inference():
           self.msk_src = self.msk_src.repeat_interleave(repeats=self.K, dim=0) #[bs,1,ls] => [bs*K,1,ls]
           self.z_xtgt = self.z_xtgt.repeat_interleave(repeats=self.K, dim=0) #[bs,lxt,ed] => [bs*K,lxt,ed]
           self.msk_xtgt = self.msk_xtgt.repeat_interleave(repeats=self.K, dim=0) #[bs,1,lxt] => [bs*K,1,lxt]
-          _, self.msk_tgt_cross = prepare_source_cross(hyps, self.tgt_voc.idx_pad, self.device)
         elif self.model_type == 'sxs_sc':
           self.z_src = self.z_src.repeat_interleave(repeats=self.K, dim=0) #[bs,ls,ed] => [bs*K,ls,ed]
           self.msk_src = self.msk_src.repeat_interleave(repeats=self.K, dim=0) #[bs,1,ls] => [bs*K,1,ls]
@@ -156,7 +155,8 @@ class Inference():
       elif self.model_type == 's_s_scc_scc':
         y_next = self.model.decode(self.z_src, self.z_xtgt, hyps, self.msk_src, self.msk_xtgt, msk_tgt=msk_tgt)[:,-1,:] #[I,lt,Vt] => [I,Vt]
       elif self.model_type == '2nmt_2c':
-        y_next = self.model.decode(self.z_src, self.z_xtgt, hyps, self.msk_src, self.msk_xtgt, msk_tgt=msk_tgt, msk_tgt_cross=self.msk_tgt_cross)[:,-1,:] #[I,lt,Vt] => [I,Vt]
+        _, msk_tgt_cross = prepare_source_cross(hyps, self.tgt_voc.idx_pad, self.device)
+        y_next = self.model.decode(self.z_src, self.z_xtgt, hyps, self.msk_src, self.msk_xtgt, msk_tgt=msk_tgt, msk_tgt_cross=msk_tgt_cross)[:,-1,:] #[I,lt,Vt] => [I,Vt]
       elif self.model_type == 'sxs_sc':
         y_next = self.model.decode(self.z_src, self.z_xtgt, hyps, self.msk_src, self.msk_xtgt, msk_tgt=msk_tgt)[:,-1,:] #[I,lt,Vt] => [I,Vt]
       elif self.model_type == 'sxsc_sc':
