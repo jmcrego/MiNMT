@@ -90,7 +90,7 @@ class Encoder_Decoder_2nmt_2c(torch.nn.Module):
     z_src = self.stacked_encoder(src, msk_src) #[bs,ls,ed]
 
     ### cross_xtgt ###
-    z_xtgt = self.cross_xtgt(z_xtgt, z_src, msk_xtgt, msk_xsrc)
+    z_xtgt = self.cross_xtgt(z_src, z_xtgt, msk_xsrc, msk_xtgt)
 
     ### generator_hide ###
     #y_hide = self.generator_hide(z_xtgt) #[bs, lt, Vt]
@@ -107,8 +107,8 @@ class Encoder_Decoder_2nmt_2c(torch.nn.Module):
     tgt = self.add_pos_enc(self.tgt_emb(tgt)) #[bs,lt,ed]
     z_tgt = self.stacked_decoder(z_src, tgt, msk_src, msk_tgt) #[bs,lt,ed]
 
-    ### cross_tgt ###
-    z_tgt = self.cross_tgt(z_tgt, z_xtgt, msk_tgt, msk_xtgt)
+    ### cross_tgt: tgt attends xtgt #########################
+    z_tgt = self.cross_tgt(z_xtgt, z_tgt, msk_xtgt, msk_tgt_cross)
 
     ### generator_trns ###
     y_trns = self.generator_trns(z_tgt) #[bs, lt, Vt]
