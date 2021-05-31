@@ -12,6 +12,7 @@ from transformer.Model_s_s_scc_scc import Encoder_Decoder_s_s_scc_scc
 from transformer.Model_sxs_sc import Encoder_Decoder_sxs_sc
 from transformer.Model_sxsc_sc import Encoder_Decoder_sxsc_sc
 from transformer.Model_s_s_scc import Encoder_Decoder_s_s_scc
+from transformer.Model_2nmt_2c import Encoder_Decoder_2nmt_2c
 from transformer.Inference import Inference
 from tools.Tools import create_logger, read_dnet
 
