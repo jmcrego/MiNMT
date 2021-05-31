@@ -98,7 +98,7 @@ class Encoder_Decoder_2nmt_2c(torch.nn.Module):
 
     return z_src, z_xtgt
 
-  def decode(self, z_src, z_xtgt, tgt, msk_src, msk_xtgt, msk_tgt=None):
+  def decode(self, z_src, z_xtgt, tgt, msk_src, msk_xtgt, msk_tgt, msk_tgt_cross=None):
     assert z_src.shape[0] == tgt.shape[0] ### src/tgt batch_sizes must be equal
     #z_src are the embeddings of the source words (encoder) [bs, sl, ed]
     #tgt is the history (words already generated) for current step [bs, lt]
