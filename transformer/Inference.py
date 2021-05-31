@@ -156,7 +156,7 @@ class Inference():
       elif self.model_type == 's_s_scc_scc':
         y_next = self.model.decode(self.z_src, self.z_xtgt, hyps, self.msk_src, self.msk_xtgt, msk_tgt=msk_tgt)[:,-1,:] #[I,lt,Vt] => [I,Vt]
       elif self.model_type == '2nmt_2c':
-        y_next = self.model.decode(self.z_src, self.z_xtgt, hyps, self.msk_src, self.msk_xtgt, msk_tgt=msk_tgt, msk_tgt_cross=msk_tgt_cross)[:,-1,:] #[I,lt,Vt] => [I,Vt]
+        y_next = self.model.decode(self.z_src, self.z_xtgt, hyps, self.msk_src, self.msk_xtgt, msk_tgt=msk_tgt, msk_tgt_cross=self.msk_tgt_cross)[:,-1,:] #[I,lt,Vt] => [I,Vt]
       elif self.model_type == 'sxs_sc':
         y_next = self.model.decode(self.z_src, self.z_xtgt, hyps, self.msk_src, self.msk_xtgt, msk_tgt=msk_tgt)[:,-1,:] #[I,lt,Vt] => [I,Vt]
       elif self.model_type == 'sxsc_sc':
