@@ -276,7 +276,7 @@ class Learning():
 
     loss = 1.0*valid_loss/n_batch if n_batch else 0.0
     fref = validset.files[1]
-    bleu = 0.0 #self.translate_valid(validset, fref)
+    bleu = self.translate_valid(validset, fref)
     toc = time.time()
     logging.info('Validation step: {} #batchs: {} sec: {:.2f} bleu: {:.2f} loss: {:.3f}'.format(self.optScheduler._step, n_batch, toc-tic, bleu, loss))
     if tensorboard:
@@ -288,7 +288,8 @@ class Learning():
     hyps = self.inference.translate(validset, fhyp)
     with codecs.open(fref, 'r', 'utf-8') as fd:
       refs = [l for l in fd.read().splitlines()]
-    assert len(refs) == len(hyps)
+    hyps = [h[0] for h in hyps]
+    assert len(refs) == len([hyps])
     return sacrebleu.corpus_bleu(hyps, [refs], force=True, tokenize='none').score
 
 def print_pos_src_tgt_hyp_ref(pred, pos, src, tgt, ref):
