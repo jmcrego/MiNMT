@@ -177,6 +177,8 @@ class Dataset():
     self.shard_size = self.shard_size or len(self.Idxs[0])
     shards = [idxs_pos[i:i+self.shard_size] for i in range(0, n_lines, self.shard_size)]
     ### traverse shards ###
+    n_filter = 0
+    n_examples = 0
     for s,shard in enumerate(shards): #each shard is a list of positions in the original corpus self.Idxs
       ###################
       ### build shard ###
@@ -184,11 +186,14 @@ class Dataset():
       shard_len = []
       shard_pos = []
       for pos in shard:
+        n_examples += 1
         if not self.filter_length(pos):
           shard_pos.append(pos)
           shard_len.append(len(self.Idxs[0][pos]))
           if len(shard_pos) == self.shard_size:
             break
+        else:
+          n_filter += 1
       logging.info('Built shard {}/{} ({} examples)'.format(s+1,len(shards),len(shard_pos)))
       ####################
       ### build batchs ###
@@ -209,6 +214,7 @@ class Dataset():
             idxs.append([self.idx_bos] + self.Idxs[n][pos] + [self.idx_eos])
           batch_idx.append(idxs)
         yield batch_pos, batch_idx
+    logging.info('End of dataset with {} examples ({} filtered)'.format(n_examples, n_filter))
 
 
 
