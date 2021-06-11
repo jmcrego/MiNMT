@@ -24,7 +24,7 @@ class Vocab():
  
     self.tok_to_idx = defaultdict()
     self.idx_to_tok = []
-     with codecs.open(fvoc, 'r', 'utf-8') as fd:
+    with codecs.open(fvoc, 'r', 'utf-8') as fd:
       self.idx_to_tok = [l for l in fd.read().splitlines()]
 
     self.tok_to_idx = {k:i for i,k in enumerate(self.idx_to_tok)}

@@ -44,6 +44,7 @@ Tokens always used:
   create_logger(None, 'info')
   logging.info('min_freq = {}'.format(min_freq))
   logging.info('max_size = {}'.format(max_size))
+  logging.info('max_eos = {}'.format(max_eos))
 
   ###################
   ### count words ###
