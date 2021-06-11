@@ -90,36 +90,6 @@ class Learning():
           tgt, ref, msk_tgt = prepare_target(batch_tgt, self.idx_pad, device)
           pred = self.model.forward(src, tgt, msk_src, msk_tgt) #no log_softmax is applied
 
-        elif self.model.type() == 's_s_scc_scc': 
-          batch_src, batch_tgt, batch_xsrc, batch_xtgt = batch_idxs[0], batch_idxs[1], batch_idxs[2], batch_idxs[3]
-          src, msk_src = prepare_source(batch_src, self.idx_pad, device)
-          tgt, ref, msk_tgt = prepare_target(batch_tgt, self.idx_pad, device)
-          xsrc, msk_xsrc = prepare_source(batch_xsrc, self.idx_pad, device)
-          xtgt, msk_xtgt = prepare_source(batch_xtgt, self.idx_pad, device)
-          pred_msk, pred = self.model.forward(src, xsrc, xtgt, tgt, msk_src, msk_xsrc, msk_xtgt, msk_tgt) #no log_softmax is applied
-
-        elif self.model.type() == '2nmt_2c': 
-          batch_src, batch_tgt, batch_xsrc, batch_xtgt, batch_hide_xtgt = batch_idxs[0], batch_idxs[1], batch_idxs[2], batch_idxs[3], batch_idxs[4]
-          src, msk_src = prepare_source(batch_src, self.idx_pad, device)
-#          logging.info('src = {}'.format(src.shape))
-#          logging.info('msk_src = {}'.format(msk_src.shape))
-          tgt, ref, msk_tgt = prepare_target(batch_tgt, self.idx_pad, device)
-#          logging.info('tgt = {}'.format(tgt.shape))
-#          logging.info('ref = {}'.format(ref.shape))
-#          logging.info('msk_tgt = {}'.format(msk_tgt.shape))
-          _, msk_tgt_cross = prepare_source_cross(batch_tgt, self.idx_pad, device)
-#          logging.info('msk_tgt_cross = {}'.format(msk_tgt_cross.shape))
-          hide_xtgt, msk_hide_xtgt = prepare_source(batch_hide_xtgt, self.idx_pad, device)
-#          logging.info('hide_xtgt = {}'.format(hide_xtgt.shape))
-#          logging.info('msk_hide_xtgt = {}'.format(msk_hide_xtgt.shape))
-          xsrc, msk_xsrc = prepare_source(batch_xsrc, self.idx_pad, device)
-#          logging.info('xsrc = {}'.format(xsrc.shape))
-#          logging.info('msk_xsrc = {}'.format(msk_xsrc.shape))
-          xtgt, msk_xtgt = prepare_source(batch_xtgt, self.idx_pad, device)
-#          logging.info('xtgt = {}'.format(xtgt.shape))
-#          logging.info('msk_xtgt = {}'.format(msk_xtgt.shape))
-          pred_hide, pred = self.model.forward(src, xsrc, xtgt, tgt, msk_src, msk_xsrc, msk_xtgt, msk_tgt, msk_tgt_cross) #no log_softmax is applied
-
         elif self.model.type() == 'sxs_sc':
           batch_src, batch_tgt, batch_xtgt = batch_idxs[0], batch_idxs[1], batch_idxs[2]
           src, msk_src = prepare_source(batch_src, self.idx_pad, device)
@@ -146,18 +116,7 @@ class Learning():
         ###
         ntok_in_batch = torch.sum(ref != self.idx_pad)
         ntok_in_step += ntok_in_batch
-        loss_trns = self.criter(pred, ref) / ntok_in_batch / self.accum_n_batchs #sum of losses in batch (normalized by tokens in batch) (n batchs will be accumulated before model update, so i normalize by n batchs)
-        if self.model.type() == '2nmt_2c':
- #         logging.info('pred_hide = {}'.format(pred_hide.shape))
- #         logging.info('hide_xtgt = {}'.format(hide_xtgt.shape))
-          alpha = 0.5
-          ntokhide_in_batch = torch.sum(hide_xtgt != self.idx_pad)
-#          logging.info('ntokhide_in_batch = {}'.format(ntokhide_in_batch))
-          loss_hide = self.criter(pred_hide, hide_xtgt) / ntokhide_in_batch / self.accum_n_batchs
-          loss = (alpha * loss_trns) + ((1.0-alpha) * loss_hide)
-#          logging.info('loss_trns = {:.6f} loss_trns = {:.6f}'.format(loss_trns.item(), loss_hide.item()))
-        else:
-          loss = loss_trns
+        loss = self.criter(pred, ref) / ntok_in_batch / self.accum_n_batchs #sum of losses in batch (normalized by tokens in batch) (n batchs will be accumulated before model update, so i normalize by n batchs)
         loss_accum += loss.item()
         ###
         ### compute/accumulate gradients (accumulate gradients until step() is called)
@@ -229,23 +188,6 @@ class Learning():
           src, msk_src = prepare_source(batch_src, self.idx_pad, device)
           tgt, ref, msk_tgt = prepare_target(batch_tgt, self.idx_pad, device)
           pred = self.model.forward(src, tgt, msk_src, msk_tgt) #no log_softmax is applied
-
-        elif self.model.type() == 's_s_scc_scc':
-          batch_src, batch_tgt, batch_xsrc, batch_xtgt = batch_idxs[0], batch_idxs[1], batch_idxs[2], batch_idxs[3]
-          src, msk_src = prepare_source(batch_src, self.idx_pad, device)
-          tgt, ref, msk_tgt = prepare_target(batch_tgt, self.idx_pad, device)
-          xsrc, msk_xsrc = prepare_source(batch_xsrc, self.idx_pad, device)
-          xtgt, msk_xtgt = prepare_source(batch_xtgt, self.idx_pad, device)
-          pred_msk, pred = self.model.forward(src, xsrc, xtgt, tgt, msk_src, msk_xsrc, msk_xtgt, msk_tgt) #no log_softmax is applied
-
-        elif self.model.type() == '2nmt_2c': 
-          batch_src, batch_tgt, batch_xsrc, batch_xtgt = batch_idxs[0], batch_idxs[1], batch_idxs[2], batch_idxs[3]
-          src, msk_src = prepare_source(batch_src, self.idx_pad, device)
-          tgt, ref, msk_tgt = prepare_target(batch_tgt, self.idx_pad, device)
-          _, msk_tgt_cross = prepare_source_cross(batch_tgt, self.idx_pad, device)
-          xsrc, msk_xsrc = prepare_source(batch_xsrc, self.idx_pad, device)
-          xtgt, msk_xtgt = prepare_source(batch_xtgt, self.idx_pad, device)
-          pred_hide, pred = self.model.forward(src, xsrc, xtgt, tgt, msk_src, msk_xsrc, msk_xtgt, msk_tgt, msk_tgt_cross) #no log_softmax is applied
 
         elif self.model.type() == 'sxs_sc':
           batch_src, batch_tgt, batch_xtgt = batch_idxs[0], batch_idxs[1], batch_idxs[2]
