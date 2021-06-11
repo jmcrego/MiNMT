@@ -12,7 +12,7 @@ from tools.Tools import flatten_count
 ### Vocab #############################################
 #######################################################
 class Vocab():
-  def __init__(self, fvoc):
+  def __init__(self, fvoc, n_eos = 0):
     self.idx_pad = 0
     self.str_pad = '<pad>'
     self.idx_unk = 1
@@ -21,18 +21,17 @@ class Vocab():
     self.str_bos = '<bos>'
     self.idx_eos = 3
     self.str_eos = '<eos>'
-#    self.idx_msk = 4
-#    self.str_msk = '⸨msk⸩'
+ 
     self.tok_to_idx = defaultdict()
     self.idx_to_tok = []
-    with codecs.open(fvoc, 'r', 'utf-8') as fd:
+     with codecs.open(fvoc, 'r', 'utf-8') as fd:
       self.idx_to_tok = [l for l in fd.read().splitlines()]
+
     self.tok_to_idx = {k:i for i,k in enumerate(self.idx_to_tok)}
     assert self.tok_to_idx[self.str_pad] == 0, '<pad> must exist in vocab with id=0 while found id={}'.format(self.tok_to_idx[self.str_pad])
     assert self.tok_to_idx[self.str_unk] == 1, '<unk> must exist in vocab with id=1 while found id={}'.format(self.tok_to_idx[self.str_unk])
     assert self.tok_to_idx[self.str_bos] == 2, '<bos> must exist in vocab with id=2 while found id={}'.format(self.tok_to_idx[self.str_bos])
     assert self.tok_to_idx[self.str_eos] == 3, '<eos> must exist in vocab with id=3 while found id={}'.format(self.tok_to_idx[self.str_eos])
-#    assert self.tok_to_idx[self.str_msk] == 4, '⸨msk⸩ must exist in vocab with id=5 while found id={}'.format(self.tok_to_idx[self.str_msk])
     logging.debug('Read Vocab ({} entries) from {}'.format(len(self.idx_to_tok), fvoc))
 
   def __len__(self):
