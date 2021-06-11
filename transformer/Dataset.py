@@ -12,7 +12,7 @@ from tools.Tools import flatten_count
 ### Vocab #############################################
 #######################################################
 class Vocab():
-  def __init__(self, fvoc, n_eos = 0):
+  def __init__(self, fvoc):
     self.idx_pad = 0
     self.str_pad = '<pad>'
     self.idx_unk = 1
@@ -21,7 +21,7 @@ class Vocab():
     self.str_bos = '<bos>'
     self.idx_eos = 3
     self.str_eos = '<eos>'
- 
+
     self.tok_to_idx = defaultdict()
     self.idx_to_tok = []
     with codecs.open(fvoc, 'r', 'utf-8') as fd:
@@ -90,18 +90,20 @@ class Batch():
 ### Dataset ##################################################################################################
 ##############################################################################################################
 class Dataset():
-  def __init__(self, vocs, files, shard_size=500000, batch_size=4096, batch_type='tokens', max_length=100):    
+  def __init__(self, vocs, files, accum_eos=0, shard_size=500000, batch_size=4096, batch_type='tokens', max_length=100):    
     super(Dataset, self).__init__()
     assert len(vocs) == len(files), 'Dataset must be initialized with same number of vocs and files'
+    self.accum_eos = accum_eos
     self.shard_size = shard_size
     self.batch_type = batch_type
     self.batch_size = batch_size
     self.max_length = max_length
-    self.idx_pad = vocs[0].idx_pad
-    self.idx_unk = vocs[0].idx_unk
-    self.idx_bos = vocs[0].idx_bos
-    self.idx_eos = vocs[0].idx_eos
+#    self.idx_pad = vocs[0].idx_pad
+#    self.idx_unk = vocs[0].idx_unk
+#    self.idx_bos = vocs[0].idx_bos
+#    self.idx_eos = vocs[0].idx_eos
     self.Idxs = []
+    self.vocs = vocs
     self.files = files
 
     for n in range(len(files)):
@@ -112,10 +114,9 @@ class Dataset():
         idxs = [[vocs[n][t] for t in l.split()] for l in fd.read().splitlines()]
       self.Idxs.append(idxs)
       ### compute tokens and OOVs
-      n_tok, n_unk = flatten_count(self.Idxs[-1], [self.idx_unk])
+      n_tok, n_unk = flatten_count(self.Idxs[-1], [self.vocs[n].idx_unk])
       logging.info('Read Corpus ({} lines ~ {} tokens ~ {} OOVs [{:.2f}%]) from {}'.format(len(idxs),n_tok,n_unk,100.0*n_unk/n_tok,files[n]))
       assert len(self.Idxs[0]) == len(self.Idxs[-1]), 'Non-parallel corpus in dataset'
-
 
   def build_batchs(self, lens, idxs_pos, n_files):
     assert len(lens) == len(idxs_pos)
@@ -210,12 +211,20 @@ class Dataset():
         for n in range(n_files):
           idxs = []
           for pos in batch_pos:
-            idxs.append([self.idx_bos] + self.Idxs[n][pos] + [self.idx_eos])
+            idxs.append([self.vocs[n].idx_bos] + self.Idxs[n][pos] + [self.insert_eos(n, len(self.Idxs[n][pos]))])
           batch_idx.append(idxs)
         yield batch_pos, batch_idx
     logging.info('End of dataset with {} examples ({} filtered)'.format(n_examples, n_filter))
 
 
-
+  def insert_eos(self, n, l):
+    if self.accum_eos == 0:
+      return self.vocs[n].idx_eos
+    else:
+      str_eos = '<eos:' + str(l // self.accum_eos) + '>'
+      if str_eos in self.vocs[n]:
+        return self.vocs[n][str_eos]
+      else:
+        return self.vocs[n].idx_eos
 
 

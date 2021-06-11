@@ -11,8 +11,6 @@ from transformer.Model import Encoder_Decoder, save_checkpoint, numparameters
 from transformer.Model_sxs_sc import Encoder_Decoder_sxs_sc
 from transformer.Model_sxsc_sc import Encoder_Decoder_sxsc_sc
 from transformer.Model_s_s_scc import Encoder_Decoder_s_s_scc
-#from transformer.Model_2nmt_2c import Encoder_Decoder_2nmt_2c
-#from transformer.Model_s_s_scc_scc import Encoder_Decoder_s_s_scc_scc
 import numpy as np
 
 ######################################################################
@@ -122,13 +120,13 @@ class Options():
    -n_layers        INT : number of encoder layers ({})
    -dropout       FLOAT : dropout value ({})
    -model_type   STRING : model type ({})
-                            s_sc    : one encoder: (self) => decoder (self+cross)
-                            s_s_scc : two encoders: (self) (self) => decoder (self+cross+cross)
-                            sxs_sc  : two encoders: (self) (self) concatenated embeddings => decoder (self+cross)
-                            sxsc_sc : two encoders: (self) (self+cross) concatenated embeddings => decoder (self+cross)
+                            s_sc    : one encoder (self) => decoder (self+cross)
+                            s_s_scc : two encoders (self) (self) => decoder (self+cross+cross)
+                            sxs_sc  : two encoders (self) (self) concatenated embeddings => decoder (self+cross)
+                            sxsc_sc : two encoders (self) (self+cross) concatenated embeddings => decoder (self+cross)
    -share_embeddings    : share source/target embeddings ({})
    -share_encoders      : share encoders when multiple ({})
-   -accum_eos       INT : use <eos:N> ({})
+   -accum_eos       INT : tokens <eos:N> must exist in src/tgt vocab ({})
 
    -weight_decay  FLOAT : weight decay for Adam optimizer ({})
    -beta1         FLOAT : beta1 for Adam optimizer ({})
@@ -138,7 +136,9 @@ class Options():
    -log_file       FILE : log file  (stderr)
    -log_level       STR : log level [debug, info, warning, critical, error] (info)
    -h                   : this help
-'''.format(self.prog, self.net['emb_dim'], self.net['qk_dim'], self.net['v_dim'], self.net['ff_dim'], self.net['n_heads'], self.net['n_layers'], self.net['dropout'], self.net['model_type'], self.net['share_embeddings'], self.net['share_encoders'], self.net['accum_eos'], self.net['weight_decay'], self.net['beta1'], self.net['beta2'], self.net['eps']))
+'''.format(self.prog, self.net['emb_dim'], self.net['qk_dim'], self.net['v_dim'], self.net['ff_dim'], self.net['n_heads'], self.net['n_layers'], self.net['dropout'], 
+    self.net['model_type'], self.net['share_embeddings'], self.net['share_encoders'], self.net['accum_eos'], 
+    self.net['weight_decay'], self.net['beta1'], self.net['beta2'], self.net['eps']))
     sys.exit()
 
 ######################################################################
