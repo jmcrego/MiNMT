@@ -8,11 +8,11 @@ import torch
 from tools.Tools import create_logger, write_dnet
 from transformer.Dataset import Vocab
 from transformer.Model import Encoder_Decoder, save_checkpoint, numparameters
-from transformer.Model_s_s_scc_scc import Encoder_Decoder_s_s_scc_scc
 from transformer.Model_sxs_sc import Encoder_Decoder_sxs_sc
 from transformer.Model_sxsc_sc import Encoder_Decoder_sxsc_sc
 from transformer.Model_s_s_scc import Encoder_Decoder_s_s_scc
-from transformer.Model_2nmt_2c import Encoder_Decoder_2nmt_2c
+#from transformer.Model_2nmt_2c import Encoder_Decoder_2nmt_2c
+#from transformer.Model_s_s_scc_scc import Encoder_Decoder_s_s_scc_scc
 import numpy as np
 
 ######################################################################
@@ -40,6 +40,7 @@ class Options():
     self.net['beta2'] = 0.998
     self.net['eps'] = 1e-9
     self.net['model_type'] = 's_sc'
+    self.net['accum_eos'] = 0
     log_file = 'stderr'
     log_level = 'info'
 
@@ -83,6 +84,8 @@ class Options():
         self.net['beta2'] = float(argv.pop(0))
       elif tok=='-eps' and len(argv):
         self.net['eps'] = float(argv.pop(0))
+      elif tok=="-accum_eos" and len(argv):
+        self.net['accum_eos'] = int(argv.pop(0))
 
       elif tok=="-log_file" and len(argv):
         log_file = argv.pop(0)
@@ -119,8 +122,13 @@ class Options():
    -n_layers        INT : number of encoder layers ({})
    -dropout       FLOAT : dropout value ({})
    -model_type   STRING : model type ({})
+                            s_sc    : one encoder: (self) => decoder (self+cross)
+                            s_s_scc : two encoders: (self) (self) => decoder (self+cross+cross)
+                            sxs_sc  : two encoders: (self) (self) concatenated embeddings => decoder (self+cross)
+                            sxsc_sc : two encoders: (self) (self+cross) concatenated embeddings => decoder (self+cross)
    -share_embeddings    : share source/target embeddings ({})
    -share_encoders      : share encoders when multiple ({})
+   -accum_eos       INT : use <eos:N> ({})
 
    -weight_decay  FLOAT : weight decay for Adam optimizer ({})
    -beta1         FLOAT : beta1 for Adam optimizer ({})
@@ -130,7 +138,7 @@ class Options():
    -log_file       FILE : log file  (stderr)
    -log_level       STR : log level [debug, info, warning, critical, error] (info)
    -h                   : this help
-'''.format(self.prog, self.net['emb_dim'], self.net['qk_dim'], self.net['v_dim'], self.net['ff_dim'], self.net['n_heads'], self.net['n_layers'], self.net['dropout'], self.net['model_type'], self.net['share_embeddings'], self.net['share_encoders'], self.net['weight_decay'], self.net['beta1'], self.net['beta2'], self.net['eps']))
+'''.format(self.prog, self.net['emb_dim'], self.net['qk_dim'], self.net['v_dim'], self.net['ff_dim'], self.net['n_heads'], self.net['n_layers'], self.net['dropout'], self.net['model_type'], self.net['share_embeddings'], self.net['share_encoders'], self.net['accum_eos'], self.net['weight_decay'], self.net['beta1'], self.net['beta2'], self.net['eps']))
     sys.exit()
 
 ######################################################################
@@ -145,18 +153,14 @@ if __name__ == '__main__':
   src_voc = Vocab(o.src_voc)
   tgt_voc = Vocab(o.tgt_voc)
   device = torch.device('cpu')
-  if o.net['model_type'] == 's_s_scc_scc':
-    model = Encoder_Decoder_s_s_scc_scc(o.net['n_layers'], o.net['ff_dim'], o.net['n_heads'], o.net['emb_dim'], o.net['qk_dim'], o.net['v_dim'], o.net['dropout'], o.net['share_embeddings'], o.net['share_encoders'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
-  elif o.net['model_type'] == '2nmt_2c':
-    model = Encoder_Decoder_2nmt_2c(o.net['n_layers'], o.net['ff_dim'], o.net['n_heads'], o.net['emb_dim'], o.net['qk_dim'], o.net['v_dim'], o.net['dropout'], o.net['share_embeddings'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
+  if o.net['model_type'] == 's_sc':
+    model = Encoder_Decoder(o.net['n_layers'], o.net['ff_dim'], o.net['n_heads'], o.net['emb_dim'], o.net['qk_dim'], o.net['v_dim'], o.net['dropout'], o.net['share_embeddings'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
   elif o.net['model_type'] == 'sxs_sc':
     model = Encoder_Decoder_sxs_sc(o.net['n_layers'], o.net['ff_dim'], o.net['n_heads'], o.net['emb_dim'], o.net['qk_dim'], o.net['v_dim'], o.net['dropout'], o.net['share_embeddings'], o.net['share_encoders'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
   elif o.net['model_type'] == 'sxsc_sc':
     model = Encoder_Decoder_sxsc_sc(o.net['n_layers'], o.net['ff_dim'], o.net['n_heads'], o.net['emb_dim'], o.net['qk_dim'], o.net['v_dim'], o.net['dropout'], o.net['share_embeddings'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
   elif o.net['model_type'] == 's_s_scc':
     model = Encoder_Decoder_s_s_scc(o.net['n_layers'], o.net['ff_dim'], o.net['n_heads'], o.net['emb_dim'], o.net['qk_dim'], o.net['v_dim'], o.net['dropout'], o.net['share_embeddings'], o.net['share_encoders'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
-  elif o.net['model_type'] == 's_sc':
-    model = Encoder_Decoder(o.net['n_layers'], o.net['ff_dim'], o.net['n_heads'], o.net['emb_dim'], o.net['qk_dim'], o.net['v_dim'], o.net['dropout'], o.net['share_embeddings'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
   else:
     logging.error('bad model_type: {}'.format(o.net['model_type']))
     sys.exit()

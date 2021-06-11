@@ -8,11 +8,11 @@ import torch
 #import yaml
 from transformer.Dataset import Dataset, Vocab
 from transformer.Model import Encoder_Decoder, load_model, numparameters
-from transformer.Model_s_s_scc_scc import Encoder_Decoder_s_s_scc_scc
+#from transformer.Model_s_s_scc_scc import Encoder_Decoder_s_s_scc_scc
+#from transformer.Model_2nmt_2c import Encoder_Decoder_2nmt_2c
 from transformer.Model_sxs_sc import Encoder_Decoder_sxs_sc
 from transformer.Model_sxsc_sc import Encoder_Decoder_sxsc_sc
 from transformer.Model_s_s_scc import Encoder_Decoder_s_s_scc
-from transformer.Model_2nmt_2c import Encoder_Decoder_2nmt_2c
 from transformer.Inference import Inference
 from tools.Tools import create_logger, read_dnet
 
@@ -157,18 +157,14 @@ if __name__ == '__main__':
   ### load model ###
   ##################
   device = torch.device('cuda' if o.cuda and torch.cuda.is_available() else 'cpu')
-  if n['model_type'] == 's_s_scc_scc':
-    model = Encoder_Decoder_s_s_scc_scc(n['n_layers'], n['ff_dim'], n['n_heads'], n['emb_dim'], n['qk_dim'], n['v_dim'], n['dropout'], n['share_embeddings'], o.net['share_encoders'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
-  elif n['model_type'] == '2nmt_2c':
-    model = Encoder_Decoder_2nmt_2c(n['n_layers'], n['ff_dim'], n['n_heads'], n['emb_dim'], n['qk_dim'], n['v_dim'], n['dropout'], n['share_embeddings'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
+  if n['model_type'] == 's_sc':
+    model = Encoder_Decoder(n['n_layers'], n['ff_dim'], n['n_heads'], n['emb_dim'], n['qk_dim'], n['v_dim'], n['dropout'], n['share_embeddings'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
   elif n['model_type'] == 'sxs_sc':
     model = Encoder_Decoder_sxs_sc(n['n_layers'], n['ff_dim'], n['n_heads'], n['emb_dim'], n['qk_dim'], n['v_dim'], n['dropout'], n['share_embeddings'], n['share_encoders'], len(source_voc), len(tgt_voc), src_voc.idx_pad).to(device)
   elif n['model_type'] == 'sxsc_sc':
     model = Encoder_Decoder_sxsc_sc(n['n_layers'], n['ff_dim'], n['n_heads'], n['emb_dim'], n['qk_dim'], n['v_dim'], n['dropout'], n['share_embeddings'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
   elif n['model_type'] == 's_s_scc':
     model = Encoder_Decoder_s_s_scc(n['n_layers'], n['ff_dim'], n['n_heads'], n['emb_dim'], n['qk_dim'], n['v_dim'], n['dropout'], n['share_embeddings'], n['share_encoders'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
-  elif n['model_type'] == 's_sc':
-    model = Encoder_Decoder(n['n_layers'], n['ff_dim'], n['n_heads'], n['emb_dim'], n['qk_dim'], n['v_dim'], n['dropout'], n['share_embeddings'], len(src_voc), len(tgt_voc), src_voc.idx_pad).to(device)
 
   logging.info('Built model (#params, size) = ({}) in device {}'.format(', '.join([str(f) for f in numparameters(model)]), next(model.parameters()).device))
   step, model = load_model(o.dnet + '/network', model, device, o.model)
@@ -177,32 +173,24 @@ if __name__ == '__main__':
   ### load test ####
   ##################
   if o.prefix is not None:
-    if n['model_type'] == 's_s_scc_scc':
-      test = Dataset([src_voc, src_voc, tgt_voc, tgt_voc], [o.input, o.xsrc, o.xtgt, o.prefix], o.shard_size, o.batch_size, o.batch_type, o.max_length)
-    elif n['model_type'] == '2nmt_2c':
-      test = Dataset([src_voc, tgt_voc, src_voc, tgt_voc], [o.input, o.xsrc, o.xtgt, o.prefix], o.shard_size, o.batch_size, o.batch_type, o.max_length)
+    if n['model_type'] == 's_sc':
+      test = Dataset([src_voc,tgt_voc], [o.input,o.prefix], o.shard_size, o.batch_size, o.batch_type, o.max_length)
     elif n['model_type'] == 'sxs_sc':
       test = Dataset([src_voc, tgt_voc, tgt_voc], [o.input, o.xtgt, o.prefix], o.shard_size, o.batch_size, o.batch_type, o.max_length)
     elif n['model_type'] == 'sxsc_sc':
       test = Dataset([src_voc, tgt_voc, tgt_voc], [o.input, o.xtgt, o.prefix], o.shard_size, o.batch_size, o.batch_type, o.max_length)
     elif n['model_type'] == 's_s_scc':
       test = Dataset([src_voc, tgt_voc, tgt_voc], [o.input, o.xtgt, o.prefix], o.shard_size, o.batch_size, o.batch_type, o.max_length)
-    elif n['model_type'] == 's_sc':
-      test = Dataset([src_voc,tgt_voc], [o.input,o.prefix], o.shard_size, o.batch_size, o.batch_type, o.max_length)
 
   else: ### without prefix
-    if n['model_type'] == 's_s_scc_scc':
-      test = Dataset([src_voc, src_voc, tgt_voc], [o.input, o.xsrc, o.xtgt], o.shard_size, o.batch_size, o.batch_type, o.max_length)
-    elif n['model_type'] == '2nmt_2c':
-      test = Dataset([src_voc, tgt_voc, src_voc], [o.input, o.xsrc, o.xtgt], o.shard_size, o.batch_size, o.batch_type, o.max_length)
+    if n['model_type'] == 's_sc':
+      test = Dataset([src_voc], [o.input], o.shard_size, o.batch_size, o.batch_type, o.max_length)
     elif n['model_type'] == 'sxs_sc':
       test = Dataset([src_voc, tgt_voc], [o.input, o.xtgt], o.shard_size, o.batch_size, o.batch_type, o.max_length)
     elif n['model_type'] == 'sxsc_sc':
       test = Dataset([src_voc, tgt_voc], [o.input, o.xtgt], o.shard_size, o.batch_size, o.batch_type, o.max_length)
     elif n['model_type'] == 's_s_scc':
       test = Dataset([src_voc, tgt_voc], [o.input, o.xtgt], o.shard_size, o.batch_size, o.batch_type, o.max_length)
-    elif n['model_type'] == 's_sc':
-      test = Dataset([src_voc], [o.input], o.shard_size, o.batch_size, o.batch_type, o.max_length)
 
   ##################
   ### Inference ####
