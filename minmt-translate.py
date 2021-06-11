@@ -174,23 +174,23 @@ if __name__ == '__main__':
   ##################
   if o.prefix is not None:
     if n['model_type'] == 's_sc':
-      test = Dataset([src_voc,tgt_voc], [o.input,o.prefix], o.shard_size, o.batch_size, o.batch_type, o.max_length)
+      test = Dataset([src_voc,tgt_voc], [o.input,o.prefix], n['accum_eos'], o.shard_size, o.batch_size, o.batch_type, o.max_length)
     elif n['model_type'] == 'sxs_sc':
-      test = Dataset([src_voc, tgt_voc, tgt_voc], [o.input, o.xtgt, o.prefix], o.shard_size, o.batch_size, o.batch_type, o.max_length)
+      test = Dataset([src_voc, tgt_voc, tgt_voc], [o.input, o.xtgt, o.prefix], n['accum_eos'], o.shard_size, o.batch_size, o.batch_type, o.max_length)
     elif n['model_type'] == 'sxsc_sc':
-      test = Dataset([src_voc, tgt_voc, tgt_voc], [o.input, o.xtgt, o.prefix], o.shard_size, o.batch_size, o.batch_type, o.max_length)
+      test = Dataset([src_voc, tgt_voc, tgt_voc], [o.input, o.xtgt, o.prefix], n['accum_eos'], o.shard_size, o.batch_size, o.batch_type, o.max_length)
     elif n['model_type'] == 's_s_scc':
-      test = Dataset([src_voc, tgt_voc, tgt_voc], [o.input, o.xtgt, o.prefix], o.shard_size, o.batch_size, o.batch_type, o.max_length)
+      test = Dataset([src_voc, tgt_voc, tgt_voc], [o.input, o.xtgt, o.prefix], n['accum_eos'], o.shard_size, o.batch_size, o.batch_type, o.max_length)
 
   else: ### without prefix
     if n['model_type'] == 's_sc':
-      test = Dataset([src_voc], [o.input], o.shard_size, o.batch_size, o.batch_type, o.max_length)
+      test = Dataset([src_voc], [o.input], n['accum_eos'], o.shard_size, o.batch_size, o.batch_type, o.max_length)
     elif n['model_type'] == 'sxs_sc':
-      test = Dataset([src_voc, tgt_voc], [o.input, o.xtgt], o.shard_size, o.batch_size, o.batch_type, o.max_length)
+      test = Dataset([src_voc, tgt_voc], [o.input, o.xtgt], n['accum_eos'], o.shard_size, o.batch_size, o.batch_type, o.max_length)
     elif n['model_type'] == 'sxsc_sc':
-      test = Dataset([src_voc, tgt_voc], [o.input, o.xtgt], o.shard_size, o.batch_size, o.batch_type, o.max_length)
+      test = Dataset([src_voc, tgt_voc], [o.input, o.xtgt], n['accum_eos'], o.shard_size, o.batch_size, o.batch_type, o.max_length)
     elif n['model_type'] == 's_s_scc':
-      test = Dataset([src_voc, tgt_voc], [o.input, o.xtgt], o.shard_size, o.batch_size, o.batch_type, o.max_length)
+      test = Dataset([src_voc, tgt_voc], [o.input, o.xtgt], n['accum_eos'], o.shard_size, o.batch_size, o.batch_type, o.max_length)
 
   ##################
   ### Inference ####
