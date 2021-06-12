@@ -50,6 +50,15 @@ class Vocab():
     else:
       return self.idx_unk
 
+  def get_idx_eos(self, l, accum_eos=0):
+    if accum_eos == 0:
+      return self.idx_eos
+    else:
+      str_eos = '<eos:' + str(l // accum_eos) + '>'
+      if str_eos in self.tok_to_idx:
+        return self.tok_to_idx[str_eos]
+      else:
+        return self.idx_eos
 
 ##############################################################################################################
 ### Batch ####################################################################################################
@@ -211,20 +220,13 @@ class Dataset():
         for n in range(n_files):
           idxs = []
           for pos in batch_pos:
-            idxs.append([self.vocs[n].idx_bos] + self.Idxs[n][pos] + [self.insert_eos(n, len(self.Idxs[n][pos]))])
+            idx_bos = self.vocs[n].idx_bos
+            idx_eos = self.vocs[n].get_idx_eos(len(self.Idxs[n][pos]), self.accum_eos) ### number of tokens (<bos> <eos> not considered)
+            idxs.append([idx_bos] + self.Idxs[n][pos] + [idx_eos])
           batch_idx.append(idxs)
         yield batch_pos, batch_idx
     logging.info('End of dataset with {} examples ({} filtered)'.format(n_examples, n_filter))
 
 
-  def insert_eos(self, n, l):
-    if self.accum_eos == 0:
-      return self.vocs[n].idx_eos
-    else:
-      str_eos = '<eos:' + str(l // self.accum_eos) + '>'
-      if str_eos in self.vocs[n]:
-        return self.vocs[n][str_eos]
-      else:
-        return self.vocs[n].idx_eos
 
 

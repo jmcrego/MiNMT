@@ -195,7 +195,7 @@ if __name__ == '__main__':
   ##################
   ### Inference ####
   ##################
-  inference = Inference(model, src_voc, tgt_voc, o, n['model_type'], device)
+  inference = Inference(model, src_voc, tgt_voc, o, n['accum_eos'], device)
   inference.translate(test,o.output)
 
   toc = time.time()

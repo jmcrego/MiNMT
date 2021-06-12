@@ -283,7 +283,7 @@ if __name__ == '__main__':
   #############
   ### learn ###
   #############
-  inference_valid = Inference(model, src_voc, tgt_voc, DefaultOptsInfer(), n['model_type'], device)
+  inference_valid = Inference(model, src_voc, tgt_voc, DefaultOptsInfer(), n['accum_eos'], device)
   learning = Learning(model, optScheduler, criter, o.dnet + '/network', src_voc.idx_pad, inference_valid, o)
   learning.learn(train, valid, device)
 

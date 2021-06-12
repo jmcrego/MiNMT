@@ -18,13 +18,10 @@ def norm_length(l, alpha):
 ### Inference ################################################################################################
 ##############################################################################################################
 class Inference():
-  def __init__(self, model, src_voc, tgt_voc, oi, model_type, device): 
+  def __init__(self, model, src_voc, tgt_voc, oi, accum_eos, device): 
     super(Inference, self).__init__()
     self.model = model
-    self.model_type = model_type
-    self.src_voc = src_voc
-    self.tgt_voc = tgt_voc
-    self.Vt = len(tgt_voc)
+    self.accum_eos = accum_eos
     self.max_size = oi.max_size
     self.alpha = oi.alpha
     self.format = oi.format
@@ -32,6 +29,9 @@ class Inference():
     self.N = oi.n_best
     self.prefix = oi.prefix is not None
     self.device = device
+    self.src_voc = src_voc
+    self.tgt_voc = tgt_voc
+    self.Vt = len(tgt_voc)
     self.next_wrds = torch.tensor([i for i in range(self.Vt)], dtype=int, device=self.device).view(1,-1) #[1,Vt]
 
 
@@ -51,21 +51,21 @@ class Inference():
         ##############
         ### ENCODE ###
         ##############
-        if self.model_type == 's_sc':
+        if self.model.type() == 's_sc':
           src, self.msk_src = prepare_source(batch_idxs[0], self.src_voc.idx_pad, self.device) #src is [bs, ls] msk_src is [bs,1,ls]
           self.z_src = self.model.encode(src, self.msk_src) #[bs,ls,ed]
 
-        elif self.model_type == 'sxs_sc':
+        elif self.model.type() == 'sxs_sc':
           src, self.msk_src = prepare_source(batch_idxs[0], self.src_voc.idx_pad, self.device) #src is [bs, ls] msk_src is [bs,1,ls]
           xtgt, self.msk_xtgt = prepare_source(batch_idxs[1], self.tgt_voc.idx_pad, self.device) #xtgt is [bs, lxt] msk_xtgt is [bs,1,lxt]
           self.z_src, self.z_xtgt = self.model.encode(src, xtgt, self.msk_src, self.msk_xtgt) #[bs,ls,ed] [bs,lxt,ed]
 
-        elif self.model_type == 'sxsc_sc':
+        elif self.model.type() == 'sxsc_sc':
           src, self.msk_src = prepare_source(batch_idxs[0], self.src_voc.idx_pad, self.device) #src is [bs, ls] msk_src is [bs,1,ls]
           xtgt, self.msk_xtgt = prepare_source(batch_idxs[1], self.tgt_voc.idx_pad, self.device) #xtgt is [bs, lxt] msk_xtgt is [bs,1,lxt]
           self.z_src, self.z_xtgt = self.model.encode(src, xtgt, self.msk_src, self.msk_xtgt) #[bs,ls,ed] [bs,lxt,ed]
 
-        elif self.model_type == 's_s_scc':
+        elif self.model.type() == 's_s_scc':
           src, self.msk_src = prepare_source(batch_idxs[0], self.src_voc.idx_pad, self.device) #src is [bs, ls] msk_src is [bs,1,ls]
           xtgt, self.msk_xtgt = prepare_source(batch_idxs[1], self.tgt_voc.idx_pad, self.device) #xtgt is [bs, lxt] msk_xtgt is [bs,1,lxt]
           self.z_src, self.z_xtgt = self.model.encode(src, xtgt, self.msk_src, self.msk_xtgt) #[bs,ls,ed] [bs,lxt,ed]
@@ -106,20 +106,20 @@ class Inference():
       I, lt = hyps.shape 
 
       if lt == 2:
-        if self.model_type == 's_sc':
+        if self.model.type() == 's_sc':
           self.z_src = self.z_src.repeat_interleave(repeats=self.K, dim=0) #[bs,ls,ed] => [bs*K,ls,ed]
           self.msk_src = self.msk_src.repeat_interleave(repeats=self.K, dim=0) #[bs,1,ls] => [bs*K,1,ls]
-        elif self.model_type == 'sxs_sc':
-          self.z_src = self.z_src.repeat_interleave(repeats=self.K, dim=0) #[bs,ls,ed] => [bs*K,ls,ed]
-          self.msk_src = self.msk_src.repeat_interleave(repeats=self.K, dim=0) #[bs,1,ls] => [bs*K,1,ls]
-          self.z_xtgt = self.z_xtgt.repeat_interleave(repeats=self.K, dim=0) #[bs,lxt,ed] => [bs*K,lxt,ed]
-          self.msk_xtgt = self.msk_xtgt.repeat_interleave(repeats=self.K, dim=0) #[bs,1,lxt] => [bs*K,1,lxt]
-        elif self.model_type == 'sxsc_sc':
+        elif self.model.type() == 'sxs_sc':
           self.z_src = self.z_src.repeat_interleave(repeats=self.K, dim=0) #[bs,ls,ed] => [bs*K,ls,ed]
           self.msk_src = self.msk_src.repeat_interleave(repeats=self.K, dim=0) #[bs,1,ls] => [bs*K,1,ls]
           self.z_xtgt = self.z_xtgt.repeat_interleave(repeats=self.K, dim=0) #[bs,lxt,ed] => [bs*K,lxt,ed]
           self.msk_xtgt = self.msk_xtgt.repeat_interleave(repeats=self.K, dim=0) #[bs,1,lxt] => [bs*K,1,lxt]
-        elif self.model_type == 's_s_scc':
+        elif self.model.type() == 'sxsc_sc':
+          self.z_src = self.z_src.repeat_interleave(repeats=self.K, dim=0) #[bs,ls,ed] => [bs*K,ls,ed]
+          self.msk_src = self.msk_src.repeat_interleave(repeats=self.K, dim=0) #[bs,1,ls] => [bs*K,1,ls]
+          self.z_xtgt = self.z_xtgt.repeat_interleave(repeats=self.K, dim=0) #[bs,lxt,ed] => [bs*K,lxt,ed]
+          self.msk_xtgt = self.msk_xtgt.repeat_interleave(repeats=self.K, dim=0) #[bs,1,lxt] => [bs*K,1,lxt]
+        elif self.model.type() == 's_s_scc':
           self.z_src = self.z_src.repeat_interleave(repeats=self.K, dim=0) #[bs,ls,ed] => [bs*K,ls,ed]
           self.msk_src = self.msk_src.repeat_interleave(repeats=self.K, dim=0) #[bs,1,ls] => [bs*K,1,ls]
           self.z_xtgt = self.z_xtgt.repeat_interleave(repeats=self.K, dim=0) #[bs,lxt,ed] => [bs*K,lxt,ed]
@@ -129,13 +129,13 @@ class Inference():
       ### DECODE ###
       ##############
       msk_tgt = (1 - torch.triu(torch.ones((1, lt, lt), device=self.device), diagonal=1)).bool()
-      if self.model_type == 's_sc':
+      if self.model.type() == 's_sc':
         y_next = self.model.decode(self.z_src, hyps, self.msk_src, msk_tgt=msk_tgt)[:,-1,:] #[I,lt,Vt] => [I,Vt]
-      elif self.model_type == 'sxs_sc':
+      elif self.model.type() == 'sxs_sc':
         y_next = self.model.decode(self.z_src, self.z_xtgt, hyps, self.msk_src, self.msk_xtgt, msk_tgt=msk_tgt)[:,-1,:] #[I,lt,Vt] => [I,Vt]
       elif self.model_type == 'sxsc_sc':
         y_next = self.model.decode(self.z_src, self.z_xtgt, hyps, self.msk_src, self.msk_xtgt, msk_tgt=msk_tgt)[:,-1,:] #[I,lt,Vt] => [I,Vt]
-      elif self.model_type == 's_s_scc':
+      elif self.model.type() == 's_s_scc':
         y_next = self.model.decode(self.z_src, self.z_xtgt, hyps, self.msk_src, self.msk_xtgt, msk_tgt=msk_tgt)[:,-1,:] #[I,lt,Vt] => [I,Vt]
 
       hyps, logP = self.expand(y_next, hyps, logP, bs) #both are [bs,1*Vt,lt] OR [bs,K*Vt,lt]
@@ -151,7 +151,9 @@ class Inference():
       ##############
       ### FINALS ###
       ##############
-      index_of_finals = (hyps[:,-1]==self.tgt_voc.idx_eos).nonzero(as_tuple=False).squeeze(-1) #[n] n being the number of final hyps found
+      idx_eos = self.tgt_voc.get_idx_eos(lt-1, self.accum_eos)
+      #logging.info('idx_eos = {} {}'.format(idx_eos, self.tgt_voc[idx_eos]))
+      index_of_finals = (hyps[:,-1]==idx_eos).nonzero(as_tuple=False).squeeze(-1) #[n] n being the number of final hyps found
       for i in index_of_finals:
         b = i//self.K
         if len(finals[b]) < self.K:
@@ -207,7 +209,8 @@ class Inference():
     logP = logP.contiguous().view(bs,-1,self.Vt,lt)
 
     #set -Inf to all last added tokens but idx_eos 
-    all_but_eos = torch.cat( (torch.arange(0,self.tgt_voc.idx_eos), torch.arange(self.tgt_voc.idx_eos+1,self.Vt)) )
+    idx_eos = self.tgt_voc.get_idx_eos(lt-1, self.accum_eos)
+    all_but_eos = torch.cat( (torch.arange(0,idx_eos), torch.arange(idx_eos+1,self.Vt)) )
     logP[:,:,all_but_eos,-1] = float('-Inf') 
 
     logP = logP.contiguous().view(bs,n_times_Vt,lt)
@@ -223,7 +226,7 @@ class Inference():
 
     for b in range(pref.shape[0]):
       idx_pref = pref[b].item()
-      if idx_pref == self.tgt_voc.idx_eos: ### do not force if pref_idx is idx_eos
+      if idx_pref == self.tgt_voc.get_idx_eos(lt-1, self.accum_eos): ### do not force if pref_idx is idx_eos
         continue
       elif idx_pref == self.tgt_voc.idx_pad: ### do not force if pref_idx is idx_pad
         continue
