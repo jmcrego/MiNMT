@@ -146,6 +146,9 @@ class Inference():
       elif self.prefix and lt < lp: #force decoding using prefix
         logP = self.force_prefix(hyps, logP, self.batch_pre[:,lt]) #[bs,1*Vt,lt] OR [bs,K*Vt,lt]
 
+      elif self.accum_eos:
+        logP = eliminate_accum_eos(logP)
+        
       hyps, logP = self.Kbest(hyps, logP) #both are [bs*K,lt]
 
       ##############
@@ -212,6 +215,24 @@ class Inference():
     idx_eos = self.tgt_voc.get_idx_eos(lt-1, self.accum_eos)
     all_but_eos = torch.cat( (torch.arange(0,idx_eos), torch.arange(idx_eos+1,self.Vt)) )
     logP[:,:,all_but_eos,-1] = float('-Inf') 
+
+    logP = logP.contiguous().view(bs,n_times_Vt,lt)
+    return logP
+
+  def eliminate_accum_eos(self, logP):
+    #logP is [bs, 1*Vt, lt] or [bs, K*Vt, lt]
+    bs, n_times_Vt, lt = logP.shape
+    logP = logP.contiguous().view(bs,-1,self.Vt,lt)
+
+    for p in range(10000):
+      if p == lt-1:
+        continue
+      str_eos = '<eos:' + str(p) + '>'
+      if str_eos not in self.tgt_voc
+        break
+      #set str_eos
+      idx_eos = self.tgt_voc[str_eos]
+      logP[:,:,idx_eos,-1] = float('-Inf') 
 
     logP = logP.contiguous().view(bs,n_times_Vt,lt)
     return logP
