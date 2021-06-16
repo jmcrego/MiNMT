@@ -228,7 +228,7 @@ class Inference():
       if p == lt-1:
         continue
       str_eos = '<eos:' + str(p) + '>'
-      if str_eos not in self.tgt_voc
+      if str_eos not in self.tgt_voc:
         break
       #set str_eos
       idx_eos = self.tgt_voc[str_eos]
